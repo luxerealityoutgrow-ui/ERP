@@ -1,0 +1,3 @@
+module.exports=[63922,(a,b,c)=>{let{createClientModuleProxy:d}=a.r(50423);a.n(d("[project]/AI Projects/Luxe Realty Pune - ERP/node_modules/next/dist/client/components/builtin/global-error.js <module evaluation>"))},78814,(a,b,c)=>{let{createClientModuleProxy:d}=a.r(50423);a.n(d("[project]/AI Projects/Luxe Realty Pune - ERP/node_modules/next/dist/client/components/builtin/global-error.js"))},48995,a=>{"use strict";a.i(63922);var b=a.i(78814);a.n(b)},11647,a=>{a.n(a.i(48995))}];
+
+//# sourceMappingURL=0aoe_next_dist_client_components_builtin_global-error_0nhsf2a.js.map

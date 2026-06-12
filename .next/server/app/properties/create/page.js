@@ -1,0 +1,13 @@
+var R=require("../../../chunks/ssr/[turbopack]_runtime.js")("server/app/properties/create/page.js")
+R.c("server/chunks/ssr/[root-of-the-server]__1yqab_s._.js")
+R.c("server/chunks/ssr/0aoe_next_dist_esm_build_templates_app-page_0kjp_90.js")
+R.c("server/chunks/ssr/[root-of-the-server]__1c77gby._.js")
+R.c("server/chunks/ssr/[root-of-the-server]__0r4t3ek._.js")
+R.c("server/chunks/ssr/AI Projects_Luxe Realty Pune - ERP_066kpq7._.js")
+R.c("server/chunks/ssr/0aoe_next_dist_client_components_031-1zl._.js")
+R.c("server/chunks/ssr/0aoe_next_dist_client_components_builtin_forbidden_1xag3k0.js")
+R.c("server/chunks/ssr/0aoe_next_dist_client_components_builtin_unauthorized_1l-o-p2.js")
+R.c("server/chunks/ssr/0aoe_next_dist_client_components_builtin_global-error_0nhsf2a.js")
+R.c("server/chunks/ssr/10up__next-internal_server_app_properties_create_page_actions_0d0azj4.js")
+R.m(11159)
+module.exports=R.m(11159).exports

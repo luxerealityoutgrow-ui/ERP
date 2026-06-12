@@ -1,0 +1,7 @@
+# see https://help.github.com/en/github/using-github/ignoring-files
+node_modules
+data
+out
+.env
+npm-debug.log
+.DS_Store
