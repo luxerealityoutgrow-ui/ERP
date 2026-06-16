@@ -110,10 +110,11 @@ const SelectContent = React.forwardRef<
     if (!searchable || !search) return children
 
     return React.Children.toArray(children).filter((child) => {
-      if (React.isValidElement(child) && child.props.children) {
-        const text = typeof child.props.children === 'string'
-          ? child.props.children
-          : child.props.children.toString()
+      if (React.isValidElement(child) && (child.props as any).children) {
+        const childProps = child.props as any;
+        const text = typeof childProps.children === 'string'
+          ? childProps.children
+          : childProps.children.toString()
         return text.toLowerCase().includes(search.toLowerCase())
       }
       return true
