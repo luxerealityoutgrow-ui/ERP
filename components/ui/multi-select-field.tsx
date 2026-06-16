@@ -1,8 +1,14 @@
 // components/multi-select-field.tsx
 import React from 'react';
 import { SimpleMultiSelect } from '@/components/simple-multi-select';
-import { FormField } from '@/types/crud';
 import { useTranslation } from 'react-i18next';
+
+interface FormField {
+  name: string;
+  label: string;
+  placeholder?: string;
+  options?: { value: string; label: string }[];
+}
 
 interface MultiSelectFieldProps {
   field: FormField;

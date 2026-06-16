@@ -70,3 +70,21 @@ export async function fetchProperty(id: string): Promise<Property> {
   if (error) throw error;
   return data as Property;
 }
+
+export async function fetchSetting(id: string): Promise<string> {
+  const { data, error } = await supabase
+    .from('settings')
+    .select('value')
+    .eq('id', id)
+    .single();
+  if (error) return '';
+  return data.value;
+}
+
+export async function updateSetting(id: string, value: string) {
+  const { error } = await supabase
+    .from('settings')
+    .update({ value, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw error;
+}

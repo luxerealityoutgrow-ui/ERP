@@ -9,8 +9,8 @@ export interface InputProps
 
 const InputError = React.forwardRef<HTMLInputElement, InputProps>(
     ({ className, message, ...props }, ref) => {
-        return (
-            message && <p
+        return message ? (
+            <p
                 className={cn(
                     "text-sm font-medium text-destructive",
                     className
@@ -20,7 +20,7 @@ const InputError = React.forwardRef<HTMLInputElement, InputProps>(
             >
                 {message}
             </p>
-        )
+        ) : null;
     }
 )
 InputError.displayName = "InputError"

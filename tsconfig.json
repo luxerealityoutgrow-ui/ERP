@@ -12,7 +12,7 @@
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
@@ -25,8 +25,13 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*", "./*"],
-      "@inertiajs/react": ["./src/lib/inertia-stubs.ts"]
+      "@/*": [
+        "./src/*",
+        "./*"
+      ],
+      "@inertiajs/react": [
+        "./src/lib/inertia-stubs.ts"
+      ]
     }
   },
   "include": [

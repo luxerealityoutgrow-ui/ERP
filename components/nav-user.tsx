@@ -31,27 +31,56 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import {User} from "@/types";
-import {Link, router, usePage} from "@inertiajs/react";
-import {useTheme} from "next-themes";
+import { User, PageProps } from "@/types";
+import { Link, router, usePage } from "@inertiajs/react";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { getImagePath } from "@/utils/helpers";
 import React from "react";
-import { PageProps } from "@/types";
-
-
+import { useProfile } from '@/lib/auth';
+import { supabase } from '@/lib/supabaseClient';
 
 export function NavUser({
-  user,
+  user: propUser,
   inHeader = false,
 }: {
-  user: User
+  user?: User
   inHeader?: boolean
 }) {
   const { isMobile } = useSidebar()
-  const {setTheme} = useTheme()
+  const { setTheme } = useTheme()
   const { i18n, t } = useTranslation()
-  const { auth } = usePage<PageProps>().props
+  const profile = useProfile()
+
+  const handleLogout = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    await supabase.auth.signOut();
+    window.location.href = '/login';
+  };
+
+  const user = propUser || (profile ? {
+    id: profile.id,
+    name: profile.full_name || 'User',
+    email: profile.email || '',
+    avatar: undefined,
+    permissions: ['manage-profile']
+  } : {
+    id: '',
+    name: 'Guest User',
+    email: 'guest@example.com',
+    avatar: undefined,
+    permissions: []
+  });
+
+  const auth = {
+    user: profile ? {
+      id: profile.id,
+      name: profile.full_name || 'User',
+      email: profile.email || '',
+      role: profile.role,
+      permissions: ['manage-profile']
+    } : null
+  };
 
 
 
@@ -88,16 +117,9 @@ export function NavUser({
             )}
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link
-              className="w-full"
-              href={route("logout")}
-              method={"post"}
-              as={"button"}
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              {t('Log out')}
-            </Link>
+          <DropdownMenuItem onClick={handleLogout} className="cursor-pointer w-full flex items-center">
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>{t('Log out')}</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
         </DropdownMenu>
@@ -178,16 +200,9 @@ export function NavUser({
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
 
-            <DropdownMenuItem asChild>
-              <Link
-                  className="w-full"
-                  href={route("logout")}
-                  method={"post"}
-                  as={"button"}
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                {t('Log out')}
-              </Link>
+            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer w-full flex items-center">
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>{t('Log out')}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

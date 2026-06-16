@@ -32,6 +32,30 @@ export async function createLeadAction(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
+  // Trigger Apps Script Integration if configured
+  try {
+    const { data: setting } = await supabase
+      .from('settings')
+      .select('value')
+      .eq('id', 'apps_script_url')
+      .single();
+    
+    if (setting?.value) {
+      // Fire and forget integration call
+      fetch(setting.value, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'new_lead',
+          lead: inserted,
+          triggered_by: profile?.email
+        }),
+      }).catch(err => console.error('Apps Script Sync Error:', err));
+    }
+  } catch (err) {
+    console.error('Integration check failed:', err);
+  }
+
   // Audit log
   await supabase
     .from('audit_logs')

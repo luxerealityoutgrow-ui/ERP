@@ -1,14 +1,13 @@
-import { DataTable } from '@/components/ui/data-table';
-import { ColumnDef } from '@tanstack/react-table';
+import { DataTable, Column } from '@/components/ui/data-table';
 import { Property } from '@/lib/queries';
 
-const columns: ColumnDef<Property>[] = [
-  { accessorKey: 'property_code', header: 'Code' },
-  { accessorKey: 'title', header: 'Title' },
-  { accessorKey: 'location', header: 'Location' },
-  { accessorKey: 'price', header: 'Price' },
-  { accessorKey: 'listing_type', header: 'Type' },
-  { accessorKey: 'status_id', header: 'Status' }
+const columns: Column<Property>[] = [
+  { key: 'property_code', header: 'Code' },
+  { key: 'title', header: 'Title' },
+  { key: 'location', header: 'Location' },
+  { key: 'price', header: 'Price' },
+  { key: 'listing_type', header: 'Type' },
+  { key: 'status_id', header: 'Status' }
 ];
 
 export function PropertyTable({ data }: { data: Property[] }) {

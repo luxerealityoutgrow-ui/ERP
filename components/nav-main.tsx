@@ -5,7 +5,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ChevronDown } from 'lucide-react';
 import { NavItem } from '@/types';
 
-export function NavMain({ items = [], searchQuery = "" }: { items: NavItem[], searchQuery?: string }) {
+export function NavMain({ items = [], searchQuery = "" }: { items?: NavItem[], searchQuery?: string }) {
     const page = usePage();
 
     // Filter items based on search query

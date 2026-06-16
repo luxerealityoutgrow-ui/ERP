@@ -5,5 +5,10 @@ interface LeadSourceChartProps {
 }
 
 export function LeadSourceChart({ data }: LeadSourceChartProps) {
-  return <BarChart data={data} title="Leads by Source" />;
+  return (
+    <div>
+      <h3 className="text-sm font-medium mb-4">Leads by Source</h3>
+      <BarChart data={data} xAxisKey="name" dataKey="value" />
+    </div>
+  );
 }

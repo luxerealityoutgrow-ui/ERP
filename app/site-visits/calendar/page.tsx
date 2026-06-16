@@ -1,13 +1,13 @@
 // app/site-visits/calendar/page.tsx
 "use client";
 import { useProfile } from '@/lib/auth';
-import { fetchSiteVisits } from '@/lib/siteVisits';
+import { fetchSiteVisits, SiteVisit } from '@/lib/siteVisits';
 import { CalendarView } from '@/components/site-visits/CalendarView';
 import { useEffect, useState } from 'react';
 
 export default function SiteVisitsCalendarPage() {
   const profile = useProfile();
-  const [visits, setVisits] = useState([]);
+  const [visits, setVisits] = useState<SiteVisit[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

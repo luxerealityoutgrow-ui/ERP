@@ -1,3 +1,4 @@
+"use client";
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,11 +16,16 @@ interface Language {
 }
 
 const getCountryFlag = (countryCode: string): string => {
-    const codePoints = countryCode
-        .toUpperCase()
-        .split('')
-        .map(char => 127397 + char.charCodeAt(0));
-    return String.fromCodePoint(...codePoints);
+    if (!countryCode) return '🌐';
+    try {
+        const codePoints = countryCode
+            .toUpperCase()
+            .split('')
+            .map(char => 127397 + char.charCodeAt(0));
+        return String.fromCodePoint(...codePoints);
+    } catch (e) {
+        return '🌐';
+    }
 };
 
 
