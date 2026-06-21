@@ -11,7 +11,6 @@ export default function SiteVisitsCalendarPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!profile) return;
     fetchSiteVisits(profile)
       .then(setVisits)
       .catch(console.error)

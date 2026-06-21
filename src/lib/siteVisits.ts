@@ -16,7 +16,7 @@ export interface SiteVisit {
   created_at?: string;
 }
 
-export async function fetchSiteVisits(profile: Profile): Promise<SiteVisit[]> {
+export async function fetchSiteVisits(profile: Profile | null): Promise<SiteVisit[]> {
   // Sales execs can view their assigned visits; managers see all
   const { data, error } = await supabase
     .from('site_visits')

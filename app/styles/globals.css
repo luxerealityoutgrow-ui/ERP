@@ -108,3 +108,17 @@
     @apply bg-background text-foreground;
   }
 }
+
+@theme {
+  --color-gold-50: #fbf9f1;
+  --color-gold-100: #f5f0db;
+  --color-gold-200: #eadab4;
+  --color-gold-300: #dfbe83;
+  --color-gold-400: #d5a156;
+  --color-gold-500: #cd8736;
+  --color-gold-600: #bf702a;
+  --color-gold-700: #9f5624;
+  --color-gold-800: #834524;
+  --color-gold-900: #693820;
+  --color-gold-950: #3c1d0e;
+}

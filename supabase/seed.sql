@@ -1,0 +1,16 @@
+-- Seed Data for Luxe ERP
+
+-- Insert Properties
+INSERT INTO public.properties (id, title, property_code, location, address, property_type, configuration, carpet_area, price, status_id, listing_type, owner_name, owner_contact, description) VALUES
+('b2a47738-1925-46bd-89ba-3b036dc719b3', 'Vivencia', 'PROP-WOR-01', 'Kalyani Nagar, Pune', 'Vivencia, Kalyani Nagar, Pune, Maharashtra 411006', 'Apartment', '4 BHK', 4500, 22000000, 'Available', 'Sale', 'Vikram Seth', '+91 98200 12345', 'Stunning organic modern architectural masterpiece in the heart of Mumbai. Features full-height glass walls, infinity edge balcony, and state-of-the-art home automation.'),
+('c4c81a5a-8b8b-4a4b-9e45-1234567890ab', 'Power Heights', 'PROP-GUR-02', 'Koregaon Park, Pune', 'DLF Phase 5, Golf Course Road, Koregaon Park, Maharashtra 411001', 'Penthouse', '3 BHK', 3200, 13000000, 'Available', 'Sale', 'Aditya Birla', '+91 99100 54321', 'Exclusive double-height glass ceiling penthouse offering panoramic views of the city skyline. Includes private terrace pool and dedicated concierge services.'),
+('d5d92b6b-9c9c-5b5c-af56-2345678901bc', 'Vivencia', 'PROP-HYD-03', 'Baner, Pune', 'Road No. 45, Baner, Pune, Maharashtra 411045', 'Villa', '5 BHK', 8500, 31000000, 'Under Offer', 'Sale', 'Nagarjuna Reddy', '+91 94400 98765', 'Minimalist contemporary villa blended with traditional Indian architectural elements. Features large courtyards and expansive landscaped gardens.'),
+('e6ea3c7c-0ada-6c6d-b067-3456789012cd', 'NYATI Evoque', 'PROP-BLR-04', 'Viman Nagar, Pune', 'ITPL Main Road, Viman Nagar, Pune, Maharashtra 411014', 'Apartment', '3 BHK', 2400, 35000000, 'Available', 'Sale', 'Rohan Murthy', '+91 80500 11223', 'Modern high-rise apartment with premium finishes and smart home features. Located in the tech hub of the city with excellent connectivity.')
+ON CONFLICT (id) DO NOTHING;
+
+-- Insert Leads (Assign to the currently logged in user if possible, otherwise leave unassigned)
+INSERT INTO public.leads (client_name, phone, email, lead_source_id, budget_min, budget_max, preferred_location, property_type, configuration, category, transaction_type, stage_id, status, notes) VALUES
+('Ananya Sharma', '+91 98200 11223', 'ananya.s@gmail.com', '99acres', 40000000, 50000000, 'Kalyani Nagar, Pune', 'Apartment', '3 BHK', 'Residential', 'Outright', 'New inquiry', 'Hot', 'Prefers modern architectural designs. Needs sea view.'),
+('Vikram Malhotra', '+91 99100 55443', 'vikram.m@corporatespace.in', 'Web Referral', 80000000, 100000000, 'Koregaon Park, Pune', 'Penthouse', '4 BHK', 'Residential', 'Outright', 'Site visit', 'Warm', 'Corporate client. Wants high-floor penthouse with city skyline views.'),
+('Rajesh Gupta', '+91 94400 88776', 'rajesh.gupta@outlook.com', 'Direct Call', 120000000, 150000000, 'Baner, Pune', 'Villa', '5 BHK', 'Residential', 'Outright', 'Follow up', 'Warm', 'Has visited Heritage Villa twice. Discussing pricing and payment schedules.'),
+('Deepika Rao', '+91 80500 44332', 'deepika.rao@tech-leads.in', 'MagicBricks', 25000000, 35000000, 'Viman Nagar, Pune', 'Apartment', '3 BHK', 'Residential', 'Outright', 'Site visit', 'Warm', 'Looking for property near ITPL. Primary interest in ready-to-move projects.');

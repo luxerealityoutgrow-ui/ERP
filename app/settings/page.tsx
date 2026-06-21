@@ -44,12 +44,12 @@ export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState<SettingSection>('profile');
 
   // Profile form state
-  const [fullName, setFullName] = useState('David Thompson');
-  const [email, setEmail] = useState('david@luxerealty.com');
-  const [phone, setPhone] = useState('+1 (555) 234-5678');
+  const [fullName, setFullName] = useState('Rahul Sharma');
+  const [email, setEmail] = useState('rahul@luxerealty.in');
+  const [phone, setPhone] = useState('+91 98200 12345');
   const [role, setRole] = useState('Senior Agent');
-  const [agency, setAgency] = useState('Luxe Realty');
-  const [bio, setBio] = useState('Luxury real estate specialist with 8+ years of experience in high-value residential and commercial properties across California.');
+  const [agency, setAgency] = useState('Luxe Realty India');
+  const [bio, setBio] = useState('Luxury real estate specialist with 8+ years of experience in high-value residential and commercial properties across Pune and Maharashtra.');
   const [profileSaved, setProfileSaved] = useState(false);
 
   // Security state
@@ -103,7 +103,7 @@ export default function SettingsPage() {
     setNotifStates(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const inputClass = "w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3.5 py-2.5 text-xs text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/20 transition-all";
+  const inputClass = "w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3.5 py-2.5 text-xs text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400/20 transition-all";
   const labelClass = "text-[10px] font-bold text-zinc-500 uppercase tracking-wider block mb-1.5";
 
   return (
@@ -112,7 +112,7 @@ export default function SettingsPage() {
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-zinc-900 flex items-center gap-2">
-          <Settings className="h-6 w-6 text-emerald-500" />
+          <Settings className="h-6 w-6 text-zinc-500" />
           Settings
         </h1>
         <p className="text-xs text-zinc-500 mt-0.5">
@@ -135,15 +135,15 @@ export default function SettingsPage() {
                   onClick={() => setActiveSection(s.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${
                     isActive
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                      ? 'bg-zinc-50 text-zinc-700 border border-zinc-100'
                       : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
                   }`}
                 >
-                  <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-emerald-600' : 'text-zinc-400'}`} />
+                  <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-zinc-600' : 'text-zinc-400'}`} />
                   <div className="flex-1 text-left">
                     <p className="text-xs font-semibold leading-none">{s.label}</p>
                   </div>
-                  <ChevronRight className={`h-3.5 w-3.5 ${isActive ? 'text-emerald-500' : 'text-zinc-300'}`} />
+                  <ChevronRight className={`h-3.5 w-3.5 ${isActive ? 'text-zinc-500' : 'text-zinc-300'}`} />
                 </button>
               );
             })}
@@ -165,7 +165,7 @@ export default function SettingsPage() {
                 {/* Avatar */}
                 <div className="flex items-center gap-5">
                   <div className="relative">
-                    <div className="h-16 w-16 rounded-2xl bg-emerald-50 border-2 border-emerald-100 flex items-center justify-center font-black text-2xl text-emerald-600">
+                    <div className="h-16 w-16 rounded-2xl bg-zinc-50 border-2 border-zinc-100 flex items-center justify-center font-black text-2xl text-zinc-600">
                       D
                     </div>
                     <button className="absolute -bottom-1 -right-1 h-6 w-6 rounded-lg bg-white border border-zinc-200 shadow-sm flex items-center justify-center hover:bg-zinc-50 transition-colors">
@@ -175,7 +175,7 @@ export default function SettingsPage() {
                   <div>
                     <p className="text-sm font-bold text-zinc-800">{fullName}</p>
                     <p className="text-xs text-zinc-500">{role} • {agency}</p>
-                    <button className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 mt-1 transition-colors">Change photo</button>
+                    <button className="text-[10px] font-bold text-zinc-600 hover:text-zinc-700 mt-1 transition-colors">Change photo</button>
                   </div>
                 </div>
 
@@ -252,8 +252,8 @@ export default function SettingsPage() {
                     onClick={handleSaveProfile}
                     className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all ${
                       profileSaved
-                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-                        : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm'
+                        ? 'bg-zinc-50 text-zinc-600 border border-zinc-200'
+                        : 'bg-zinc-600 text-white hover:bg-zinc-700 shadow-sm'
                     }`}
                   >
                     {profileSaved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
@@ -282,7 +282,7 @@ export default function SettingsPage() {
                       onClick={() => toggleNotif(opt.id)}
                       className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 transition-colors cursor-pointer ${
                         notifStates[opt.id]
-                          ? 'bg-emerald-500 border-emerald-500'
+                          ? 'bg-zinc-500 border-zinc-500'
                           : 'bg-zinc-200 border-zinc-200'
                       }`}
                     >
@@ -357,7 +357,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <div className="flex justify-end">
-                    <button className="px-5 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 shadow-sm transition-all flex items-center gap-2">
+                    <button className="px-5 py-2.5 rounded-xl bg-zinc-600 text-white text-xs font-bold hover:bg-zinc-700 shadow-sm transition-all flex items-center gap-2">
                       <Save className="h-3.5 w-3.5" />
                       Update Password
                     </button>
@@ -371,7 +371,7 @@ export default function SettingsPage() {
                   <p className="text-xs font-bold text-zinc-800">Two-Factor Authentication (2FA)</p>
                   <p className="text-[10px] text-zinc-500 mt-0.5">Add a layer of security using an authenticator app.</p>
                   <span className={`inline-block mt-1.5 text-[9px] font-bold px-2 py-0.5 rounded border ${
-                    twoFAEnabled ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-zinc-50 text-zinc-500 border-zinc-200'
+                    twoFAEnabled ? 'bg-zinc-50 text-zinc-600 border-zinc-100' : 'bg-zinc-50 text-zinc-500 border-zinc-200'
                   }`}>
                     {twoFAEnabled ? 'ENABLED' : 'DISABLED'}
                   </span>
@@ -381,7 +381,7 @@ export default function SettingsPage() {
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                     twoFAEnabled
                       ? 'bg-red-50 text-red-500 border border-red-100 hover:bg-red-100'
-                      : 'bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100'
+                      : 'bg-zinc-50 text-zinc-600 border border-zinc-100 hover:bg-zinc-100'
                   }`}
                 >
                   {twoFAEnabled ? 'Disable 2FA' : 'Enable 2FA'}
@@ -401,7 +401,7 @@ export default function SettingsPage() {
                   ].map((s) => (
                     <div key={s.device} className="flex items-center justify-between px-6 py-4">
                       <div>
-                        <p className="text-xs font-semibold text-zinc-800">{s.device} {s.isCurrent && <span className="ml-1 text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded">ACTIVE</span>}</p>
+                        <p className="text-xs font-semibold text-zinc-800">{s.device} {s.isCurrent && <span className="ml-1 text-[9px] font-bold text-zinc-600 bg-zinc-50 border border-zinc-100 px-1.5 py-0.5 rounded">ACTIVE</span>}</p>
                         <p className="text-[10px] text-zinc-500 mt-0.5">{s.location} · {s.lastSeen}</p>
                       </div>
                       {!s.isCurrent && (
@@ -434,13 +434,13 @@ export default function SettingsPage() {
                       <div
                         key={theme.label}
                         className={`border-2 rounded-xl p-3 cursor-pointer transition-all ${
-                          i === 0 ? 'border-emerald-400 bg-emerald-50/30' : 'border-zinc-200 hover:border-zinc-300'
+                          i === 0 ? 'border-zinc-400 bg-zinc-50/30' : 'border-zinc-200 hover:border-zinc-300'
                         }`}
                       >
                         <div className={`h-10 rounded-lg border mb-2 ${theme.preview}`} />
                         <p className="text-xs font-semibold text-zinc-800">{theme.label}</p>
                         <p className="text-[10px] text-zinc-500">{theme.sublabel}</p>
-                        {i === 0 && <span className="text-[9px] font-bold text-emerald-600">ACTIVE</span>}
+                        {i === 0 && <span className="text-[9px] font-bold text-zinc-600">ACTIVE</span>}
                       </div>
                     ))}
                   </div>
@@ -451,7 +451,7 @@ export default function SettingsPage() {
                   <label className={labelClass}>Accent Color</label>
                   <div className="flex items-center gap-3">
                     {[
-                      { color: 'bg-emerald-500', label: 'Emerald' },
+                      { color: 'bg-zinc-500', label: 'Emerald' },
                       { color: 'bg-blue-500', label: 'Blue' },
                       { color: 'bg-violet-500', label: 'Violet' },
                       { color: 'bg-amber-500', label: 'Amber' },
@@ -460,7 +460,7 @@ export default function SettingsPage() {
                       <button
                         key={c.label}
                         title={c.label}
-                        className={`h-8 w-8 rounded-lg ${c.color} transition-all hover:scale-110 ${i === 0 ? 'ring-2 ring-offset-2 ring-emerald-400' : ''}`}
+                        className={`h-8 w-8 rounded-lg ${c.color} transition-all hover:scale-110 ${i === 0 ? 'ring-2 ring-offset-2 ring-zinc-400' : ''}`}
                       />
                     ))}
                   </div>
@@ -474,12 +474,12 @@ export default function SettingsPage() {
                       <div
                         key={d}
                         className={`border-2 rounded-xl p-3 cursor-pointer transition-all ${
-                          i === 1 ? 'border-emerald-400 bg-emerald-50/30' : 'border-zinc-200 hover:border-zinc-300'
+                          i === 1 ? 'border-zinc-400 bg-zinc-50/30' : 'border-zinc-200 hover:border-zinc-300'
                         }`}
                       >
                         <p className="text-xs font-semibold text-zinc-800">{d}</p>
                         <p className="text-[10px] text-zinc-500">{i === 0 ? 'Less padding, more items visible' : 'Spacious and easy to navigate'}</p>
-                        {i === 1 && <span className="text-[9px] font-bold text-emerald-600">ACTIVE</span>}
+                        {i === 1 && <span className="text-[9px] font-bold text-zinc-600">ACTIVE</span>}
                       </div>
                     ))}
                   </div>
@@ -567,7 +567,7 @@ export default function SettingsPage() {
                     <button
                       className={`px-3.5 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
                         integration.connected
-                          ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100'
+                          ? 'bg-zinc-50 text-zinc-600 border border-zinc-100 hover:bg-zinc-100'
                           : 'bg-zinc-50 text-zinc-600 border border-zinc-200 hover:bg-zinc-100'
                       }`}
                     >

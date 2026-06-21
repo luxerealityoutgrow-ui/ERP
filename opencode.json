@@ -4,6 +4,21 @@
     "heroui-react": {
       "type": "local",
       "command": ["npx", "-y", "@heroui/react-mcp@latest"]
+    },
+    "supabase": {
+      "type": "local",
+      "command": [
+        "node",
+        "/Users/hussian/LUXE-ERP/node_modules/@supabase/mcp-server-supabase/dist/transports/stdio.js",
+        "--features",
+        "account,database,debugging,development,docs,functions,storage",
+        "--project-ref",
+        "sjnwbezerwxdreyhdpci"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "sbp_d4b67328231e6605c411c2ddc6d9edd4077d933d",
+        "SUPABASE_PROJECT_REF": "sjnwbezerwxdreyhdpci"
+      }
     }
   }
 }

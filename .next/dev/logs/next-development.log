@@ -1,4 +1,0 @@
-{"timestamp":"00:00:00.339","source":"Server","level":"WARN","message":"⚠ Minimum recommended TypeScript version is v5.1.0, older versions can potentially be incompatible with Next.js. Detected: 4.9.5"}
-{"timestamp":"00:00:00.408","source":"Server","level":"LOG","message":"- Experiments (use with caution):"}
-{"timestamp":"00:00:00.408","source":"Server","level":"LOG","message":"  ✓ serverActions"}
-{"timestamp":"00:00:00.408","source":"Server","level":"LOG","message":""}

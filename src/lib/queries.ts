@@ -7,12 +7,14 @@ export interface Lead {
   client_name: string;
   phone: string;
   email: string;
-  lead_source_id?: string;
-  budget_min?: number;
-  budget_max?: number;
-  preferred_location?: string;
-  property_type?: string;
-  configuration?: string;
+  lead_source_id: string;
+  budget_min: number;
+  budget_max: number;
+  preferred_location: string;
+  property_type: string;
+  configuration: string;
+  category: string; // 'Commercial' | 'Residential'
+  transaction_type: string; // 'Rent' | 'Outright'
   required_area?: number;
   purpose?: string;
   assigned_to?: string;
@@ -23,11 +25,12 @@ export interface Lead {
   created_at?: string;
 }
 
-export async function fetchLeads(profile: Profile): Promise<Lead[]> {
-  const { data, error } = await supabase
-    .from('leads')
-    .select('*')
-    .eq('assigned_to', profile.id);
+export async function fetchLeads(profile: Profile | null): Promise<Lead[]> {
+  let query = supabase.from('leads').select('*');
+  if (profile) {
+    query = query.eq('assigned_to', profile.id);
+  }
+  const { data, error } = await query;
   if (error) throw error;
   return data as Lead[];
 }
@@ -52,7 +55,7 @@ export interface Property {
   created_at?: string;
 }
 
-export async function fetchProperties(profile: Profile): Promise<Property[]> {
+export async function fetchProperties(profile: Profile | null): Promise<Property[]> {
   // Sales managers see all; execs see only properties they have access to (join via share)
   const { data, error } = await supabase
     .from('properties')

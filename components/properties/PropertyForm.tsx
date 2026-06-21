@@ -26,7 +26,7 @@ export function PropertyForm({ initialValues = {} }: { initialValues?: Partial<a
           <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">Property Details</h1>
           <p className="text-sm text-zinc-500">Manage your real estate listings and their specifications.</p>
         </div>
-        <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20">
+        <Button type="submit" className="bg-zinc-600 hover:bg-zinc-700 text-white shadow-lg shadow-zinc-500/20">
           Save Property
         </Button>
       </div>
@@ -37,7 +37,7 @@ export function PropertyForm({ initialValues = {} }: { initialValues?: Partial<a
           <Card className="border-zinc-200/80 shadow-sm overflow-hidden">
             <CardHeader className="border-b border-zinc-100">
               <div className="flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-emerald-600" />
+                <Building2 className="w-4 h-4 text-zinc-600" />
                 <CardTitle className="text-base font-bold">Basic Information</CardTitle>
               </div>
               <CardDescription>Primary details about the property listing.</CardDescription>
@@ -87,7 +87,7 @@ export function PropertyForm({ initialValues = {} }: { initialValues?: Partial<a
           <Card className="border-zinc-200/80 shadow-sm overflow-hidden">
             <CardHeader className="border-b border-zinc-100">
               <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-emerald-600" />
+                <MapPin className="w-4 h-4 text-zinc-600" />
                 <CardTitle className="text-base font-bold">Location</CardTitle>
               </div>
               <CardDescription>Specify where the property is situated.</CardDescription>
@@ -108,7 +108,7 @@ export function PropertyForm({ initialValues = {} }: { initialValues?: Partial<a
           <Card className="border-zinc-200/80 shadow-sm overflow-hidden">
             <CardHeader className="border-b border-zinc-100">
               <div className="flex items-center gap-2">
-                <User className="w-4 h-4 text-emerald-600" />
+                <User className="w-4 h-4 text-zinc-600" />
                 <CardTitle className="text-base font-bold">Ownership</CardTitle>
               </div>
               <CardDescription>Contact information for the property owner.</CardDescription>
@@ -121,7 +121,7 @@ export function PropertyForm({ initialValues = {} }: { initialValues?: Partial<a
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="owner_contact" className="text-xs font-bold text-foreground uppercase tracking-wider">Owner Contact</Label>
-                  <Input id="owner_contact" name="owner_contact" placeholder="+1 (555) 000-0000" defaultValue={initialValues.owner_contact ?? ''} />
+                  <Input id="owner_contact" name="owner_contact" placeholder="+91 90000 00000" defaultValue={initialValues.owner_contact ?? ''} />
                 </div>
               </div>
             </CardContent>
@@ -133,7 +133,7 @@ export function PropertyForm({ initialValues = {} }: { initialValues?: Partial<a
           <Card className="border-zinc-200/80 shadow-sm overflow-hidden">
             <CardHeader className="border-b border-zinc-100">
               <div className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-emerald-600" />
+                <DollarSign className="w-4 h-4 text-zinc-600" />
                 <CardTitle className="text-base font-bold">Pricing & Area</CardTitle>
               </div>
             </CardHeader>
@@ -141,8 +141,8 @@ export function PropertyForm({ initialValues = {} }: { initialValues?: Partial<a
               <div className="space-y-1.5">
                 <Label htmlFor="price" className="text-xs font-bold text-foreground uppercase tracking-wider">Price</Label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">$</span>
-                  <Input id="price" type="number" name="price" className="pl-7" placeholder="0.00" defaultValue={initialValues.price ?? ''} />
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">₹</span>
+                  <Input id="price" type="number" name="price" className="pl-7" placeholder="e.g. 5,00,00,000" defaultValue={initialValues.price ?? ''} />
                 </div>
               </div>
 
@@ -167,7 +167,7 @@ export function PropertyForm({ initialValues = {} }: { initialValues?: Partial<a
           <Card className="border-zinc-200/80 shadow-sm overflow-hidden">
             <CardHeader className="border-b border-zinc-100">
               <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-emerald-600" />
+                <FileText className="w-4 h-4 text-zinc-600" />
                 <CardTitle className="text-base font-bold">Specifications</CardTitle>
               </div>
             </CardHeader>
@@ -185,7 +185,7 @@ export function PropertyForm({ initialValues = {} }: { initialValues?: Partial<a
           <Card className="border-zinc-200/80 shadow-sm overflow-hidden">
             <CardHeader className="border-b border-zinc-100">
               <div className="flex items-center gap-2">
-                <ImageIcon className="w-4 h-4 text-emerald-600" />
+                <ImageIcon className="w-4 h-4 text-zinc-600" />
                 <CardTitle className="text-base font-bold">Media</CardTitle>
               </div>
             </CardHeader>
@@ -202,7 +202,7 @@ export function PropertyForm({ initialValues = {} }: { initialValues?: Partial<a
       <div className="flex justify-end pt-6 border-t border-zinc-200">
         <div className="flex gap-3">
           <Button variant="outline" type="button" className="px-8 border-zinc-300 text-zinc-600">Cancel</Button>
-          <Button type="submit" className="px-8 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20">
+          <Button type="submit" className="px-8 bg-zinc-600 hover:bg-zinc-700 text-white shadow-lg shadow-zinc-500/20">
             Save Property Listing
           </Button>
         </div>

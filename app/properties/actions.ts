@@ -13,7 +13,7 @@ async function getProfile(): Promise<Profile | null> {
   return profile as Profile;
 }
 
-export async function createPropertyAction(formData: FormData) {
+export async function createPropertyAction(prevState: any, formData: FormData) {
   const profile = await getProfile();
   const data: Record<string, unknown> = {
     title: formData.get('title'),
@@ -22,10 +22,10 @@ export async function createPropertyAction(formData: FormData) {
     address: formData.get('address'),
     property_type: formData.get('property_type'),
     configuration: formData.get('configuration'),
-    carpet_area: formData.get('carpet_area'),
-    built_up_area: formData.get('built_up_area'),
-    price: formData.get('price'),
-    status_id: formData.get('status_id'),
+    carpet_area: formData.get('carpet_area') || null,
+    built_up_area: formData.get('built_up_area') || null,
+    price: formData.get('price') || null,
+    status_id: formData.get('status_id') || 'Available',
     listing_type: formData.get('listing_type'),
     owner_name: formData.get('owner_name'),
     owner_contact: formData.get('owner_contact'),
@@ -40,16 +40,22 @@ export async function createPropertyAction(formData: FormData) {
     .select()
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("Insert property error:", error);
+    return { error: error.message };
+  }
 
   await supabase
     .from('audit_logs')
     .insert({ user_id: profile?.id, event: 'Property created', changes: data });
 
-  return inserted;
+  return { success: true, data: inserted };
 }
 
-export async function updatePropertyAction(id: string, formData: FormData) {
+export async function updatePropertyAction(prevState: any, formData: FormData) {
+  const id = formData.get('id') as string;
+  if (!id) return { error: "Missing property ID" };
+
   const profile = await getProfile();
   const data: Record<string, unknown> = {
     title: formData.get('title'),
@@ -58,9 +64,9 @@ export async function updatePropertyAction(id: string, formData: FormData) {
     address: formData.get('address'),
     property_type: formData.get('property_type'),
     configuration: formData.get('configuration'),
-    carpet_area: formData.get('carpet_area'),
-    built_up_area: formData.get('built_up_area'),
-    price: formData.get('price'),
+    carpet_area: formData.get('carpet_area') || null,
+    built_up_area: formData.get('built_up_area') || null,
+    price: formData.get('price') || null,
     status_id: formData.get('status_id'),
     listing_type: formData.get('listing_type'),
     owner_name: formData.get('owner_name'),
@@ -76,11 +82,14 @@ export async function updatePropertyAction(id: string, formData: FormData) {
     .select()
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("Update property error:", error);
+    return { error: error.message };
+  }
 
   await supabase
     .from('audit_logs')
     .insert({ user_id: profile?.id, event: 'Property updated', changes: data });
 
-  return updated;
+  return { success: true, data: updated };
 }

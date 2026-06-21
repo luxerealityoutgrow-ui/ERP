@@ -15,6 +15,7 @@ import {
   FileText,
   Building
 } from 'lucide-react';
+import { formatCurrency, formatPriceShort } from '@/lib/formatters';
 
 interface Deal {
   id: string;
@@ -32,62 +33,62 @@ export default function PipelinePage() {
   const [deals, setDeads] = useState<Deal[]>([
     {
       id: 'deal-1',
-      client_name: 'Olivia Ryans',
-      property_preference: 'Obsidian Villa',
-      budget: 4850000,
-      stage: 'Proposal',
+      client_name: 'Ananya Sharma',
+      property_preference: 'Vivencia',
+      budget: 22000000,
+      stage: 'Follow up',
       notes: 'Submitted proposal details. Client reviewing financing option.',
-      source: 'Zillow Portal',
+      source: '99 acres',
       lastActive: '10m ago'
     },
     {
       id: 'deal-2',
-      client_name: 'Marcus Vance',
-      property_preference: 'Elysian Penthouse',
-      budget: 3200000,
-      stage: 'Qualify',
+      client_name: 'Vikram Malhotra',
+      property_preference: 'Power Heights',
+      budget: 13000000,
+      stage: 'Site visit',
       notes: 'Requested site visit. Verified proof of funds.',
-      source: 'Web Referral',
+      source: 'Referral',
       lastActive: '1h ago'
     },
     {
       id: 'deal-3',
-      client_name: 'Sarah Jenkins',
-      property_preference: 'Coastal Villa',
-      budget: 5150000,
-      stage: 'Negotiate',
-      notes: 'Offered $4.95M. Owner counter-offered $5.05M.',
-      source: 'Direct Call',
+      client_name: 'Rajesh Gupta',
+      property_preference: 'Vivencia',
+      budget: 31000000,
+      stage: 'Follow up',
+      notes: 'Offered ₹21.5 Cr. Owner counter-offered ₹22 Cr.',
+      source: 'Website',
       lastActive: '3h ago'
     },
     {
       id: 'deal-4',
-      client_name: 'David Kim',
-      property_preference: 'Pasadena Penthouse',
-      budget: 350000,
-      stage: 'Won',
-      notes: 'Contract signed. Commission escrow opened.',
+      client_name: 'Deepika Rao',
+      property_preference: 'NYATI Evoque',
+      budget: 35000000,
+      stage: 'Closure',
+      notes: 'Contract signed. Token amount received.',
       source: 'Walk-in',
       lastActive: '1d ago'
     },
     {
       id: 'deal-5',
-      client_name: 'Michael Chang',
-      property_preference: 'Beverly Hills Mansion',
-      budget: 8900000,
-      stage: 'Prospect',
-      notes: 'Initial call. Wants a modern compound.',
-      source: 'Social Media',
+      client_name: 'Amitabh Kapoor',
+      property_preference: 'Baner Mansion',
+      budget: 189000000,
+      stage: 'New inquiry',
+      notes: 'Initial call. Wants a modern compound in Hyderabad.',
+      source: 'Instagram',
       lastActive: '2d ago'
     },
     {
       id: 'deal-6',
-      client_name: 'Sophia Loren',
-      property_preference: 'Glass Penthouse',
-      budget: 4200000,
-      stage: 'Proposal',
+      client_name: 'Saira Banu',
+      property_preference: 'Bandra Sea View Penthouse',
+      budget: 142000000,
+      stage: 'Follow up',
       notes: 'Sent floorplans and view packages.',
-      source: 'Cold Outreach',
+      source: 'Website',
       lastActive: '4h ago'
     }
   ]);
@@ -96,247 +97,231 @@ export default function PipelinePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [noteText, setNoteText] = useState('');
 
-  const stages = ['Prospect', 'Qualify', 'Proposal', 'Negotiate', 'Won'];
+  const stages = ['New inquiry', 'Site visit', 'Follow up', 'Closure'];
 
-  // Move deal stages
-  const moveDeal = (dealId: string, direction: 'left' | 'right') => {
-    setDeads(prev => prev.map(deal => {
-      if (deal.id !== dealId) return deal;
-      const currentIdx = stages.indexOf(deal.stage);
-      let newIdx = currentIdx;
-      if (direction === 'left' && currentIdx > 0) newIdx--;
-      if (direction === 'right' && currentIdx < stages.length - 1) newIdx++;
-      return { ...deal, stage: stages[newIdx] };
-    }));
+  // Handle drag and drop logic
+  const onDragStart = (e: React.DragEvent, dealId: string) => {
+    e.dataTransfer.setData('dealId', dealId);
   };
 
-  // Open deal details
-  const openDealDetails = (deal: Deal) => {
+  const onDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const onDrop = (e: React.DragEvent, stage: string) => {
+    const dealId = e.dataTransfer.getData('dealId');
+    const updatedDeads = deals.map(d => {
+      if (d.id === dealId) return { ...d, stage };
+      return d;
+    });
+    setDeads(updatedDeads);
+  };
+
+  // Open deal detail modal
+  const openDeal = (deal: Deal) => {
     setSelectedDeal(deal);
     setNoteText(deal.notes);
     setIsModalOpen(true);
   };
 
-  // Save deal notes
-  const saveDealNotes = () => {
-    if (!selectedDeal) return;
-    setDeads(prev => prev.map(deal => {
-      if (deal.id !== selectedDeal.id) return deal;
-      return { ...deal, notes: noteText };
-    }));
-    setSelectedDeal(prev => prev ? { ...prev, notes: noteText } : null);
-  };
-
-  // Add a new deal
-  const addNewDeal = () => {
-    const name = prompt("Enter Client Name:");
-    if (!name) return;
-    const prop = prompt("Enter Property Preference:") || "Luxury Estate";
-    const budgetStr = prompt("Enter Budget Max ($):") || "1000000";
-    const budget = parseFloat(budgetStr.replace(/[^0-9]/g, '')) || 1000000;
-    
-    const newDeal: Deal = {
-      id: `deal-${Date.now()}`,
-      client_name: name,
-      property_preference: prop,
-      budget: budget,
-      stage: 'Prospect',
-      notes: 'Deal generated in pipeline.',
-      source: 'Direct Client',
-      lastActive: 'Just now'
-    };
-
-    setDeads(prev => [...prev, newDeal]);
-  };
+  // Calculate stats for header
+  const totalValue = deals.reduce((acc, d) => acc + d.budget, 0);
+  const totalCount = deals.length;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12 text-zinc-900">
+    <div className="space-y-6 max-w-7xl mx-auto pb-10 text-zinc-900">
       
-      {/* Header section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 flex items-center gap-2">
-            <TrendingUp className="h-6 w-6 text-emerald-500" />
-            Sales Pipeline
-          </h1>
-          <p className="text-xs text-zinc-500">
-            Monitor transaction stages, value counts, and progress deals toward completion.
-          </p>
+      {/* Pipeline Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="p-3 rounded-2xl bg-zinc-50 text-zinc-600">
+            <TrendingUp className="h-6 w-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Sales Pipeline</h1>
+            <p className="text-xs text-zinc-500 font-medium mt-0.5">Visually track deal progression and weighted revenue forecast.</p>
+          </div>
         </div>
-        <button 
-          onClick={addNewDeal}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 text-xs font-bold text-zinc-950 hover:brightness-110 shadow-md shadow-emerald-500/10 transition-all"
-        >
-          <Plus className="h-4 w-4" />
-          Create New Deal
-        </button>
+
+        <div className="flex items-center gap-6">
+          <div className="text-center md:text-right">
+            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Total Pipeline Value</p>
+            <p className="text-xl font-black text-zinc-600">{formatPriceShort(totalValue)}</p>
+          </div>
+          <div className="h-10 w-px bg-zinc-100 hidden md:block" />
+          <div className="text-center md:text-right">
+            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Active Deals</p>
+            <p className="text-xl font-black text-zinc-900">{totalCount}</p>
+          </div>
+          <button 
+            className="flex items-center gap-2 px-5 py-2.5 bg-zinc-900 text-white rounded-xl text-xs font-bold hover:bg-zinc-800 transition-all shadow-md shadow-zinc-900/10 ml-2"
+            onClick={() => {
+              const name = prompt("Enter Client Name:") || "New Client";
+              const budgetStr = prompt("Enter Budget (₹):") || "10000000";
+              const budget = parseInt(budgetStr);
+              setDeads([...deals, {
+                id: `deal-${Date.now()}`,
+                client_name: name,
+                property_preference: 'TBD',
+                budget: budget,
+                stage: 'Prospect',
+                notes: 'Newly added lead.',
+                source: 'Manual Entry',
+                lastActive: 'Just now'
+              }]);
+            }}
+          >
+            <Plus className="h-4 w-4" />
+            Add Deal
+          </button>
+        </div>
       </div>
 
-      {/* Kanban Stages Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 items-start">
+      {/* Kanban Board */}
+      <div className="flex gap-4 overflow-x-auto pb-6 -mx-4 px-4 scrollbar-hide">
         {stages.map((stage) => {
           const stageDeals = deals.filter(d => d.stage === stage);
-          const stageValue = stageDeals.reduce((sum, d) => sum + d.budget, 0);
+          const stageValue = stageDeals.reduce((acc, d) => acc + d.budget, 0);
 
           return (
-            <div key={stage} className="bg-zinc-50 border border-zinc-200 rounded-2xl p-4 space-y-4 flex flex-col min-h-[500px]">
+            <div 
+              key={stage}
+              className="flex-shrink-0 w-80 flex flex-col gap-4"
+              onDragOver={onDragOver}
+              onDrop={(e) => onDrop(e, stage)}
+            >
               {/* Stage Header */}
-              <div className="flex items-center justify-between pb-2 border-b border-zinc-200">
-                <div>
-                  <h3 className="text-xs font-bold text-zinc-800 uppercase tracking-wider">{stage}</h3>
-                  <span className="text-[10px] text-emerald-600 font-extrabold mt-0.5 block">
-                    ${(stageValue / 1000000).toFixed(2)}M
+              <div className="flex items-center justify-between px-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-zinc-900 uppercase tracking-wider">{stage}</span>
+                  <span className="h-5 w-5 rounded-full bg-zinc-100 flex items-center justify-center text-[10px] font-bold text-zinc-500">
+                    {stageDeals.length}
                   </span>
                 </div>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-zinc-200 text-zinc-600">
-                  {stageDeals.length}
+                <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">
+                  {formatPriceShort(stageValue)}
                 </span>
               </div>
 
-              {/* Deal Cards */}
-              <div className="space-y-3 flex-1 overflow-y-auto">
+              {/* Stage Column */}
+              <div className="flex-1 bg-zinc-50/50 rounded-2xl p-3 border border-zinc-100/50 min-h-[500px] flex flex-col gap-3">
                 {stageDeals.map((deal) => (
-                  <div 
+                  <div
                     key={deal.id}
-                    onClick={() => openDealDetails(deal)}
-                    className="bg-white border border-zinc-200 hover:border-zinc-300 p-4 rounded-xl space-y-3 cursor-pointer group hover:shadow-sm hover:translate-y-[-1px] transition-all duration-200"
+                    draggable
+                    onDragStart={(e) => onDragStart(e, deal.id)}
+                    onClick={() => openDeal(deal)}
+                    className="bg-white border border-zinc-200 p-4 rounded-xl shadow-sm hover:shadow-md hover:border-zinc-500/30 transition-all cursor-grab active:cursor-grabbing group"
                   >
-                    <div>
-                      <h4 className="text-xs font-bold text-zinc-800 group-hover:text-emerald-600 transition-colors">
-                        {deal.client_name}
-                      </h4>
-                      <p className="text-[10px] text-zinc-500 flex items-center gap-1 mt-1 font-medium">
-                        <Building className="h-3 w-3 text-zinc-500" />
-                        {deal.property_preference}
-                      </p>
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="h-6 w-6 rounded-full bg-zinc-100 flex items-center justify-center text-[10px] font-bold text-zinc-600">
+                          {deal.client_name.charAt(0)}
+                        </div>
+                        <h4 className="text-xs font-bold text-zinc-900 group-hover:text-zinc-600 transition-colors">{deal.client_name}</h4>
+                      </div>
+                      <span className="text-[9px] font-bold text-zinc-600">{formatPriceShort(deal.budget)}</span>
                     </div>
 
-                    {/* Budget & Last Active Row */}
-                    <div className="flex items-center justify-between pt-2 border-t border-zinc-100 text-xs">
-                      <span className="font-bold text-emerald-600">${(deal.budget / 1000).toFixed(0)}k</span>
-                      <span className="text-[9px] text-zinc-400 flex items-center gap-1">
+                    <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-medium mb-4">
+                      <MapPin className="h-3 w-3" />
+                      {deal.property_preference}
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-zinc-50 pt-3">
+                      <div className="flex items-center gap-3">
+                        <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">{deal.source}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-[9px] font-bold text-zinc-400">
                         <Clock className="h-2.5 w-2.5" />
                         {deal.lastActive}
-                      </span>
+                      </div>
                     </div>
-
-                    {/* Column Shift Interactivity controls */}
-                    <div className="flex items-center justify-between pt-1" onClick={e => e.stopPropagation()}>
-                      <button 
-                        onClick={() => moveDeal(deal.id, 'left')}
-                        disabled={stage === 'Prospect'}
-                        className="p-1 rounded bg-zinc-50 border border-zinc-200 hover:bg-zinc-100 text-zinc-500 disabled:opacity-30 disabled:pointer-events-none transition-colors"
-                        title="Move Left"
-                      >
-                        <ChevronLeft className="h-3 w-3" />
-                      </button>
-                      <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Shift Stage</span>
-                      <button 
-                        onClick={() => moveDeal(deal.id, 'right')}
-                        disabled={stage === 'Won'}
-                        className="p-1 rounded bg-zinc-50 border border-zinc-200 hover:bg-zinc-100 text-zinc-500 disabled:opacity-30 disabled:pointer-events-none transition-colors"
-                        title="Move Right"
-                      >
-                        <ChevronRight className="h-3 w-3" />
-                      </button>
-                    </div>
-
                   </div>
                 ))}
 
                 {stageDeals.length === 0 && (
-                  <div className="py-8 text-center text-[10px] text-zinc-400 border border-dashed border-zinc-200 rounded-xl">
-                    No deals here.
+                  <div className="flex-1 flex flex-col items-center justify-center text-zinc-300 border-2 border-dashed border-zinc-100 rounded-xl py-10">
+                    <Briefcase className="h-8 w-8 opacity-20 mb-2" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">No deals in {stage}</span>
                   </div>
                 )}
               </div>
-
             </div>
           );
         })}
       </div>
 
-      {/* Deal Details Modal overlay */}
+      {/* Deal Details Modal */}
       {isModalOpen && selectedDeal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/40 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-white border border-zinc-200 rounded-2xl p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-150">
-            {/* Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
-                  <Users className="h-4 w-4" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-zinc-950/40 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
+          <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-zinc-500 text-white flex items-center justify-center font-bold">
+                  {selectedDeal.client_name.charAt(0)}
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-zinc-900">{selectedDeal.client_name}</h3>
-                  <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Deal Details</span>
+                  <h3 className="font-bold text-zinc-900">{selectedDeal.client_name}</h3>
+                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{selectedDeal.source}</p>
                 </div>
               </div>
-              <button 
-                onClick={() => setIsModalOpen(false)}
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
-              >
-                <X className="h-4.5 w-4.5" />
+              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-zinc-200 rounded-full transition-colors">
+                <X className="h-5 w-5 text-zinc-400" />
               </button>
             </div>
 
-            {/* Details Fields */}
-            <div className="space-y-3 text-xs">
+            {/* Modal Body */}
+            <div className="p-6 space-y-6">
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Property Target</span>
-                  <span className="text-zinc-700 font-semibold mt-0.5 block">{selectedDeal.property_preference}</span>
+                <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
+                  <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Deal Value</p>
+                  <p className="text-sm font-black text-zinc-900">{formatCurrency(selectedDeal.budget)}</p>
                 </div>
-                <div>
-                  <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Deal Value</span>
-                  <span className="text-emerald-600 font-bold mt-0.5 block flex items-center gap-0.5">
-                    <DollarSign className="h-3.5 w-3.5" />
-                    {selectedDeal.budget.toLocaleString()}
-                  </span>
+                <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
+                  <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Current Stage</p>
+                  <p className="text-sm font-bold text-zinc-600">{selectedDeal.stage}</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Lead Source</span>
-                  <span className="text-zinc-500 font-semibold mt-0.5 block">{selectedDeal.source}</span>
-                </div>
-                <div>
-                  <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Current Stage</span>
-                  <span className="text-zinc-700 font-semibold mt-0.5 block uppercase tracking-wider">{selectedDeal.stage}</span>
+              <div className="space-y-3">
+                <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                  <Building className="h-4 w-4 text-zinc-500" />
+                  Property Preference
+                </h4>
+                <div className="p-4 rounded-2xl border border-zinc-200 font-bold text-sm">
+                  {selectedDeal.property_preference}
                 </div>
               </div>
 
-              {/* Notes block */}
-              <div className="space-y-1">
-                <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Negotiation Progress Notes</span>
-                <textarea
+              <div className="space-y-3">
+                <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-zinc-500" />
+                  Deal Notes & History
+                </h4>
+                <textarea 
+                  className="w-full h-32 p-4 rounded-2xl border border-zinc-200 text-sm font-medium focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 outline-none transition-all resize-none bg-zinc-50/50"
+                  placeholder="Enter updates about this deal..."
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
-                  className="w-full h-24 bg-zinc-50 border border-zinc-200 rounded-xl p-3 text-xs text-zinc-800 focus:outline-none focus:border-emerald-500/50 resize-none"
                 />
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="pt-2 flex items-center justify-end gap-2.5">
-              <button 
-                onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-zinc-50 border border-zinc-200 text-xs font-bold text-zinc-600 hover:bg-zinc-100 transition-colors"
-              >
+            {/* Modal Footer */}
+            <div className="p-6 border-t border-zinc-100 bg-zinc-50/50 flex items-center justify-end gap-3">
+              <button className="px-5 py-2.5 rounded-xl text-xs font-bold text-zinc-500 hover:text-zinc-900 hover:bg-white transition-all">
                 Close
               </button>
-              <button 
-                onClick={() => { saveDealNotes(); setIsModalOpen(false); }}
-                className="px-4 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-xs font-bold text-emerald-600 transition-all"
-              >
-                Save Changes
+              <button className="px-5 py-2.5 rounded-xl bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800 transition-all shadow-lg shadow-zinc-900/10">
+                Save Progress
               </button>
             </div>
-
           </div>
         </div>
       )}
-
     </div>
   );
 }

@@ -1,27 +1,80 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useProfile } from '@/lib/auth';
 import { fetchLeads, Lead } from '@/lib/queries';
+import { supabase } from '@/lib/supabaseClient';
 import { 
   Users, 
   Search, 
   Plus, 
-  Filter, 
   X, 
   Phone, 
   Mail, 
   MapPin, 
-  DollarSign, 
   Briefcase, 
-  Calendar, 
-  Edit3, 
   CheckCircle,
   Clock,
   Sparkles,
-  ArrowUpRight
+  Tag,
+  Trash2,
+  ArrowUpRight,
+  Edit3,
+  ChevronDown
 } from 'lucide-react';
+import { Download01 } from '@untitledui/icons';
 import Link from 'next/link';
+import { Table, TableCard } from '@/components/application/table/table';
+import { CheckboxBase } from '@/components/base/checkbox/checkbox';
+import { cx } from '@/utils/cx';
+
+const STICKY_DATE_CLASS = "sticky left-0 z-10 bg-white group-hover/row:bg-zinc-50 transition-colors shadow-[1px_0_0_0_rgba(16,24,40,0.06)]";
+const STICKY_NAME_CLASS = "sticky left-[150px] z-10 bg-white group-hover/row:bg-zinc-50 transition-colors shadow-[1px_0_0_0_rgba(16,24,40,0.06)]";
+const STICKY_DATE_HEADER_CLASS = "sticky left-0 z-20 bg-secondary shadow-[1px_0_0_0_rgba(16,24,40,0.06)]";
+const STICKY_NAME_HEADER_CLASS = "sticky left-[150px] z-20 bg-secondary shadow-[1px_0_0_0_rgba(16,24,40,0.06)]";
+
+const CELL_INPUT_CLASS =
+  "w-full rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-900 shadow-sm outline-none transition-all placeholder:text-zinc-400 hover:border-zinc-300 focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20 shrink-0";
+const CELL_TEXTAREA_CLASS =
+  "w-full min-w-[220px] resize-none rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-900 shadow-sm outline-none transition-all placeholder:text-zinc-400 hover:border-zinc-300 focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20 shrink-0";
+
+function formatDate(iso: string | undefined | null) {
+  if (!iso) return "No date";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  return d.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatShortDate(iso: string | undefined | null) {
+  if (!iso) return "No date";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+// Abbreviate currency values into Indian units: Cr (Crore) and L (Lakh)
+function formatBudgetAbbreviated(value: number | undefined | null) {
+  if (!value) return "";
+  if (value >= 10000000) {
+    const cr = value / 10000000;
+    return `₹${cr % 1 === 0 ? cr : cr.toFixed(2)} Cr`;
+  }
+  if (value >= 100000) {
+    const lakhs = value / 100000;
+    return `₹${lakhs % 1 === 0 ? lakhs : lakhs.toFixed(2)} L`;
+  }
+  return `₹${value.toLocaleString('en-IN')}`;
+}
 
 export default function LeadsPage() {
   const profile = useProfile();
@@ -30,467 +83,945 @@ export default function LeadsPage() {
   
   // Interactive UI state
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('All');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortKey, setSortKey] = useState<'created_at' | 'client_name'>('created_at');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [toast, setToast] = useState<{ msg: string; tone: "ok" | "err" } | null>(null);
+
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [noteText, setNoteText] = useState('');
+  const [isSavingNote, setIsSavingNote] = useState(false);
 
   // Fetch leads on load
   useEffect(() => {
-    if (!profile) return;
-    fetchLeads(profile)
-      .then(setLeads)
-      .catch(console.error)
-      .finally(() => setLoading(false));
+    const timer = setTimeout(() => {
+      fetchLeads(profile)
+        .then(data => {
+          if (data && data.length > 0) {
+            // Normalize lead status to ensure only allowed values are present in UI
+            const allowedStatuses = ['Hot', 'Warm', 'No answer', 'Not reachable', 'Switched off', 'Closed'];
+            const normalizedData = data.map(lead => {
+              let currentStatus = lead.status;
+              if (!currentStatus || !allowedStatuses.includes(currentStatus)) {
+                if (currentStatus === 'New' || currentStatus === 'Cold') {
+                  currentStatus = 'Hot';
+                } else if (currentStatus === 'Contacted' || currentStatus === 'Negotiating') {
+                  currentStatus = 'Warm';
+                } else {
+                  currentStatus = 'Hot'; // fallback
+                }
+              }
+              return { ...lead, status: currentStatus };
+            });
+            setLeads(normalizedData);
+          }
+        })
+        .catch(console.error)
+        .finally(() => setLoading(false));
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [profile]);
+
+  // Toast auto-dismissal
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 2500);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   // Fallback mock leads if DB is empty
   const mockLeads: Lead[] = [
     {
       id: 'mock-1',
-      client_name: 'Olivia Ryans',
-      phone: '+1 (555) 019-9231',
-      email: 'olivia@gmail.com',
-      budget_min: 400000,
-      budget_max: 500000,
-      preferred_location: 'Beverly Hills, CA',
-      property_type: 'Villa',
+      client_name: 'Ananya Sharma',
+      phone: '+91 98200 11223',
+      email: 'ananya.s@gmail.com',
+      budget_min: 40000000,
+      budget_max: 50000000,
+      preferred_location: 'Kalyani Nagar, Pune',
+      property_type: 'Apartment',
       configuration: '3 BHK',
-      stage_id: 'New',
-      status: 'New',
-      notes: 'Prefers modern architectural designs. Needs spacious lawn.',
+      category: 'Residential',
+      transaction_type: 'Outright',
+      stage_id: 'New inquiry',
+      status: 'Hot',
+      notes: 'Prefers modern architectural designs. Needs sea view.',
       created_at: '2026-06-15T12:00:00Z',
-      lead_source_id: 'Zillow Portal'
+      lead_source_id: '99 acres'
     },
     {
       id: 'mock-2',
-      client_name: 'Marcus Vance',
-      phone: '+1 (555) 014-8842',
-      email: 'marcus.v@vancecorp.com',
-      budget_min: 800000,
-      budget_max: 1000000,
-      preferred_location: 'Malibu, CA',
+      client_name: 'Vikram Malhotra',
+      phone: '+91 99100 55443',
+      email: 'vikram.m@corporatespace.in',
+      budget_min: 80000000,
+      budget_max: 100000000,
+      preferred_location: 'Koregaon Park, Pune',
       property_type: 'Penthouse',
       configuration: '4 BHK',
-      stage_id: 'Contacted',
-      status: 'Contacted',
-      notes: 'Corporate client. Wants high-floor penthouse with ocean views.',
+      category: 'Residential',
+      transaction_type: 'Outright',
+      stage_id: 'Site visit',
+      status: 'Warm',
+      notes: 'Corporate client. Wants high-floor penthouse with city skyline views.',
       created_at: '2026-06-14T09:30:00Z',
-      lead_source_id: 'Web Referral'
+      lead_source_id: 'Referral'
     },
     {
       id: 'mock-3',
-      client_name: 'Sarah Jenkins',
-      phone: '+1 (555) 017-7756',
-      email: 'sarah.jenkins@outlook.com',
-      budget_min: 1200000,
-      budget_max: 1500000,
-      preferred_location: 'Los Angeles, CA',
+      client_name: 'Rajesh Gupta',
+      phone: '+91 94400 88776',
+      email: 'rajesh.gupta@outlook.com',
+      budget_min: 120000000,
+      budget_max: 150000000,
+      preferred_location: 'Baner, Pune',
       property_type: 'Villa',
       configuration: '5 BHK',
-      stage_id: 'Negotiating',
-      status: 'Negotiating',
-      notes: 'Has visited Obsidian Villa twice. Discussing pricing and payment schedules.',
+      category: 'Residential',
+      transaction_type: 'Outright',
+      stage_id: 'Follow up',
+      status: 'No answer',
+      notes: 'Has visited Heritage Villa twice. Discussing pricing and payment schedules.',
       created_at: '2026-06-12T14:15:00Z',
-      lead_source_id: 'Direct Call'
+      lead_source_id: 'Website'
     },
     {
       id: 'mock-4',
-      client_name: 'David Kim',
-      phone: '+1 (555) 018-4491',
-      email: 'dkim@gmail.com',
-      budget_min: 300000,
-      budget_max: 400000,
-      preferred_location: 'Pasadena, CA',
+      client_name: 'Deepika Rao',
+      phone: '+91 80500 44332',
+      email: 'deepika.rao@tech-leads.in',
+      budget_min: 25000000,
+      budget_max: 35000000,
+      preferred_location: 'Viman Nagar, Pune',
       property_type: 'Apartment',
-      configuration: '2 BHK',
-      stage_id: 'Closed',
-      status: 'Closed',
-      notes: 'Deal closed for Pasadena Penthouse. Contract signed.',
-      created_at: '2026-06-10T10:00:00Z',
-      lead_source_id: 'Walk-in'
-    },
-    {
-      id: 'mock-5',
-      client_name: 'Elena Rostova',
-      phone: '+1 (555) 019-1144',
-      email: 'elena.rostov@luxmail.ru',
-      budget_min: 2000000,
-      budget_max: 2500000,
-      preferred_location: 'Malibu, CA',
-      property_type: 'Villa',
-      configuration: '6 BHK',
-      stage_id: 'Closed',
-      status: 'Closed',
-      notes: 'VVIP customer looking for beachside compound.',
-      created_at: '2026-06-08T16:00:00Z',
-      lead_source_id: 'Social Media'
+      configuration: '3 BHK',
+      category: 'Residential',
+      transaction_type: 'Outright',
+      stage_id: 'Site visit',
+      status: 'Warm',
+      notes: 'Looking for property near ITPL. Primary interest in ready-to-move projects.',
+      created_at: '2026-06-10T11:00:00Z',
+      lead_source_id: 'Magicbricks'
     }
   ];
 
   const displayLeads = leads.length > 0 ? leads : mockLeads;
 
-  // Filter and search logic
-  const filteredLeads = displayLeads.filter(lead => {
-    const matchesSearch = 
-      lead.client_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (lead.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (lead.preferred_location || '').toLowerCase().includes(searchQuery.toLowerCase());
-      
-    if (activeTab === 'All') return matchesSearch;
-    return matchesSearch && (lead.status || lead.stage_id) === activeTab;
-  });
+  // Filter logic
+  const filteredLeads = useMemo(() => {
+    return displayLeads.filter(lead => {
+      const q = searchQuery.trim().toLowerCase();
+      const matchesSearch = !q ||
+        lead.client_name?.toLowerCase().includes(q) ||
+        lead.email?.toLowerCase().includes(q) ||
+        lead.phone?.includes(q) ||
+        (lead.preferred_location || '').toLowerCase().includes(q) ||
+        (lead.property_type || '').toLowerCase().includes(q) ||
+        (lead.configuration || '').toLowerCase().includes(q) ||
+        (lead.lead_source_id || '').toLowerCase().includes(q);
+        
+      if (statusFilter === 'today') {
+        if (!lead.created_at) return false;
+        const d = new Date(lead.created_at);
+        return matchesSearch && d.toDateString() === new Date().toDateString();
+      }
+      if (statusFilter !== 'all' && statusFilter !== 'All') {
+        return matchesSearch && lead.status === statusFilter;
+      }
+      return matchesSearch;
+    });
+  }, [displayLeads, searchQuery, statusFilter]);
 
-  // Handle lead select
+  // Sort logic
+  const sortedLeads = useMemo(() => {
+    return [...filteredLeads].sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === "created_at") {
+        const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        cmp = timeA - timeB;
+      } else {
+        cmp = (a.client_name || "").localeCompare(b.client_name || "");
+      }
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+  }, [filteredLeads, sortKey, sortDir]);
+
+  // Selection helpers
+  const selectedLeads = useMemo(
+    () => sortedLeads.filter((lead) => selectedLeadIds.has(lead.id)),
+    [sortedLeads, selectedLeadIds],
+  );
+
+  const allVisibleSelected = sortedLeads.length > 0 && sortedLeads.every((lead) => selectedLeadIds.has(lead.id));
+  const someVisibleSelected = sortedLeads.some((lead) => selectedLeadIds.has(lead.id));
+
+  function toggleVisibleSelection(checked: boolean) {
+    setSelectedLeadIds((prev) => {
+      const next = new Set(prev);
+      if (checked) sortedLeads.forEach((lead) => next.add(lead.id));
+      else sortedLeads.forEach((lead) => next.delete(lead.id));
+      return next;
+    });
+  }
+
+  function toggleLeadSelection(id: string, checked: boolean) {
+    setSelectedLeadIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+
+  function toggleSort(key: 'created_at' | 'client_name') {
+    if (sortKey === key) {
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir('desc');
+    }
+  }
+
+  // Inline DB updates
+  const handleRowStatusChange = async (leadId: string, newStatus: string) => {
+    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status: newStatus } : l));
+    if (selectedLead && selectedLead.id === leadId) {
+      setSelectedLead(prev => prev ? { ...prev, status: newStatus } : null);
+    }
+    setToast({ msg: "Status updated.", tone: "ok" });
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .update({ status: newStatus })
+        .eq('id', leadId);
+      if (error) {
+        console.error("Database update error:", error);
+        setToast({ msg: `Failed: ${error.message}`, tone: "err" });
+      }
+    } catch (err) {
+      console.error(err);
+      setToast({ msg: "Failed to update status", tone: "err" });
+    }
+  };
+
+  const handleRowStageChange = async (leadId: string, newStage: string) => {
+    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stage_id: newStage } : l));
+    if (selectedLead && selectedLead.id === leadId) {
+      setSelectedLead(prev => prev ? { ...prev, stage_id: newStage } : null);
+    }
+    setToast({ msg: "Stage updated.", tone: "ok" });
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .update({ stage_id: newStage })
+        .eq('id', leadId);
+      if (error) {
+        console.error("Database update error:", error);
+        setToast({ msg: `Failed: ${error.message}`, tone: "err" });
+      }
+    } catch (err) {
+      console.error(err);
+      setToast({ msg: "Failed to update stage", tone: "err" });
+    }
+  };
+
+  const handleRowFollowUpChange = async (leadId: string, date: string) => {
+    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, next_followup_date: date || undefined } : l));
+    if (selectedLead && selectedLead.id === leadId) {
+      setSelectedLead(prev => prev ? { ...prev, next_followup_date: date } : null);
+    }
+    setToast({ msg: "Follow-up date updated.", tone: "ok" });
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .update({ next_followup_date: date || null })
+        .eq('id', leadId);
+      if (error) {
+        console.error("Database update error:", error);
+        setToast({ msg: `Failed: ${error.message}`, tone: "err" });
+      }
+    } catch (err) {
+      console.error(err);
+      setToast({ msg: "Failed to update follow-up", tone: "err" });
+    }
+  };
+
+  const handleRowNotesChange = async (leadId: string, newNotes: string) => {
+    const lead = displayLeads.find(l => l.id === leadId);
+    if (lead?.notes === newNotes) return;
+    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, notes: newNotes } : l));
+    if (selectedLead && selectedLead.id === leadId) {
+      setSelectedLead(prev => prev ? { ...prev, notes: newNotes } : null);
+      setNoteText(newNotes);
+    }
+    setToast({ msg: "Notes saved.", tone: "ok" });
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .update({ notes: newNotes })
+        .eq('id', leadId);
+      if (error) {
+        console.error("Database update error:", error);
+        setToast({ msg: `Failed: ${error.message}`, tone: "err" });
+      }
+    } catch (err) {
+      console.error(err);
+      setToast({ msg: "Failed to save notes", tone: "err" });
+    }
+  };
+
+  const handleDeleteLead = async (leadId: string) => {
+    if (!confirm("Delete this lead? This cannot be undone.")) return;
+    setLeads(prev => prev.filter(l => l.id !== leadId));
+    setSelectedLeadIds(prev => {
+      const next = new Set(prev);
+      next.delete(leadId);
+      return next;
+    });
+    if (selectedLead && selectedLead.id === leadId) {
+      setIsDrawerOpen(false);
+      setSelectedLead(null);
+    }
+    setToast({ msg: "Lead deleted.", tone: "ok" });
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .delete()
+        .eq('id', leadId);
+      if (error) {
+        console.error("Database deletion error:", error);
+        setToast({ msg: `Failed: ${error.message}`, tone: "err" });
+      }
+    } catch (err) {
+      console.error(err);
+      setToast({ msg: "Failed to delete lead", tone: "err" });
+    }
+  };
+
+  const bulkDeleteSelected = async () => {
+    if (selectedLeadIds.size === 0) return;
+    if (!confirm(`Delete ${selectedLeadIds.size} selected lead(s)? This cannot be undone.`)) return;
+    
+    setBulkDeleting(true);
+    const selectedIdsArray = Array.from(selectedLeadIds);
+    setLeads(prev => prev.filter(l => !selectedLeadIds.has(l.id)));
+    setSelectedLeadIds(new Set());
+    setToast({ msg: `${selectedIdsArray.length} leads deleted.`, tone: "ok" });
+
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .delete()
+        .in('id', selectedIdsArray);
+      if (error) {
+        console.error("Database deletion error:", error);
+        setToast({ msg: `Failed: ${error.message}`, tone: "err" });
+      }
+    } catch (err) {
+      console.error(err);
+      setToast({ msg: "Failed bulk deletion", tone: "err" });
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
+  // CSV Export
+  function exportCsv(rowsToExport = sortedLeads) {
+    const headers = [
+      "Created At",
+      "Client Name",
+      "Email",
+      "Phone",
+      "Source",
+      "Budget Min",
+      "Budget Max",
+      "Preferred Location",
+      "Property Type",
+      "Configuration",
+      "Commercial/Residential",
+      "Rent/Outright",
+      "Status",
+      "Stage",
+      "Next Followup Date",
+      "Notes"
+    ];
+    const rows = rowsToExport.map((l) =>
+      [
+        l.created_at || "",
+        l.client_name || "",
+        l.email || "",
+        l.phone || "",
+        l.lead_source_id || "",
+        l.budget_min || "",
+        l.budget_max || "",
+        l.preferred_location || "",
+        l.property_type || "",
+        l.configuration || "",
+        l.category || "",
+        l.transaction_type || "",
+        l.status || "",
+        l.stage_id || "",
+        l.next_followup_date || "",
+        l.notes || ""
+      ]
+        .map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`)
+        .join(",")
+    );
+    const blob = new Blob([[headers.join(","), ...rows].join("\n")], {
+      type: "text/csv;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `luxe-leads-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // Handle lead click to open drawer
   const handleOpenLead = (lead: Lead) => {
     setSelectedLead(lead);
     setNoteText(lead.notes || '');
     setIsDrawerOpen(true);
   };
 
-  // Update lead status in state
+  // Drawer update methods (delegates to row methods for single source of truth)
   const handleUpdateStatus = (newStatus: string) => {
     if (!selectedLead) return;
-    const updated = { ...selectedLead, status: newStatus, stage_id: newStatus };
-    setSelectedLead(updated);
-    
-    // Update main list
-    setLeads(prev => {
-      const idx = prev.findIndex(l => l.id === selectedLead.id);
-      if (idx === -1) return prev;
-      const copy = [...prev];
-      copy[idx] = updated;
-      return copy;
-    });
-    
-    // Update local mocks
-    const idxMock = mockLeads.findIndex(l => l.id === selectedLead.id);
-    if (idxMock !== -1) {
-      mockLeads[idxMock] = updated;
+    handleRowStatusChange(selectedLead.id, newStatus);
+  };
+
+  const handleSaveNotes = () => {
+    if (!selectedLead) return;
+    handleRowNotesChange(selectedLead.id, noteText);
+  };
+
+  // Color mappings
+  const getSourceStyle = (source: string | undefined | null) => {
+    const s = source?.toLowerCase() || '';
+    if (s.includes('website')) return 'bg-blue-50 text-blue-700 border-blue-200';
+    if (s.includes('referral')) return 'bg-purple-50 text-purple-700 border-purple-200';
+    if (s.includes('instagram')) return 'bg-pink-50 text-pink-700 border-pink-200';
+    if (s.includes('99 acres') || s.includes('99acres')) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    if (s.includes('magicbricks') || s.includes('magic bricks')) return 'bg-red-50 text-red-700 border-red-200';
+    if (s.includes('walkin') || s.includes('walk in') || s.includes('direct')) return 'bg-cyan-50 text-cyan-700 border-cyan-200';
+    return 'bg-zinc-50 text-zinc-700 border-zinc-200';
+  };
+
+  const getStatusStyle = (status: string) => {
+    switch(status) {
+      case 'Hot': return 'bg-rose-50 text-rose-700 border-rose-200';
+      case 'Warm': return 'bg-amber-50 text-amber-700 border-amber-200';
+      case 'No answer': return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'Not reachable': return 'bg-purple-50 text-purple-700 border-purple-200';
+      case 'Switched off': return 'bg-zinc-100 text-zinc-700 border-zinc-200';
+      case 'Closed': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      default: return 'bg-zinc-50 text-zinc-600 border-zinc-200';
     }
   };
 
-  // Save new note locally
-  const handleSaveNotes = () => {
-    if (!selectedLead) return;
-    const updated = { ...selectedLead, notes: noteText };
-    setSelectedLead(updated);
-    
-    // Update main state
-    setLeads(prev => {
-      const idx = prev.findIndex(l => l.id === selectedLead.id);
-      if (idx === -1) return prev;
-      const copy = [...prev];
-      copy[idx] = updated;
-      return copy;
-    });
-  };
+  const statusTabs = ['All', 'Hot', 'Warm', 'No answer', 'Not reachable', 'Switched off', 'Closed'];
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12 text-zinc-900">
-      
-      {/* Header section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 flex items-center gap-2">
-            <Users className="h-6 w-6 text-emerald-500" />
-            Leads Management
-          </h1>
-          <p className="text-xs text-zinc-500">
-            Track and nurture potential clients from capture to final closing contract.
-          </p>
+    <div className="space-y-6 max-w-7xl mx-auto pb-20 px-4">
+      {/* Page Header Area */}
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-900 flex items-center gap-2">
+              <Users className="h-6 w-6 text-zinc-500" />
+              Lead Management
+            </h1>
+            <p className="text-xs text-zinc-500 font-medium">Capture, track and nurture your sales prospects and high-intent clients.</p>
+          </div>
         </div>
-        <Link href="/leads/create">
-          <button className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 text-xs font-bold text-zinc-950 hover:brightness-110 shadow-md shadow-emerald-500/10 transition-all">
-            <Plus className="h-4 w-4" />
-            Add New Lead
-          </button>
-        </Link>
       </div>
 
-      {/* Tabs and search bar */}
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-zinc-50 border border-zinc-200 rounded-2xl p-4">
-        {/* Tab Filters */}
-        <div className="flex flex-wrap gap-1">
-          {['All', 'New', 'Contacted', 'Negotiating', 'Closed'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all ${
-                activeTab === tab 
-                  ? 'bg-white text-emerald-600 border border-zinc-200 shadow-sm' 
-                  : 'text-zinc-400 hover:text-zinc-700'
-              }`}
-            >
-              {tab}
-            </button>
+      {/* Leads Tabular View */}
+      {loading ? (
+        <div className="space-y-4">
+          {[1,2,3,4,5].map(i => (
+            <div key={i} className="h-16 bg-white border border-zinc-100 rounded-2xl animate-pulse" />
           ))}
         </div>
-
-        {/* Search Input */}
-        <div className="relative w-full md:w-80">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
-          <input
-            type="text"
-            placeholder="Search name, email, location..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white border border-zinc-200 rounded-xl pl-9 pr-4 py-2 text-xs text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/20 transition-all"
-          />
-        </div>
-      </div>
-
-      {/* Leads Table Card */}
-      <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-zinc-100 text-[10px] font-bold text-zinc-500 uppercase tracking-widest bg-zinc-50">
-                <th className="px-6 py-4">Client</th>
-                <th className="px-6 py-4">Contact</th>
-                <th className="px-6 py-4">Requirements</th>
-                <th className="px-6 py-4">Budget Range</th>
-                <th className="px-6 py-4">Stage</th>
-                <th className="px-6 py-4">Source</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100">
-              {filteredLeads.map((lead) => (
-                <tr 
-                  key={lead.id} 
-                  className="hover:bg-zinc-50 transition-colors group cursor-pointer"
-                  onClick={() => handleOpenLead(lead)}
-                >
-                  {/* Client name and avatar */}
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-lg bg-zinc-100 border border-zinc-200 text-xs font-extrabold text-emerald-600 flex items-center justify-center">
-                        {lead.client_name.charAt(0)}
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-bold text-zinc-800 group-hover:text-emerald-600 transition-colors">{lead.client_name}</h4>
-                        <span className="text-[9px] text-zinc-500 tracking-wider uppercase">Lead ID: {lead.id.slice(0, 8)}</span>
-                      </div>
-                    </div>
-                  </td>
-                  {/* Email & Phone */}
-                  <td className="px-6 py-4 text-xs font-medium text-zinc-500">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="flex items-center gap-1.5">
-                        <Mail className="h-3 w-3 text-zinc-400" />
-                        {lead.email || '-'}
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <Phone className="h-3 w-3 text-zinc-400" />
-                        {lead.phone || '-'}
-                      </span>
-                    </div>
-                  </td>
-                  {/* Location & property preference */}
-                  <td className="px-6 py-4 text-xs">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="font-semibold text-zinc-800 flex items-center gap-1">
-                        <MapPin className="h-3 w-3 text-emerald-500" />
-                        {lead.preferred_location || 'Not Specified'}
-                      </span>
-                      <span className="text-zinc-500 text-[10px] pl-4">
-                        {lead.property_type || 'Any Property'} • {lead.configuration || 'Any'}
-                      </span>
-                    </div>
-                  </td>
-                  {/* Budget */}
-                  <td className="px-6 py-4 text-xs font-bold text-emerald-600">
-                    {lead.budget_max 
-                      ? `$${Number(lead.budget_min || 0).toLocaleString()} - $${Number(lead.budget_max).toLocaleString()}` 
-                      : 'No Budget Spec'}
-                  </td>
-                  {/* Stage badge */}
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-widest border ${
-                      lead.status === 'New' 
-                        ? 'bg-blue-50 text-blue-600 border-blue-100' 
-                        : lead.status === 'Contacted' 
-                          ? 'bg-amber-50 text-amber-600 border-amber-100' 
-                          : lead.status === 'Negotiating' 
-                            ? 'bg-purple-50 text-purple-600 border-purple-100' 
-                            : 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                    }`}>
-                      {lead.status || lead.stage_id || 'New'}
-                    </span>
-                  </td>
-                  {/* Source */}
-                  <td className="px-6 py-4 text-[10px] font-semibold text-zinc-500 tracking-wider">
-                    {lead.lead_source_id || 'Unknown'}
-                  </td>
-                  {/* Open details CTA */}
-                  <td className="px-6 py-4 text-right">
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); handleOpenLead(lead); }}
-                      className="p-1 rounded-lg text-zinc-400 hover:text-emerald-600 hover:bg-zinc-100 transition-all inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider"
-                    >
-                      <span>View</span>
-                      <ArrowUpRight className="h-3.5 w-3.5" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {filteredLeads.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-xs text-zinc-500">
-                    No leads found matching query or tab selection.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Side Slide-Over Details Drawer */}
-      {isDrawerOpen && selectedLead && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-zinc-900/40 backdrop-blur-xs">
-          {/* Back click close */}
-          <div className="flex-1 cursor-default" onClick={() => setIsDrawerOpen(false)} />
-          
-          {/* Drawer container */}
-          <div className="w-full max-w-md bg-white border-l border-zinc-200 p-6 flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-250">
-            <div>
-              {/* Header */}
-              <div className="flex items-center justify-between pb-4 border-b border-zinc-200">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-emerald-500/10 to-teal-400/10 border border-emerald-500/20 text-emerald-600 flex items-center justify-center font-bold text-lg">
-                    {selectedLead.client_name.charAt(0)}
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-zinc-900">{selectedLead.client_name}</h3>
-                    <span className="text-[10px] text-zinc-500 uppercase tracking-widest">Leads Dashboard</span>
-                  </div>
+      ) : (
+        <TableCard.Root className="overflow-hidden bg-white ring-1 ring-zinc-200 shadow-xs rounded-xl">
+          <TableCard.Header 
+            title="All leads"
+            badge={sortedLeads.length}
+            description="Capture, track and nurture your sales prospects and high-intent clients."
+            contentTrailing={
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="relative group shrink-0">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400 group-focus-within:text-zinc-500 transition-colors" />
+                  <input 
+                    type="text" 
+                    placeholder="Search leads..." 
+                    className="pl-9 pr-3 py-1.5 bg-white border border-zinc-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 w-48 transition-all shrink-0"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
                 </div>
-                <button 
-                  onClick={() => setIsDrawerOpen(false)}
-                  className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-800 hover:bg-zinc-100 transition-colors"
+                <select
+                  aria-label="Filter by status"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 shadow-sm outline-none transition-all hover:border-zinc-300 focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20 cursor-pointer shrink-0"
                 >
-                  <X className="h-4 w-4" />
+                  <option value="all">All statuses</option>
+                  <option value="today">Today</option>
+                  {statusTabs.slice(1).map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+                <button 
+                  onClick={() => exportCsv()}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-zinc-200 text-zinc-700 rounded-lg text-xs font-bold hover:bg-zinc-50 transition-all shadow-xs cursor-pointer shrink-0"
+                >
+                  <Download01 className="h-3.5 w-3.5" />
+                  Export
+                </button>
+                <Link href="/leads/create">
+                  <button className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 text-white rounded-lg text-xs font-bold hover:bg-zinc-800 transition-all shadow-sm cursor-pointer shrink-0">
+                    <Plus className="h-3.5 w-3.5" />
+                    Add Lead
+                  </button>
+                </Link>
+              </div>
+            }
+          />
+
+          {/* Bulk Action Bar */}
+          {selectedLeadIds.size > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 bg-zinc-50 px-5 py-3 shrink-0">
+              <div className="text-xs font-semibold text-zinc-700">
+                {selectedLeadIds.size} selected
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => exportCsv(selectedLeads)}
+                  className="px-3 py-1.5 bg-white border border-zinc-200 text-zinc-700 rounded-lg text-xs font-bold hover:bg-zinc-50 transition-all shadow-xs cursor-pointer shrink-0"
+                >
+                  Export selected
+                </button>
+                <button
+                  onClick={bulkDeleteSelected}
+                  disabled={bulkDeleting}
+                  className="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700 transition-all shadow-xs disabled:opacity-50 cursor-pointer shrink-0"
+                >
+                  {bulkDeleting ? "Deleting..." : "Delete selected"}
                 </button>
               </div>
+            </div>
+          )}
 
-              {/* Status Update Actions */}
-              <div className="py-4 space-y-2 border-b border-zinc-200">
-                <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Update Pipeline Stage</h4>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {['New', 'Contacted', 'Negotiating', 'Closed'].map((stage) => (
+          <div className="overflow-x-auto w-full">
+            <Table size="sm" aria-label="Leads" className="min-w-[1940px]">
+              <Table.Header>
+                <Table.Head className="w-12 text-center shrink-0">
+                  <button
+                    type="button"
+                    aria-label="Select all leads"
+                    onClick={() => toggleVisibleSelection(!allVisibleSelected)}
+                    className="inline-flex items-center justify-center rounded outline-none shrink-0"
+                  >
+                    <CheckboxBase 
+                      size="sm" 
+                      isSelected={allVisibleSelected} 
+                      isIndeterminate={!allVisibleSelected && someVisibleSelected} 
+                      className={cx("transition-colors shrink-0", !allVisibleSelected && !someVisibleSelected && "!bg-white !ring-zinc-300")}
+                    />
+                  </button>
+                </Table.Head>
+                <Table.Head className={cx("min-w-[150px] shrink-0", STICKY_DATE_HEADER_CLASS)}>
+                  <button onClick={() => toggleSort("created_at")} className="flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 hover:text-zinc-800">
+                    Created At {sortKey === "created_at" && (sortDir === "asc" ? "↑" : "↓")}
+                  </button>
+                </Table.Head>
+                <Table.Head isRowHeader className={cx("min-w-[180px] shrink-0", STICKY_NAME_HEADER_CLASS)}>
+                  <button onClick={() => toggleSort("client_name")} className="flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 hover:text-zinc-800">
+                    Name {sortKey === "client_name" && (sortDir === "asc" ? "↑" : "↓")}
+                  </button>
+                </Table.Head>
+                <Table.Head className="min-w-[220px] text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 shrink-0">Email ID</Table.Head>
+                <Table.Head className="min-w-[140px] text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 shrink-0">Phone</Table.Head>
+                <Table.Head className="min-w-[150px] text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 shrink-0">Source</Table.Head>
+                <Table.Head className="min-w-[160px] text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 shrink-0">Status</Table.Head>
+                <Table.Head className="min-w-[180px] text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 shrink-0">Location</Table.Head>
+                <Table.Head className="min-w-[180px] text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 text-right shrink-0">Budget</Table.Head>
+                <Table.Head className="min-w-[150px] text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 shrink-0">Property Type</Table.Head>
+                <Table.Head className="min-w-[140px] text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 shrink-0">Configuration</Table.Head>
+                <Table.Head className="min-w-[160px] text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 shrink-0">Commercial / Residential</Table.Head>
+                <Table.Head className="min-w-[140px] text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 shrink-0">Rent / Outright</Table.Head>
+                <Table.Head className="min-w-[160px] text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 shrink-0">Stage</Table.Head>
+                <Table.Head className="min-w-[170px] text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 shrink-0">Next Follow-Up</Table.Head>
+                <Table.Head className="min-w-[240px] text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 shrink-0">Notes</Table.Head>
+                <Table.Head className="w-44 text-center text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 shrink-0">Actions</Table.Head>
+              </Table.Header>
+              <Table.Body>
+                {sortedLeads.map((lead) => (
+                  <Table.Row 
+                    key={lead.id} 
+                    onClick={() => handleOpenLead(lead)} 
+                    className="cursor-pointer hover:bg-zinc-50/70 transition-colors group/row whitespace-nowrap"
+                  >
+                    {/* Checkbox */}
+                    <Table.Cell className="w-12 text-center shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        aria-label={`Select ${lead.client_name}`}
+                        onClick={() => toggleLeadSelection(lead.id, !selectedLeadIds.has(lead.id))}
+                        className="inline-flex items-center justify-center rounded outline-none shrink-0"
+                      >
+                        <CheckboxBase 
+                          size="sm" 
+                          isSelected={selectedLeadIds.has(lead.id)} 
+                          className={cx("transition-colors shrink-0", !selectedLeadIds.has(lead.id) && "!bg-white !ring-zinc-300")}
+                        />
+                      </button>
+                    </Table.Cell>
+
+                    {/* Created At - Sticky */}
+                    <Table.Cell className={cx(STICKY_DATE_CLASS, "whitespace-nowrap shrink-0")}>
+                      <div className="space-y-0.5">
+                        <div className="text-xs font-semibold text-zinc-900">{formatShortDate(lead.created_at)}</div>
+                        <div className="text-[10px] text-zinc-400">{formatDate(lead.created_at)}</div>
+                      </div>
+                    </Table.Cell>
+
+                    {/* Name - Sticky */}
+                    <Table.Cell className={cx(STICKY_NAME_CLASS, "whitespace-nowrap shrink-0")}>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div className="h-6 w-6 rounded-md bg-zinc-100 text-zinc-700 font-extrabold flex items-center justify-center text-[10px] shrink-0">
+                          {lead.client_name ? lead.client_name.split(' ').map(n => n[0]).join('') : '?'}
+                        </div>
+                        <div className="space-y-0.5 shrink-0">
+                          <div className="text-xs font-bold text-zinc-900 truncate max-w-[120px] shrink-0">{lead.client_name}</div>
+                          <div className="text-[10px] text-zinc-400">Contact record</div>
+                        </div>
+                      </div>
+                    </Table.Cell>
+
+                    {/* Email */}
+                    <Table.Cell className="text-zinc-600 font-medium whitespace-nowrap shrink-0">
+                      <div className="max-w-[200px] truncate text-xs shrink-0">{lead.email || "\u2014"}</div>
+                    </Table.Cell>
+
+                    {/* Phone */}
+                    <Table.Cell className="text-zinc-600 font-semibold text-xs whitespace-nowrap shrink-0">{lead.phone || "\u2014"}</Table.Cell>
+
+                    {/* Source */}
+                    <Table.Cell className="whitespace-nowrap shrink-0">
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold border shrink-0 ${getSourceStyle(lead.lead_source_id)}`}>
+                        {lead.lead_source_id || "\u2014"}
+                      </span>
+                    </Table.Cell>
+
+                    {/* Status dropdown */}
+                    <Table.Cell className="whitespace-nowrap shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <div className="relative w-28 shrink-0">
+                        <select
+                          value={lead.status || "Hot"}
+                          onChange={(e) => handleRowStatusChange(lead.id, e.target.value)}
+                          className={cx(
+                            "w-full cursor-pointer rounded-lg border pl-2.5 pr-6 py-1 text-xs font-semibold shadow-sm outline-none transition-all focus:ring-2 focus:ring-zinc-500/20 appearance-none text-left shrink-0",
+                            getStatusStyle(lead.status || "Hot")
+                          )}
+                        >
+                          {['Hot', 'Warm', 'No answer', 'Not reachable', 'Switched off', 'Closed'].map((s) => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                        <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 pointer-events-none opacity-60 shrink-0" />
+                      </div>
+                    </Table.Cell>
+
+                    {/* Location */}
+                    <Table.Cell className="text-zinc-700 font-semibold text-xs whitespace-nowrap shrink-0">
+                      <span className="flex items-center gap-1 shrink-0">
+                        <MapPin className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                        <span className="truncate max-w-[140px] shrink-0">{lead.preferred_location || "\u2014"}</span>
+                      </span>
+                    </Table.Cell>
+
+                    {/* Budget formatted in Indian units (Cr/L) */}
+                    <Table.Cell className="text-right font-extrabold text-zinc-800 text-xs whitespace-nowrap shrink-0">
+                      {lead.budget_min 
+                        ? `${formatBudgetAbbreviated(lead.budget_min)} - ${formatBudgetAbbreviated(lead.budget_max || 0)}`
+                        : 'Flexible'}
+                    </Table.Cell>
+
+                    {/* Property Type */}
+                    <Table.Cell className="text-zinc-700 font-semibold text-xs whitespace-nowrap shrink-0">{lead.property_type || "\u2014"}</Table.Cell>
+
+                    {/* Configuration */}
+                    <Table.Cell className="whitespace-nowrap shrink-0">
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border border-zinc-200 bg-zinc-50 text-zinc-600 shrink-0">
+                        {lead.configuration || 'Any'}
+                      </span>
+                    </Table.Cell>
+
+                    {/* Category */}
+                    <Table.Cell className="text-zinc-600 font-semibold text-xs whitespace-nowrap shrink-0">{lead.category || 'Residential'}</Table.Cell>
+
+                    {/* Transaction type */}
+                    <Table.Cell className="whitespace-nowrap shrink-0">
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border shrink-0 ${
+                        lead.transaction_type === 'Outright' 
+                          ? 'border-emerald-100 bg-emerald-50 text-emerald-700' 
+                          : 'border-blue-100 bg-blue-50 text-blue-700'
+                      }`}>
+                        {lead.transaction_type || 'Outright'}
+                      </span>
+                    </Table.Cell>
+
+                    {/* Stage dropdown */}
+                    <Table.Cell className="whitespace-nowrap shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <select
+                        value={lead.stage_id || "New inquiry"}
+                        onChange={(e) => handleRowStageChange(lead.id, e.target.value)}
+                        className="w-full cursor-pointer rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-semibold text-zinc-700 shadow-sm outline-none transition-all hover:border-zinc-300 focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20 appearance-none text-center shrink-0"
+                      >
+                        {['New inquiry', 'Site visit', 'Follow up', 'Closure'].map((stg) => (
+                          <option key={stg} value={stg}>{stg}</option>
+                        ))}
+                      </select>
+                    </Table.Cell>
+
+                    {/* Next followup date picker */}
+                    <Table.Cell className="whitespace-nowrap shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <div className="relative shrink-0">
+                        <input
+                          type="date"
+                          value={lead.next_followup_date || ""}
+                          onChange={(e) => handleRowFollowUpChange(lead.id, e.target.value)}
+                          className={CELL_INPUT_CLASS}
+                        />
+                        <div className="mt-0.5 text-[10px] text-zinc-400 text-center shrink-0">{formatShortDate(lead.next_followup_date)}</div>
+                      </div>
+                    </Table.Cell>
+
+                    {/* Notes textarea */}
+                    <Table.Cell className="whitespace-nowrap shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <textarea
+                        defaultValue={lead.notes || ""}
+                        onBlur={(e) => handleRowNotesChange(lead.id, e.target.value)}
+                        rows={1}
+                        placeholder="Add notes..."
+                        className={CELL_TEXTAREA_CLASS}
+                      />
+                    </Table.Cell>
+
+                    {/* Actions cell */}
+                    <Table.Cell className="text-center whitespace-nowrap shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-center gap-1.5 shrink-0">
+                        <button
+                          onClick={() => handleOpenLead(lead)}
+                          className="rounded-lg px-2.5 py-1 border border-zinc-200 bg-white text-zinc-700 text-xs font-bold hover:bg-zinc-50 hover:text-zinc-900 transition-colors shadow-xs inline-flex items-center gap-1 cursor-pointer shrink-0"
+                          title="View Details"
+                        >
+                          <ArrowUpRight className="h-3.5 w-3.5 text-zinc-500" />
+                          View Details
+                        </button>
+                        <button
+                          onClick={() => handleDeleteLead(lead.id)}
+                          className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 inline-flex items-center justify-center border border-transparent hover:border-red-100 shrink-0"
+                          title="Delete lead"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+          </div>
+          {sortedLeads.length === 0 && (
+            <div className="px-6 py-12 text-center text-xs font-semibold text-zinc-400">
+              No leads found matching query or filters.
+            </div>
+          )}
+        </TableCard.Root>
+      )}
+
+      {/* Lead Details Slide-out Drawer */}
+      {isDrawerOpen && selectedLead && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div className="absolute inset-0 bg-zinc-950/40 backdrop-blur-sm" onClick={() => setIsDrawerOpen(false)} />
+          <div className="relative w-full max-w-xl bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+            {/* Drawer Header */}
+            <div className="p-6 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-2xl bg-zinc-900 text-white flex items-center justify-center font-bold text-xl shadow-lg shadow-zinc-900/20">
+                  {selectedLead.client_name.charAt(0)}
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-zinc-900">{selectedLead.client_name}</h2>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-widest border transition-all ${getStatusStyle(selectedLead.status || 'Hot')}`}>
+                      {selectedLead.status || 'Hot'}
+                    </span>
+                    <span className="text-[10px] text-zinc-400 font-medium">Added {new Date(selectedLead.created_at || '').toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                  </div>
+                </div>
+              </div>
+              <button onClick={() => setIsDrawerOpen(false)} className="p-2 hover:bg-zinc-200 rounded-full transition-colors bg-white border border-zinc-100 shadow-sm">
+                <X className="h-5 w-5 text-zinc-400" />
+              </button>
+            </div>
+
+            {/* Drawer Content Area */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-8">
+              {/* Contact Quick Actions */}
+              <div className="grid grid-cols-2 gap-3">
+                <a 
+                  href={`tel:${selectedLead.phone}`}
+                  className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-zinc-100 text-zinc-700 text-xs font-bold hover:bg-zinc-200 border border-zinc-200/80 transition-all"
+                >
+                  <Phone className="h-4 w-4 text-zinc-500" />
+                  Call Now
+                </a>
+                <a 
+                  href={`mailto:${selectedLead.email}`}
+                  className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800 transition-all shadow-md"
+                >
+                  <Mail className="h-4 w-4 text-zinc-400" />
+                  Send Email
+                </a>
+              </div>
+
+              {/* Quick Status Selection */}
+              <div className="space-y-3 bg-zinc-50 border border-zinc-200/60 p-4 rounded-2xl">
+                <h3 className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-[0.15em] flex items-center gap-1.5">
+                  <Tag className="h-3.5 w-3.5" />
+                  Quick Update Status
+                </h3>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {['Hot', 'Warm', 'No answer', 'Not reachable', 'Switched off', 'Closed'].map((statusOption) => (
                     <button
-                      key={stage}
-                      onClick={() => handleUpdateStatus(stage)}
-                      className={`py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all border ${
-                        selectedLead.status === stage
-                          ? 'bg-emerald-50 text-emerald-600 border-emerald-200 shadow-sm'
-                          : 'bg-zinc-50 text-zinc-500 border-zinc-200 hover:text-zinc-800'
+                      key={statusOption}
+                      onClick={() => handleUpdateStatus(statusOption)}
+                      className={`px-3 py-1.5 rounded-xl text-[10px] font-bold border transition-all ${
+                        selectedLead.status === statusOption
+                          ? getStatusStyle(statusOption) + ' border-zinc-400'
+                          : 'bg-white text-zinc-500 hover:text-zinc-900 border-zinc-200 hover:bg-zinc-50'
                       }`}
                     >
-                      {stage}
+                      {statusOption}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Details fields */}
-              <div className="py-5 space-y-4 text-xs border-b border-zinc-200">
-                {/* Contact info */}
+              {/* Requirement Summary */}
+              <div className="space-y-4">
+                <h3 className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-[0.15em] flex items-center gap-2">
+                  <Briefcase className="h-3.5 w-3.5" />
+                  Client Requirement
+                </h3>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Email Address</span>
-                    <a href={`mailto:${selectedLead.email}`} className="text-zinc-700 font-semibold flex items-center gap-1.5 hover:text-emerald-600">
-                      <Mail className="h-3.5 w-3.5 text-zinc-400" />
-                      {selectedLead.email || 'None'}
-                    </a>
+                  <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
+                    <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Budget Max</p>
+                    <p className="text-sm font-bold text-zinc-900">
+                      {selectedLead.budget_max ? formatBudgetAbbreviated(selectedLead.budget_max) : 'N/A'}
+                    </p>
                   </div>
-                  <div className="space-y-1">
-                    <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Phone Number</span>
-                    <a href={`tel:${selectedLead.phone}`} className="text-zinc-700 font-semibold flex items-center gap-1.5 hover:text-emerald-600">
-                      <Phone className="h-3.5 w-3.5 text-zinc-400" />
-                      {selectedLead.phone || 'None'}
-                    </a>
+                  <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
+                    <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Configuration</p>
+                    <p className="text-sm font-bold text-zinc-900">{selectedLead.configuration || 'Any'}</p>
                   </div>
-                </div>
-
-                {/* Preferences */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Target Budget</span>
-                    <span className="text-emerald-600 font-bold flex items-center gap-0.5">
-                      <DollarSign className="h-3.5 w-3.5" />
-                      {selectedLead.budget_max 
-                        ? `${Number(selectedLead.budget_min).toLocaleString()} - ${Number(selectedLead.budget_max).toLocaleString()}`
-                        : 'Any Budget'}
-                    </span>
+                  <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
+                    <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Location Pref</p>
+                    <p className="text-sm font-bold text-zinc-900 flex items-center gap-1.5">
+                      <MapPin className="h-3.5 w-3.5 text-zinc-500" />
+                      {selectedLead.preferred_location || 'Flexible'}
+                    </p>
                   </div>
-                  <div className="space-y-1">
-                    <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Location Preference</span>
-                    <span className="text-zinc-700 font-semibold flex items-center gap-1.5">
-                      <MapPin className="h-3.5 w-3.5 text-zinc-400" />
-                      {selectedLead.preferred_location || 'Any'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Configuration */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Required Setup</span>
-                    <span className="text-zinc-700 font-semibold flex items-center gap-1.5">
-                      <Briefcase className="h-3.5 w-3.5 text-zinc-400" />
-                      {selectedLead.property_type || 'Villa'} ({selectedLead.configuration || '3 BHK'})
-                    </span>
-                  </div>
-                  <div className="space-y-1">
-                    <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Lead Source</span>
-                    <span className="text-zinc-500 font-semibold">
-                      {selectedLead.lead_source_id || 'Direct Inquiry'}
-                    </span>
+                  <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
+                    <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Property Type</p>
+                    <p className="text-sm font-bold text-zinc-900">{selectedLead.property_type || 'Residential'}</p>
                   </div>
                 </div>
               </div>
 
-              {/* Notes panel */}
-              <div className="py-4 space-y-2">
-                <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Lead Interactions Notes</span>
-                <textarea
+              {/* Engagement Timeline / Notes */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-[0.15em] flex items-center gap-2">
+                    <Clock className="h-3.5 w-3.5" />
+                    Interaction Notes
+                  </h3>
+                  <button 
+                    onClick={handleSaveNotes}
+                    className="text-[10px] font-bold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 transition-colors border border-zinc-200 px-3 py-1 rounded-lg flex items-center gap-1 disabled:opacity-50"
+                  >
+                    Save Notes
+                  </button>
+                </div>
+                
+                <textarea 
+                  className="w-full h-32 p-4 rounded-2xl border border-zinc-200 text-sm font-medium focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 outline-none transition-all resize-none bg-zinc-50/30"
+                  placeholder="Update lead progress, concerns, or next steps..."
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
-                  placeholder="Type updates, view details or follow up schedules..."
-                  className="w-full h-32 bg-zinc-50 border border-zinc-200 rounded-xl p-3 text-xs text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/20 resize-none"
                 />
-                <button 
-                  onClick={handleSaveNotes}
-                  className="px-3.5 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-[10px] font-bold text-zinc-700 uppercase tracking-wider transition-colors"
-                >
-                  Save Notes
-                </button>
+              </div>
+
+              {/* Lead Source */}
+              <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-center justify-between">
+                <div>
+                  <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-0.5">Acquisition Channel</p>
+                  <p className="text-xs font-bold text-zinc-900">{selectedLead.lead_source_id || 'Direct Inquiry'}</p>
+                </div>
+                <div className="p-2 rounded-xl bg-white border border-zinc-100 shadow-sm">
+                  <Sparkles className="h-4 w-4 text-amber-500" />
+                </div>
               </div>
             </div>
 
-            {/* Quick Actions Footer */}
-            <div className="pt-4 border-t border-zinc-200 flex items-center gap-2">
+            {/* Drawer Footer Actions */}
+            <div className="p-6 border-t border-zinc-100 bg-zinc-50/50 flex items-center gap-3">
+              <Link href={`/leads/edit?id=${selectedLead.id}`} className="flex-1">
+                <button className="w-full py-3.5 rounded-xl bg-white border border-zinc-200 text-zinc-900 text-xs font-bold hover:bg-zinc-50 transition-all flex items-center justify-center gap-2">
+                  <Edit3 className="h-4 w-4" />
+                  Edit Profile
+                </button>
+              </Link>
               <button 
-                onClick={() => alert(`Connecting call to ${selectedLead.client_name}...`)}
-                className="flex-1 py-2.5 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 text-xs font-bold transition-all"
+                onClick={() => handleUpdateStatus('Closed')}
+                className="flex-1 py-3.5 rounded-xl bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800 transition-all flex items-center justify-center gap-2 shadow-lg shadow-zinc-900/10"
               >
-                Log Call
-              </button>
-              <button 
-                onClick={() => alert(`Emailing brochure to ${selectedLead.email}...`)}
-                className="flex-1 py-2.5 rounded-xl bg-zinc-50 border border-zinc-200 text-xs font-bold text-zinc-700 hover:bg-zinc-100 transition-all"
-              >
-                Send Brochure
+                <CheckCircle className="h-4 w-4" />
+                Mark as Closed
               </button>
             </div>
-
           </div>
         </div>
       )}
 
+      {/* Floating Toast Notification */}
+      {toast && (
+        <div
+          className={cx(
+            "fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium shadow-lg ring-1 transition-all bg-white",
+            toast.tone === "ok" ? "text-emerald-700 ring-emerald-200" : "text-red-700 ring-red-200"
+          )}
+        >
+          <span
+            className={cx(
+              "h-2 w-2 rounded-full",
+              toast.tone === "ok" ? "bg-emerald-500" : "bg-red-500"
+            )}
+          />
+          {toast.msg}
+        </div>
+      )}
     </div>
   );
 }

@@ -50,7 +50,7 @@ export function DateRangePicker({
       month: 'short',
       day: 'numeric'
     }
-    return `${startDate.toLocaleDateString('en-US', options)} - ${endDate.toLocaleDateString('en-US', options)}`
+    return `${startDate.toLocaleDateString('en-IN', options)} - ${endDate.toLocaleDateString('en-IN', options)}`
   }
 
   const [startDate, endDate] = parseValue(value)
