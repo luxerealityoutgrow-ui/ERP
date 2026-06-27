@@ -26,7 +26,7 @@ export function SidebarNav() {
   const pathname = usePathname();
   const profile = useProfile();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem('sidebar-collapsed');
@@ -37,6 +37,7 @@ export function SidebarNav() {
 
   // Live clock
   useEffect(() => {
+    setCurrentTime(new Date());
     const interval = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(interval);
   }, []);
@@ -163,7 +164,7 @@ export function SidebarNav() {
               <div className="flex flex-col items-center gap-1">
                 <Clock className="h-3.5 w-3.5 text-zinc-500" />
                 <span className="text-[10px] font-bold text-zinc-300">
-                  {currentTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                  {currentTime ? currentTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
                 </span>
               </div>
             ) : (
@@ -171,11 +172,11 @@ export function SidebarNav() {
                 <div className="flex items-center gap-2">
                   <Clock className="h-3.5 w-3.5 text-zinc-500" />
                   <span className="text-xs font-bold text-zinc-200">
-                    {currentTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    {currentTime ? currentTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '--:--:--'}
                   </span>
                 </div>
                 <p className="text-[10px] text-zinc-500 font-medium pl-5.5">
-                  {currentTime.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                  {currentTime ? currentTime.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '--'}
                 </p>
               </div>
             )}
