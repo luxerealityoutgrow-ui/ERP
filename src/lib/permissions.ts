@@ -75,7 +75,7 @@ const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canBulkDelete: true,
   },
   SalesPerson: {
-    canViewDashboard: true,
+    canViewDashboard: false,
     canViewLeads: true,
     canViewAllLeads: false,
     canCreateLeads: true,

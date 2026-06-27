@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useProfile } from '@/lib/auth';
+import { useRouter } from 'next/navigation';
 import { fetchLeads, fetchProperties, Lead, Property } from '@/lib/queries';
 import { fetchSiteVisits, SiteVisit } from '@/lib/siteVisits';
 import { supabase } from '@/lib/supabaseClient';
@@ -29,6 +30,7 @@ import { getPermissions } from '@/lib/permissions';
 
 export default function DashboardPage() {
   const profile = useProfile();
+  const router = useRouter();
   const perms = getPermissions(profile?.role);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
@@ -37,6 +39,13 @@ export default function DashboardPage() {
 
   // Date range filter (synced with global if available)
   const [dateRange, setDateRange] = useState<'today' | '7d' | '30d' | '90d' | 'all'>('30d');
+
+  // Redirect SalesPerson away from dashboard
+  useEffect(() => {
+    if (profile && !perms.canViewDashboard) {
+      router.replace('/leads');
+    }
+  }, [profile, perms.canViewDashboard, router]);
 
   useEffect(() => {
     Promise.all([
@@ -127,6 +136,11 @@ export default function DashboardPage() {
     { label: 'Closure', count: inClosure, color: 'bg-emerald-500' },
   ];
   const maxPipeline = Math.max(...pipelineData.map(d => d.count), 1);
+
+  // Don't render dashboard for SalesPerson (they get redirected)
+  if (profile && !perms.canViewDashboard) {
+    return null;
+  }
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 text-zinc-900">
