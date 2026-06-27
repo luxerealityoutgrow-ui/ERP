@@ -77,24 +77,24 @@ const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
   SalesPerson: {
     canViewDashboard: false,
     canViewLeads: true,
-    canViewAllLeads: false,
+    canViewAllLeads: true, // Client says all leads visible to everyone
     canCreateLeads: true,
     canEditLeads: true,
-    canDeleteLeads: false,
+    canDeleteLeads: false, // Only admin can delete leads
     canViewProperties: true,
-    canCreateProperties: false,
-    canEditProperties: false,
-    canDeleteProperties: false,
+    canCreateProperties: true, // Client says properties can be added by all
+    canEditProperties: true,
+    canDeleteProperties: true, // Client says properties can be deleted by all
     canViewPipeline: true,
-    canViewAllPipeline: false,
+    canViewAllPipeline: true,
     canViewMatchmaking: true,
     canViewCalendar: true,
-    canViewAllCalendar: false,
+    canViewAllCalendar: true,
     canViewReporting: false,
     canViewSettings: false,
     canManageUsers: false,
     canManageIntegrations: false,
-    canExportData: false,
+    canExportData: false, // Only admin can export
     canBulkDelete: false,
   },
 };
@@ -139,6 +139,7 @@ export function canAccessRoute(role: string | undefined | null, route: string): 
     '/site-visits': 'canViewCalendar',
     '/reporting': 'canViewReporting',
     '/settings': 'canViewSettings',
+    '/users': 'canManageUsers',
   };
 
   const permKey = routePermMap[route];

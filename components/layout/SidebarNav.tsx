@@ -15,7 +15,8 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
-  Clock
+  Clock,
+  ShieldCheck
 } from 'lucide-react';
 import { useProfile } from '@/lib/auth';
 import { canAccessRoute } from '@/lib/permissions';
@@ -93,6 +94,11 @@ export function SidebarNav() {
       title: 'Settings',
       href: '/settings',
       icon: Settings,
+    },
+    {
+      title: 'Users',
+      href: '/users',
+      icon: ShieldCheck,
     },
   ];
 

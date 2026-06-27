@@ -25,7 +25,8 @@
       "autoApprove": [
         "list_tables",
         "execute_sql",
-        "apply_migration"
+        "apply_migration",
+        "get_project_url"
       ]
     }
   }

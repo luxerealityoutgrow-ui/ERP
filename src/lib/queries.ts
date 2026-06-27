@@ -27,12 +27,11 @@ export interface Lead {
 }
 
 export async function fetchLeads(profile: Profile | null): Promise<Lead[]> {
-  let query = supabase.from('leads').select('*');
-  // SalesPerson only sees own leads; Admin/SuperAdmin see all
-  if (profile && profile.role !== 'SuperAdmin' && profile.role !== 'Admin') {
-    query = query.eq('assigned_to', profile.id);
-  }
-  const { data, error } = await query;
+  // All users can see all leads (client requirement)
+  const { data, error } = await supabase
+    .from('leads')
+    .select('*')
+    .order('created_at', { ascending: false });
   if (error) throw error;
   return data as Lead[];
 }
