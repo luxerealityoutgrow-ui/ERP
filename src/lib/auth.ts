@@ -37,7 +37,13 @@ export function useProfile(): Profile | null {
           console.error('Error fetching profile:', error);
           setProfile(null);
         } else {
-          setProfile(data as Profile);
+          // Check for role override in localStorage (demo mode)
+          const roleOverride = typeof window !== 'undefined' ? localStorage.getItem('luxe-role-override') : null;
+          const profileData = data as Profile;
+          if (roleOverride && ['SuperAdmin', 'Admin', 'SalesPerson'].includes(roleOverride)) {
+            profileData.role = roleOverride;
+          }
+          setProfile(profileData);
         }
       } catch (err) {
         console.error('Error in fetchProfile:', err);
@@ -48,6 +54,15 @@ export function useProfile(): Profile | null {
     };
 
     fetchProfile();
+
+    // Listen for storage changes (role switcher)
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'luxe-role-override') {
+        fetchProfile();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
   if (loading) return null;
