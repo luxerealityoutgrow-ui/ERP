@@ -30,14 +30,14 @@ export function Header() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Fallback mock sets
-  const mockLeads: Lead[] = [
+  const mockLeads: Partial<Lead>[] = [
     { id: 'mock-1', client_name: 'Ananya Sharma', preferred_location: 'Kalyani Nagar, Pune' },
     { id: 'mock-2', client_name: 'Vikram Malhotra', preferred_location: 'Koregaon Park, Pune' },
     { id: 'mock-3', client_name: 'Rajesh Gupta', preferred_location: 'Baner, Pune' },
     { id: 'mock-4', client_name: 'Deepika Rao', preferred_location: 'Viman Nagar, Pune' }
   ];
 
-  const mockProperties: Property[] = [
+  const mockProperties: Partial<Property>[] = [
     { id: 'prop-1', title: 'Pristine Kyra', location: 'Kalyani Nagar' },
     { id: 'prop-2', title: 'Power Heights', location: 'Koregaon Park' },
     { id: 'prop-3', title: 'Vivencia', location: 'Baner' },
@@ -50,12 +50,12 @@ export function Header() {
       try {
         const leadsData = await fetchLeads(profile);
         const propsData = await fetchProperties(profile);
-        setLeads(leadsData && leadsData.length > 0 ? leadsData : mockLeads);
-        setProperties(propsData && propsData.length > 0 ? propsData : mockProperties);
+        setLeads(leadsData && leadsData.length > 0 ? leadsData : mockLeads as Lead[]);
+        setProperties(propsData && propsData.length > 0 ? propsData : mockProperties as Property[]);
       } catch (err) {
         console.error("Error loading search items:", err);
-        setLeads(mockLeads);
-        setProperties(mockProperties);
+        setLeads(mockLeads as Lead[]);
+        setProperties(mockProperties as Property[]);
       }
     };
     loadSearchPool();
