@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useProfile } from '@/lib/auth';
+import { getPermissions } from '@/lib/permissions';
 import {
   BarChart3,
   TrendingUp,
@@ -63,7 +65,20 @@ const propertyTypes = [
 ];
 
 export default function ReportingPage() {
+  const profile = useProfile();
   const [selectedPeriod, setSelectedPeriod] = useState('YTD');
+
+  // Role-based access control
+  const perms = getPermissions(profile?.role);
+  if (profile && !perms.canViewReporting) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <BarChart3 className="h-12 w-12 text-zinc-300 mb-4" />
+        <h2 className="text-xl font-bold text-zinc-900 mb-2">Access Restricted</h2>
+        <p className="text-sm text-zinc-500">Reporting is only available for Admins and SuperAdmins.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 text-zinc-900">

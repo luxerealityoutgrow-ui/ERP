@@ -14,21 +14,30 @@ import {
   LogOut,
   Calendar,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Clock
 } from 'lucide-react';
 import { useProfile } from '@/lib/auth';
+import { canAccessRoute } from '@/lib/permissions';
 import { supabase } from '@/lib/supabaseClient';
 
 export function SidebarNav() {
   const pathname = usePathname();
   const profile = useProfile();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
     const saved = localStorage.getItem('sidebar-collapsed');
     if (saved === 'true') {
       setIsCollapsed(true);
     }
+  }, []);
+
+  // Live clock
+  useEffect(() => {
+    const interval = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const toggleCollapse = () => {
@@ -78,7 +87,7 @@ export function SidebarNav() {
       title: 'Reporting',
       href: '/reporting',
       icon: BarChart3,
-      badge: 'PRO'
+      badge: 'PRO',
     },
     {
       title: 'Settings',
@@ -86,6 +95,11 @@ export function SidebarNav() {
       icon: Settings,
     },
   ];
+
+  // Filter navigation items based on user role permissions
+  const filteredNavItems = navItems.filter(item => 
+    canAccessRoute(profile?.role, item.href)
+  );
 
   return (
     <aside className={`bg-zinc-950 border-r border-zinc-900 h-full flex flex-col justify-between shrink-0 transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
@@ -102,7 +116,7 @@ export function SidebarNav() {
 
         {/* Navigation items list */}
         <nav className={`px-4 py-3 space-y-1.5 mt-4 transition-all ${isCollapsed ? 'px-2' : 'px-4'}`}>
-          {navItems.map((item) => {
+          {filteredNavItems.map((item) => {
             const isActive = pathname === item.href;
             const Icon = item.icon;
             return (
@@ -135,6 +149,32 @@ export function SidebarNav() {
             );
           })}
         </nav>
+
+        {/* Date & Time Widget */}
+        <div className={`mx-4 mt-auto mb-2 ${isCollapsed ? 'mx-2' : 'mx-4'}`}>
+          <div className={`rounded-xl bg-zinc-900 border border-zinc-800 p-3 ${isCollapsed ? 'p-2' : 'p-3'}`}>
+            {isCollapsed ? (
+              <div className="flex flex-col items-center gap-1">
+                <Clock className="h-3.5 w-3.5 text-zinc-500" />
+                <span className="text-[10px] font-bold text-zinc-300">
+                  {currentTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-3.5 w-3.5 text-zinc-500" />
+                  <span className="text-xs font-bold text-zinc-200">
+                    {currentTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                  </span>
+                </div>
+                <p className="text-[10px] text-zinc-500 font-medium pl-5.5">
+                  {currentTime.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Footer User Info & Collapse Toggle Section */}

@@ -20,13 +20,26 @@ import {
   Trash2,
   ArrowUpRight,
   Edit3,
-  ChevronDown
+  ChevronDown,
+  Share2,
+  Copy,
+  MessageSquare,
+  ExternalLink,
+  QrCode,
+  SlidersHorizontal
 } from 'lucide-react';
 import { Download01 } from '@untitledui/icons';
 import Link from 'next/link';
 import { Table, TableCard } from '@/components/application/table/table';
 import { CheckboxBase } from '@/components/base/checkbox/checkbox';
 import { cx } from '@/utils/cx';
+import { QRCodeModal } from '@/components/QRCodeModal';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const STICKY_DATE_CLASS = "sticky left-0 z-10 bg-white group-hover/row:bg-zinc-50 transition-colors shadow-[1px_0_0_0_rgba(16,24,40,0.06)]";
 const STICKY_NAME_CLASS = "sticky left-[150px] z-10 bg-white group-hover/row:bg-zinc-50 transition-colors shadow-[1px_0_0_0_rgba(16,24,40,0.06)]";
@@ -94,6 +107,20 @@ export default function LeadsPage() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [noteText, setNoteText] = useState('');
   const [isSavingNote, setIsSavingNote] = useState(false);
+  const [qrLead, setQrLead] = useState<Lead | null>(null);
+  const [isQrOpen, setIsQrOpen] = useState(false);
+
+  // Drill-down advanced filters
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [filterLocation, setFilterLocation] = useState('');
+  const [filterPropertyType, setFilterPropertyType] = useState('');
+  const [filterConfiguration, setFilterConfiguration] = useState('');
+  const [filterSource, setFilterSource] = useState('');
+  const [filterTransactionType, setFilterTransactionType] = useState('');
+  const [filterBudgetMin, setFilterBudgetMin] = useState('');
+  const [filterBudgetMax, setFilterBudgetMax] = useState('');
+  const [filterStage, setFilterStage] = useState('');
+  const [activeState, setActiveState] = useState<'Active' | 'Inactive' | 'All'>('Active');
 
   // Fetch leads on load
   useEffect(() => {
@@ -223,18 +250,45 @@ export default function LeadsPage() {
         (lead.property_type || '').toLowerCase().includes(q) ||
         (lead.configuration || '').toLowerCase().includes(q) ||
         (lead.lead_source_id || '').toLowerCase().includes(q);
-        
+
+      // Status filter (tab-level)
+      let matchesStatus = true;
       if (statusFilter === 'today') {
-        if (!lead.created_at) return false;
-        const d = new Date(lead.created_at);
-        return matchesSearch && d.toDateString() === new Date().toDateString();
+        if (!lead.created_at) matchesStatus = false;
+        else {
+          const d = new Date(lead.created_at);
+          matchesStatus = d.toDateString() === new Date().toDateString();
+        }
+      } else if (statusFilter !== 'all' && statusFilter !== 'All') {
+        matchesStatus = lead.status === statusFilter;
       }
-      if (statusFilter !== 'all' && statusFilter !== 'All') {
-        return matchesSearch && lead.status === statusFilter;
+
+      // Drill-down advanced filters
+      const matchesLocation = !filterLocation || (lead.preferred_location || '').toLowerCase().includes(filterLocation.toLowerCase());
+      const matchesPropertyType = !filterPropertyType || lead.property_type === filterPropertyType;
+      const matchesConfiguration = !filterConfiguration || lead.configuration === filterConfiguration;
+      const matchesSource = !filterSource || lead.lead_source_id === filterSource;
+      const matchesTransactionType = !filterTransactionType || lead.transaction_type === filterTransactionType;
+      const matchesStage = !filterStage || lead.stage_id === filterStage;
+
+      // Active/Inactive filter
+      const matchesActiveState = activeState === 'All' 
+        || (activeState === 'Active' && lead.is_active !== false)
+        || (activeState === 'Inactive' && lead.is_active === false);
+
+      let matchesBudget = true;
+      if (filterBudgetMin) {
+        const min = parseFloat(filterBudgetMin);
+        if (!isNaN(min)) matchesBudget = (lead.budget_max || 0) >= min;
       }
-      return matchesSearch;
+      if (matchesBudget && filterBudgetMax) {
+        const max = parseFloat(filterBudgetMax);
+        if (!isNaN(max)) matchesBudget = (lead.budget_min || 0) <= max;
+      }
+
+      return matchesSearch && matchesStatus && matchesActiveState && matchesLocation && matchesPropertyType && matchesConfiguration && matchesSource && matchesTransactionType && matchesStage && matchesBudget;
     });
-  }, [displayLeads, searchQuery, statusFilter]);
+  }, [displayLeads, searchQuery, statusFilter, activeState, filterLocation, filterPropertyType, filterConfiguration, filterSource, filterTransactionType, filterBudgetMin, filterBudgetMax, filterStage]);
 
   // Sort logic
   const sortedLeads = useMemo(() => {
@@ -309,6 +363,25 @@ export default function LeadsPage() {
     }
   };
 
+  // Toggle lead active/inactive state
+  const handleToggleLeadActive = async (leadId: string, currentState: boolean) => {
+    const newState = !currentState;
+    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, is_active: newState } : l));
+    setToast({ msg: newState ? "Lead activated." : "Lead deactivated.", tone: "ok" });
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .update({ is_active: newState })
+        .eq('id', leadId);
+      if (error) {
+        setLeads(prev => prev.map(l => l.id === leadId ? { ...l, is_active: currentState } : l));
+        setToast({ msg: `Failed: ${error.message}`, tone: "err" });
+      }
+    } catch (err) {
+      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, is_active: currentState } : l));
+      setToast({ msg: "Failed to toggle state", tone: "err" });
+    }
+  };
   const handleRowStageChange = async (leadId: string, newStage: string) => {
     setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stage_id: newStage } : l));
     if (selectedLead && selectedLead.id === leadId) {
@@ -483,6 +556,73 @@ export default function LeadsPage() {
     URL.revokeObjectURL(url);
   }
 
+  // Sharing Helper Functions
+  const generateShareText = (l: Lead) => {
+    return `📋 *LUXE REALTY LEAD DETAILS*
+👤 *Client Name:* ${l.client_name}
+📞 *Phone:* ${l.phone || 'N/A'}
+✉️ *Email:* ${l.email || 'N/A'}
+💰 *Budget:* ${l.budget_min ? `${formatBudgetAbbreviated(l.budget_min)} - ${formatBudgetAbbreviated(l.budget_max)}` : 'Flexible'}
+📍 *Preferred Location:* ${l.preferred_location || 'Flexible'}
+🏢 *Property Type:* ${l.property_type || 'N/A'} (${l.configuration || 'Any'})
+💼 *Transaction:* ${l.transaction_type || 'Outright'} / ${l.category || 'Residential'}
+📝 *Notes:* ${l.notes || 'None'}`;
+  };
+
+  const copyToClipboard = async (text: string, successMsg = "Copied to clipboard!") => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setToast({ msg: successMsg, tone: "ok" });
+    } catch (err) {
+      console.error(err);
+      setToast({ msg: "Failed to copy text", tone: "err" });
+    }
+  };
+
+  const shareWhatsApp = (l: Lead) => {
+    const text = encodeURIComponent(generateShareText(l));
+    window.open(`https://wa.me/?text=${text}`, '_blank');
+  };
+
+  const shareEmail = (l: Lead) => {
+    const subject = encodeURIComponent(`Lead Requirements - ${l.client_name}`);
+    const body = encodeURIComponent(generateShareText(l));
+    window.open(`mailto:?subject=${subject}&body=${body}`, '_self');
+  };
+
+  const getShareableUrl = (l: Lead) => {
+    if (typeof window !== 'undefined') {
+      return `${window.location.origin}/leads/${l.id}`;
+    }
+    return '';
+  };
+
+  const handleBulkShare = (type: 'copy' | 'whatsapp' | 'email') => {
+    if (selectedLeads.length === 0) return;
+    
+    const leadsSummary = selectedLeads.map((l, index) => {
+      return `${index + 1}️⃣ *${l.client_name}*
+• Budget: ${l.budget_min ? `${formatBudgetAbbreviated(l.budget_min)} - ${formatBudgetAbbreviated(l.budget_max)}` : 'Flexible'}
+• Location Pref: ${l.preferred_location || 'Flexible'}
+• Property Type: ${l.property_type || 'N/A'} (${l.configuration || 'Any'})
+• Notes: ${l.notes || 'None'}`;
+    }).join('\n\n');
+
+    const headerText = `📋 *LUXE REALTY - SHARED LEADS SUMMARY (${selectedLeads.length} leads)*\n\n`;
+    const fullText = headerText + leadsSummary;
+
+    if (type === 'copy') {
+      copyToClipboard(fullText, `${selectedLeads.length} leads details copied!`);
+    } else if (type === 'whatsapp') {
+      const text = encodeURIComponent(fullText);
+      window.open(`https://wa.me/?text=${text}`, '_blank');
+    } else if (type === 'email') {
+      const subject = encodeURIComponent(`Shared Leads Summary (${selectedLeads.length} leads)`);
+      const body = encodeURIComponent(fullText);
+      window.open(`mailto:?subject=${subject}&body=${body}`, '_self');
+    }
+  };
+
   // Handle lead click to open drawer
   const handleOpenLead = (lead: Lead) => {
     setSelectedLead(lead);
@@ -580,6 +720,39 @@ export default function LeadsPage() {
                   ))}
                 </select>
                 <button 
+                  onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0 ${
+                    showAdvancedFilters 
+                      ? 'bg-zinc-900 text-white border-zinc-900 hover:bg-zinc-800' 
+                      : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
+                  }`}
+                >
+                  <SlidersHorizontal className="h-3.5 w-3.5" />
+                  Drill Down
+                  {(filterLocation || filterPropertyType || filterConfiguration || filterSource || filterTransactionType || filterBudgetMin || filterBudgetMax || filterStage) && (
+                    <span className="ml-1 h-4 w-4 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
+                      {[filterLocation, filterPropertyType, filterConfiguration, filterSource, filterTransactionType, filterBudgetMin || filterBudgetMax, filterStage].filter(Boolean).length}
+                    </span>
+                  )}
+                </button>
+                <div className="flex items-center gap-0.5 p-0.5 bg-zinc-100 rounded-lg shrink-0">
+                  {(['Active', 'Inactive', 'All'] as const).map((state) => (
+                    <button
+                      key={state}
+                      onClick={() => setActiveState(state)}
+                      className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all ${
+                        activeState === state 
+                          ? state === 'Active' ? 'bg-emerald-500 text-white' 
+                            : state === 'Inactive' ? 'bg-zinc-500 text-white'
+                            : 'bg-white text-zinc-900 shadow-sm'
+                          : 'text-zinc-500 hover:text-zinc-700'
+                      }`}
+                    >
+                      {state}
+                    </button>
+                  ))}
+                </div>
+                <button 
                   onClick={() => exportCsv()}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-zinc-200 text-zinc-700 rounded-lg text-xs font-bold hover:bg-zinc-50 transition-all shadow-xs cursor-pointer shrink-0"
                 >
@@ -596,6 +769,139 @@ export default function LeadsPage() {
             }
           />
 
+          {/* Drill Down Advanced Filters Panel */}
+          {showAdvancedFilters && (
+            <div className="border-b border-zinc-200 bg-zinc-50/70 px-5 py-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-bold text-zinc-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <SlidersHorizontal className="h-3.5 w-3.5 text-zinc-500" />
+                  Drill Down Filters
+                </h3>
+                <button
+                  onClick={() => {
+                    setFilterLocation('');
+                    setFilterPropertyType('');
+                    setFilterConfiguration('');
+                    setFilterSource('');
+                    setFilterTransactionType('');
+                    setFilterBudgetMin('');
+                    setFilterBudgetMax('');
+                    setFilterStage('');
+                  }}
+                  className="text-[10px] font-bold text-zinc-500 hover:text-zinc-700 transition-colors"
+                >
+                  Clear all filters
+                </button>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Location</label>
+                  <input
+                    type="text"
+                    placeholder="Any location..."
+                    value={filterLocation}
+                    onChange={(e) => setFilterLocation(e.target.value)}
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Property Type</label>
+                  <select
+                    value={filterPropertyType}
+                    onChange={(e) => setFilterPropertyType(e.target.value)}
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all cursor-pointer"
+                  >
+                    <option value="">All types</option>
+                    <option value="Apartment">Apartment</option>
+                    <option value="Villa">Villa / Independent House</option>
+                    <option value="Penthouse">Penthouse</option>
+                    <option value="Office Space">Office Space</option>
+                    <option value="Shop">Shop / Retail</option>
+                    <option value="Plot">Plot / Land</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Configuration</label>
+                  <select
+                    value={filterConfiguration}
+                    onChange={(e) => setFilterConfiguration(e.target.value)}
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all cursor-pointer"
+                  >
+                    <option value="">Any config</option>
+                    <option value="1 BHK">1 BHK</option>
+                    <option value="2 BHK">2 BHK</option>
+                    <option value="3 BHK">3 BHK</option>
+                    <option value="4 BHK">4 BHK</option>
+                    <option value="5+ BHK">5+ BHK</option>
+                    <option value="Studio">Studio</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Lead Source</label>
+                  <select
+                    value={filterSource}
+                    onChange={(e) => setFilterSource(e.target.value)}
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all cursor-pointer"
+                  >
+                    <option value="">All sources</option>
+                    <option value="Website">Website</option>
+                    <option value="Referral">Referral</option>
+                    <option value="Instagram">Instagram</option>
+                    <option value="99 acres">99 Acres</option>
+                    <option value="Magicbricks">Magicbricks</option>
+                    <option value="Walk-in">Walk-in</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Transaction</label>
+                  <select
+                    value={filterTransactionType}
+                    onChange={(e) => setFilterTransactionType(e.target.value)}
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all cursor-pointer"
+                  >
+                    <option value="">All types</option>
+                    <option value="Outright">Outright (Buy)</option>
+                    <option value="Rent">Rent / Lease</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Stage</label>
+                  <select
+                    value={filterStage}
+                    onChange={(e) => setFilterStage(e.target.value)}
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all cursor-pointer"
+                  >
+                    <option value="">All stages</option>
+                    <option value="New inquiry">New inquiry</option>
+                    <option value="Site visit">Site visit</option>
+                    <option value="Follow up">Follow up</option>
+                    <option value="Closure">Closure</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Budget Min (₹)</label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 5000000"
+                    value={filterBudgetMin}
+                    onChange={(e) => setFilterBudgetMin(e.target.value)}
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Budget Max (₹)</label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 50000000"
+                    value={filterBudgetMax}
+                    onChange={(e) => setFilterBudgetMax(e.target.value)}
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Bulk Action Bar */}
           {selectedLeadIds.size > 0 && (
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 bg-zinc-50 px-5 py-3 shrink-0">
@@ -609,6 +915,28 @@ export default function LeadsPage() {
                 >
                   Export selected
                 </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="px-3 py-1.5 bg-white border border-zinc-200 text-zinc-700 rounded-lg text-xs font-bold hover:bg-zinc-50 transition-all shadow-xs cursor-pointer shrink-0 flex items-center gap-1.5">
+                      <Share2 className="h-3.5 w-3.5 text-zinc-500" />
+                      Share selected
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48 bg-white border border-zinc-200 rounded-xl shadow-lg p-1 z-30">
+                    <DropdownMenuItem onClick={() => handleBulkShare('copy')} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
+                      <Copy className="h-3.5 w-3.5 text-zinc-400" />
+                      Copy summary text
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleBulkShare('whatsapp')} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
+                      <MessageSquare className="h-3.5 w-3.5 text-emerald-500" />
+                      Share to WhatsApp
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleBulkShare('email')} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
+                      <Mail className="h-3.5 w-3.5 text-zinc-400" />
+                      Share via Email
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <button
                   onClick={bulkDeleteSelected}
                   disabled={bulkDeleting}
@@ -697,12 +1025,18 @@ export default function LeadsPage() {
                     {/* Name - Sticky */}
                     <Table.Cell className={cx(STICKY_NAME_CLASS, "whitespace-nowrap shrink-0")}>
                       <div className="flex items-center gap-2 shrink-0">
-                        <div className="h-6 w-6 rounded-md bg-zinc-100 text-zinc-700 font-extrabold flex items-center justify-center text-[10px] shrink-0">
+                        <div className="relative h-6 w-6 rounded-md bg-zinc-100 text-zinc-700 font-extrabold flex items-center justify-center text-[10px] shrink-0">
                           {lead.client_name ? lead.client_name.split(' ').map(n => n[0]).join('') : '?'}
+                          <span className={`absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white ${
+                            lead.status === 'Hot' ? 'bg-rose-500' :
+                            lead.status === 'Warm' ? 'bg-amber-500' :
+                            lead.status === 'Closed' ? 'bg-zinc-400' :
+                            'bg-zinc-300'
+                          }`} />
                         </div>
                         <div className="space-y-0.5 shrink-0">
                           <div className="text-xs font-bold text-zinc-900 truncate max-w-[120px] shrink-0">{lead.client_name}</div>
-                          <div className="text-[10px] text-zinc-400">Contact record</div>
+                          <div className="text-[10px] text-zinc-400">{lead.status || 'Hot'}</div>
                         </div>
                       </div>
                     </Table.Cell>
@@ -828,6 +1162,38 @@ export default function LeadsPage() {
                           <ArrowUpRight className="h-3.5 w-3.5 text-zinc-500" />
                           View Details
                         </button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button 
+                              className="rounded-lg p-1.5 text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 transition-colors border border-zinc-200 bg-white shadow-xs shrink-0"
+                              title="Share Lead"
+                            >
+                              <Share2 className="h-3.5 w-3.5" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48 bg-white border border-zinc-200 rounded-xl shadow-lg p-1 z-30">
+                            <DropdownMenuItem onClick={() => copyToClipboard(generateShareText(lead), "Lead details copied!")} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
+                              <Copy className="h-3.5 w-3.5 text-zinc-400" />
+                              Copy details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => copyToClipboard(getShareableUrl(lead), "Shareable link copied!")} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
+                              <ExternalLink className="h-3.5 w-3.5 text-zinc-400" />
+                              Copy link
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => shareWhatsApp(lead)} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
+                              <MessageSquare className="h-3.5 w-3.5 text-emerald-500" />
+                              Share to WhatsApp
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => shareEmail(lead)} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
+                              <Mail className="h-3.5 w-3.5 text-zinc-400" />
+                              Share via Email
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setQrLead(lead); setIsQrOpen(true); }} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
+                              <QrCode className="h-3.5 w-3.5 text-zinc-400" />
+                              Show QR code
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                         <button
                           onClick={() => handleDeleteLead(lead.id)}
                           className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 inline-flex items-center justify-center border border-transparent hover:border-red-100 shrink-0"
@@ -986,16 +1352,46 @@ export default function LeadsPage() {
             </div>
 
             {/* Drawer Footer Actions */}
-            <div className="p-6 border-t border-zinc-100 bg-zinc-50/50 flex items-center gap-3">
-              <Link href={`/leads/edit?id=${selectedLead.id}`} className="flex-1">
+            <div className="p-6 border-t border-zinc-100 bg-zinc-50/50 flex flex-wrap items-center gap-2">
+              <Link href={`/leads/edit?id=${selectedLead.id}`} className="flex-1 min-w-[120px]">
                 <button className="w-full py-3.5 rounded-xl bg-white border border-zinc-200 text-zinc-900 text-xs font-bold hover:bg-zinc-50 transition-all flex items-center justify-center gap-2">
                   <Edit3 className="h-4 w-4" />
                   Edit Profile
                 </button>
               </Link>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex-1 min-w-[120px] py-3.5 rounded-xl bg-white border border-zinc-200 text-zinc-900 text-xs font-bold hover:bg-zinc-50 transition-all flex items-center justify-center gap-2 cursor-pointer">
+                    <Share2 className="h-4 w-4 text-zinc-500" />
+                    Share Lead
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 bg-white border border-zinc-200 rounded-xl shadow-lg p-1 z-[60]">
+                  <DropdownMenuItem onClick={() => copyToClipboard(generateShareText(selectedLead), "Lead details copied!")} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
+                    <Copy className="h-3.5 w-3.5 text-zinc-400" />
+                    Copy details
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => copyToClipboard(getShareableUrl(selectedLead), "Shareable link copied!")} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
+                    <ExternalLink className="h-3.5 w-3.5 text-zinc-400" />
+                    Copy link
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => shareWhatsApp(selectedLead)} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
+                    <MessageSquare className="h-3.5 w-3.5 text-emerald-500" />
+                    Share to WhatsApp
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => shareEmail(selectedLead)} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
+                    <Mail className="h-3.5 w-3.5 text-zinc-400" />
+                    Share via Email
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setQrLead(selectedLead); setIsQrOpen(true); }} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
+                    <QrCode className="h-3.5 w-3.5 text-zinc-400" />
+                    Show QR code
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <button 
                 onClick={() => handleUpdateStatus('Closed')}
-                className="flex-1 py-3.5 rounded-xl bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800 transition-all flex items-center justify-center gap-2 shadow-lg shadow-zinc-900/10"
+                className="flex-1 min-w-[120px] py-3.5 rounded-xl bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800 transition-all flex items-center justify-center gap-2 shadow-lg shadow-zinc-900/10"
               >
                 <CheckCircle className="h-4 w-4" />
                 Mark as Closed
@@ -1004,6 +1400,14 @@ export default function LeadsPage() {
           </div>
         </div>
       )}
+
+      {/* QR Code Modal Integration */}
+      <QRCodeModal
+        isOpen={isQrOpen}
+        onClose={() => setIsQrOpen(false)}
+        url={qrLead ? getShareableUrl(qrLead) : ''}
+        title={qrLead ? `Scan to view ${qrLead.client_name}'s requirements` : ''}
+      />
 
       {/* Floating Toast Notification */}
       {toast && (

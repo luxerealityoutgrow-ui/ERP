@@ -21,13 +21,15 @@ export interface Lead {
   stage_id?: string;
   next_followup_date?: string;
   status?: string;
+  is_active?: boolean;
   notes?: string;
   created_at?: string;
 }
 
 export async function fetchLeads(profile: Profile | null): Promise<Lead[]> {
   let query = supabase.from('leads').select('*');
-  if (profile) {
+  // SalesPerson only sees own leads; Admin/SuperAdmin see all
+  if (profile && profile.role !== 'SuperAdmin' && profile.role !== 'Admin') {
     query = query.eq('assigned_to', profile.id);
   }
   const { data, error } = await query;
@@ -52,14 +54,16 @@ export interface Property {
   owner_contact?: string;
   description?: string;
   internal_notes?: string;
+  is_active?: boolean;
   created_at?: string;
 }
 
 export async function fetchProperties(profile: Profile | null): Promise<Property[]> {
-  // Sales managers see all; execs see only properties they have access to (join via share)
+  // All roles see all properties; Active/Inactive filtering handled in UI
   const { data, error } = await supabase
     .from('properties')
-    .select('*');
+    .select('*')
+    .order('created_at', { ascending: false });
   if (error) throw error;
   return data as Property[];
 }

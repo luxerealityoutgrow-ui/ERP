@@ -31,6 +31,7 @@ export async function createPropertyAction(prevState: any, formData: FormData) {
     owner_contact: formData.get('owner_contact'),
     description: formData.get('description'),
     internal_notes: formData.get('internal_notes'),
+    is_active: true,
     created_at: new Date().toISOString()
   };
 

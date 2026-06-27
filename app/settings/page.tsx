@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { fetchSetting, updateSetting } from '@/lib/queries';
+import { useProfile } from '@/lib/auth';
+import { getPermissions } from '@/lib/permissions';
+import { supabase } from '@/lib/supabaseClient';
 import {
   Settings,
   User,
@@ -18,13 +21,17 @@ import {
   Check,
   Mail,
   Phone,
-  Building2
+  Building2,
+  Users,
+  UserPlus,
+  Trash2
 } from 'lucide-react';
 
-type SettingSection = 'profile' | 'notifications' | 'security' | 'appearance' | 'integrations';
+type SettingSection = 'profile' | 'notifications' | 'security' | 'appearance' | 'integrations' | 'users';
 
-const sections: { id: SettingSection; label: string; icon: React.ElementType; description: string }[] = [
+const sections: { id: SettingSection; label: string; icon: React.ElementType; description: string; superAdminOnly?: boolean }[] = [
   { id: 'profile', label: 'Profile', icon: User, description: 'Manage your identity and personal details.' },
+  { id: 'users', label: 'User Management', icon: Users, description: 'Manage team members and their roles.', superAdminOnly: true },
   { id: 'notifications', label: 'Notifications', icon: Bell, description: 'Configure alerts and notification preferences.' },
   { id: 'security', label: 'Security', icon: Shield, description: 'Passwords, 2FA, and access control settings.' },
   { id: 'appearance', label: 'Appearance', icon: Palette, description: 'Theme, layout, and display preferences.' },
@@ -41,7 +48,18 @@ const notifOptions = [
 ];
 
 export default function SettingsPage() {
+  const profile = useProfile();
+  const perms = getPermissions(profile?.role);
   const [activeSection, setActiveSection] = useState<SettingSection>('profile');
+
+  // User management state (SuperAdmin only)
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserName, setNewUserName] = useState('');
+  const [newUserRole, setNewUserRole] = useState('SalesPerson');
+  const [savingUser, setSavingUser] = useState(false);
 
   // Profile form state
   const [fullName, setFullName] = useState('Rahul Sharma');
@@ -82,6 +100,77 @@ export default function SettingsPage() {
     }
     loadSettings();
   }, []);
+
+  // Load team members for SuperAdmin
+  useEffect(() => {
+    if (!perms.canManageUsers) return;
+    async function loadUsers() {
+      setLoadingUsers(true);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, full_name, email, role, created_at')
+          .order('created_at', { ascending: false });
+        if (data) setTeamMembers(data);
+      } catch (err) {
+        console.error('Error loading users:', err);
+      } finally {
+        setLoadingUsers(false);
+      }
+    }
+    loadUsers();
+  }, [perms.canManageUsers]);
+
+  const handleUpdateUserRole = async (userId: string, newRole: string) => {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ role: newRole })
+      .eq('id', userId);
+    if (!error) {
+      setTeamMembers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
+    }
+  };
+
+  const handleAddUser = async () => {
+    if (!newUserEmail || !newUserName) return;
+    setSavingUser(true);
+    try {
+      // Insert a profile record (user will need to sign up separately via Supabase Auth)
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert({
+          email: newUserEmail,
+          full_name: newUserName,
+          role: newUserRole,
+          created_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+      if (data) {
+        setTeamMembers(prev => [data, ...prev]);
+        setNewUserEmail('');
+        setNewUserName('');
+        setNewUserRole('SalesPerson');
+        setShowAddUser(false);
+      }
+      if (error) console.error('Error adding user:', error);
+    } catch (err) {
+      console.error('Error adding user:', err);
+    } finally {
+      setSavingUser(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm('Are you sure you want to remove this user?')) return;
+    const { error } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', userId);
+    if (!error) {
+      setTeamMembers(prev => prev.filter(u => u.id !== userId));
+    }
+  };
 
   const handleSaveProfile = () => {
     setProfileSaved(true);
@@ -126,7 +215,7 @@ export default function SettingsPage() {
         {/* Left Sidebar Nav */}
         <div className="lg:col-span-3">
           <nav className="bg-white border border-zinc-200 rounded-2xl shadow-sm p-2 space-y-1">
-            {sections.map((s) => {
+            {sections.filter(s => !s.superAdminOnly || perms.canManageUsers).map((s) => {
               const Icon = s.icon;
               const isActive = activeSection === s.id;
               return (
@@ -578,6 +667,176 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
+          )}
+
+          {/* ── USER MANAGEMENT SECTION (SuperAdmin only) ── */}
+          {activeSection === 'users' && perms.canManageUsers && (
+            <div className="space-y-5">
+              <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl overflow-hidden">
+                <div className="px-6 py-5 border-b border-zinc-100 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-sm font-bold text-zinc-800">Team Members</h2>
+                    <p className="text-[11px] text-zinc-500 mt-0.5">Manage users and assign access levels.</p>
+                  </div>
+                  <button
+                    onClick={() => setShowAddUser(!showAddUser)}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-zinc-900 text-white rounded-xl text-xs font-bold hover:bg-zinc-800 transition-all"
+                  >
+                    <UserPlus className="h-3.5 w-3.5" />
+                    Add User
+                  </button>
+                </div>
+
+                {/* Add User Form */}
+                {showAddUser && (
+                  <div className="p-6 border-b border-zinc-100 bg-zinc-50/50">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Full Name</label>
+                        <input
+                          type="text"
+                          placeholder="John Doe"
+                          value={newUserName}
+                          onChange={(e) => setNewUserName(e.target.value)}
+                          className="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400/20 transition-all"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Email</label>
+                        <input
+                          type="email"
+                          placeholder="user@luxerealty.in"
+                          value={newUserEmail}
+                          onChange={(e) => setNewUserEmail(e.target.value)}
+                          className="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400/20 transition-all"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Role</label>
+                        <select
+                          value={newUserRole}
+                          onChange={(e) => setNewUserRole(e.target.value)}
+                          className="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-800 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400/20 transition-all cursor-pointer"
+                        >
+                          <option value="SalesPerson">SalesPerson</option>
+                          <option value="Admin">Admin</option>
+                          <option value="SuperAdmin">SuperAdmin</option>
+                        </select>
+                      </div>
+                      <div className="flex items-end">
+                        <button
+                          onClick={handleAddUser}
+                          disabled={savingUser || !newUserEmail || !newUserName}
+                          className="w-full px-4 py-2 bg-zinc-900 text-white rounded-xl text-xs font-bold hover:bg-zinc-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {savingUser ? 'Adding...' : 'Add'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Users Table */}
+                {loadingUsers ? (
+                  <div className="p-6 space-y-3">
+                    {[1,2,3].map(i => (
+                      <div key={i} className="h-12 bg-zinc-50 rounded-xl animate-pulse" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="divide-y divide-zinc-100">
+                    {teamMembers.length === 0 ? (
+                      <div className="p-8 text-center">
+                        <Users className="h-8 w-8 text-zinc-300 mx-auto mb-2" />
+                        <p className="text-xs text-zinc-500">No team members found.</p>
+                      </div>
+                    ) : (
+                      teamMembers.map((member) => (
+                        <div key={member.id} className="flex items-center justify-between px-6 py-4 hover:bg-zinc-50 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div className="h-9 w-9 rounded-xl bg-zinc-100 border border-zinc-200 flex items-center justify-center text-xs font-bold text-zinc-600">
+                              {member.full_name?.charAt(0)?.toUpperCase() || 'U'}
+                            </div>
+                            <div>
+                              <p className="text-xs font-semibold text-zinc-800">{member.full_name || 'Unnamed'}</p>
+                              <p className="text-[10px] text-zinc-500">{member.email || 'No email'}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <select
+                              value={member.role || 'SalesPerson'}
+                              onChange={(e) => handleUpdateUserRole(member.id, e.target.value)}
+                              className={`rounded-lg border px-2.5 py-1 text-[10px] font-bold cursor-pointer outline-none transition-all ${
+                                member.role === 'SuperAdmin' 
+                                  ? 'bg-violet-50 text-violet-700 border-violet-200' 
+                                  : member.role === 'Admin' 
+                                    ? 'bg-blue-50 text-blue-700 border-blue-200' 
+                                    : 'bg-zinc-50 text-zinc-600 border-zinc-200'
+                              }`}
+                            >
+                              <option value="SalesPerson">SalesPerson</option>
+                              <option value="Admin">Admin</option>
+                              <option value="SuperAdmin">SuperAdmin</option>
+                            </select>
+                            {member.id !== profile?.id && (
+                              <button
+                                onClick={() => handleDeleteUser(member.id)}
+                                className="p-1.5 rounded-lg text-zinc-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                title="Remove user"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Role Permissions Legend */}
+              <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl overflow-hidden">
+                <div className="px-6 py-5 border-b border-zinc-100">
+                  <h2 className="text-sm font-bold text-zinc-800">Role Permissions</h2>
+                  <p className="text-[11px] text-zinc-500 mt-0.5">Overview of what each role can access.</p>
+                </div>
+                <div className="p-6">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="border-b border-zinc-100">
+                          <th className="pb-2 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Permission</th>
+                          <th className="pb-2 text-[10px] font-bold text-violet-600 uppercase tracking-wider text-center">SuperAdmin</th>
+                          <th className="pb-2 text-[10px] font-bold text-blue-600 uppercase tracking-wider text-center">Admin</th>
+                          <th className="pb-2 text-[10px] font-bold text-zinc-600 uppercase tracking-wider text-center">SalesPerson</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-xs">
+                        {[
+                          { label: 'View all leads', sa: true, a: true, sp: false },
+                          { label: 'Create/edit leads', sa: true, a: true, sp: true },
+                          { label: 'Delete leads', sa: true, a: true, sp: false },
+                          { label: 'Create/edit properties', sa: true, a: true, sp: false },
+                          { label: 'View reporting', sa: true, a: true, sp: false },
+                          { label: 'Manage settings', sa: true, a: true, sp: false },
+                          { label: 'Manage users', sa: true, a: false, sp: false },
+                          { label: 'Export data', sa: true, a: true, sp: false },
+                          { label: 'Bulk delete', sa: true, a: true, sp: false },
+                        ].map((row) => (
+                          <tr key={row.label} className="border-b border-zinc-50">
+                            <td className="py-2 font-medium text-zinc-700">{row.label}</td>
+                            <td className="py-2 text-center">{row.sa ? '✓' : '—'}</td>
+                            <td className="py-2 text-center">{row.a ? '✓' : '—'}</td>
+                            <td className="py-2 text-center">{row.sp ? '✓' : '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
 
         </div>

@@ -8,15 +8,39 @@ import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TagsInput as TagPicker } from '@/components/ui/tags-input';
+import { TagsInput } from '@/components/ui/tags-input';
 import { MediaPicker } from '@/components/ui/media-picker';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Building2, MapPin, User, FileText, ImageIcon, DollarSign, Ruler } from 'lucide-react';
 
+const LOCATION_OPTIONS = [
+  { value: 'Kalyani Nagar', label: 'Kalyani Nagar' },
+  { value: 'Koregaon Park', label: 'Koregaon Park' },
+  { value: 'Baner', label: 'Baner' },
+  { value: 'Viman Nagar', label: 'Viman Nagar' },
+  { value: 'Hinjewadi', label: 'Hinjewadi' },
+  { value: 'Kharadi', label: 'Kharadi' },
+  { value: 'Wakad', label: 'Wakad' },
+  { value: 'Aundh', label: 'Aundh' },
+  { value: 'Hadapsar', label: 'Hadapsar' },
+  { value: 'Magarpatta', label: 'Magarpatta' },
+  { value: 'Boat Club Road', label: 'Boat Club Road' },
+  { value: 'Camp', label: 'Camp' },
+  { value: 'Pimpri-Chinchwad', label: 'Pimpri-Chinchwad' },
+  { value: 'Bavdhan', label: 'Bavdhan' },
+  { value: 'Pashan', label: 'Pashan' },
+];
+
 export function PropertyForm({ initialValues = {} }: { initialValues?: Partial<any> }) {
   const [state, formAction] = useActionState(createPropertyAction, null);
   const [configuration, setConfiguration] = useState<string[]>(
     initialValues.configuration ? initialValues.configuration.split(',') : []
+  );
+  const [locations, setLocations] = useState<string[]>(
+    initialValues.location
+      ? initialValues.location.split(',').map((s: string) => s.trim()).filter(Boolean)
+      : []
   );
 
   return (
@@ -95,7 +119,15 @@ export function PropertyForm({ initialValues = {} }: { initialValues?: Partial<a
             <CardContent className="p-6 space-y-4">
               <div className="space-y-1.5">
                 <Label htmlFor="location" className="text-xs font-bold text-foreground uppercase tracking-wider">Location / Area</Label>
-                <Input id="location" name="location" placeholder="e.g. Beverly Hills, CA" defaultValue={initialValues.location ?? ''} />
+                <TagsInput
+                  value={locations}
+                  onChange={setLocations}
+                  options={LOCATION_OPTIONS}
+                  allowCustom={true}
+                  placeholder="Type or select locations..."
+                />
+                <input type="hidden" name="location" value={locations.join(', ')} />
+                <p className="text-[10px] text-zinc-400 italic">Select from suggestions or type custom locations and press Enter</p>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="address" className="text-xs font-bold text-foreground uppercase tracking-wider">Full Address</Label>

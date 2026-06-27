@@ -1,19 +1,43 @@
 "use client";
-import { useActionState, useEffect } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createLeadAction, updateLeadAction } from '@/app/leads/actions';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select } from '@/components/ui/select';
+import { TagsInput } from '@/components/ui/tags-input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { User, Phone, Mail, MapPin, Building2, Briefcase, DollarSign, Filter } from 'lucide-react';
+
+const LOCATION_OPTIONS = [
+  { value: 'Kalyani Nagar', label: 'Kalyani Nagar' },
+  { value: 'Koregaon Park', label: 'Koregaon Park' },
+  { value: 'Baner', label: 'Baner' },
+  { value: 'Viman Nagar', label: 'Viman Nagar' },
+  { value: 'Hinjewadi', label: 'Hinjewadi' },
+  { value: 'Kharadi', label: 'Kharadi' },
+  { value: 'Wakad', label: 'Wakad' },
+  { value: 'Aundh', label: 'Aundh' },
+  { value: 'Hadapsar', label: 'Hadapsar' },
+  { value: 'Magarpatta', label: 'Magarpatta' },
+  { value: 'Boat Club Road', label: 'Boat Club Road' },
+  { value: 'Camp', label: 'Camp' },
+  { value: 'Pimpri-Chinchwad', label: 'Pimpri-Chinchwad' },
+  { value: 'Bavdhan', label: 'Bavdhan' },
+  { value: 'Pashan', label: 'Pashan' },
+];
 
 export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> }) {
   const router = useRouter();
   const isEdit = !!initialValues.id;
   const [state, formAction] = useActionState(isEdit ? updateLeadAction : createLeadAction, null);
+  const [preferredLocations, setPreferredLocations] = useState<string[]>(
+    initialValues.preferred_location
+      ? initialValues.preferred_location.split(',').map((s: string) => s.trim()).filter(Boolean)
+      : []
+  );
 
   useEffect(() => {
     if (state?.success) {
@@ -171,8 +195,16 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="preferred_location" className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5"/> Preferred Location <span className="text-rose-500">*</span></Label>
-                <Input id="preferred_location" name="preferred_location" placeholder="e.g. Kalyani Nagar, Pune" defaultValue={initialValues.preferred_location ?? ''} required />
+                <Label htmlFor="preferred_location" className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5"/> Preferred Locations <span className="text-rose-500">*</span></Label>
+                <TagsInput
+                  value={preferredLocations}
+                  onChange={setPreferredLocations}
+                  options={LOCATION_OPTIONS}
+                  allowCustom={true}
+                  placeholder="Type or select locations..."
+                />
+                <input type="hidden" name="preferred_location" value={preferredLocations.join(', ')} />
+                <p className="text-[10px] text-zinc-400 italic">Select from suggestions or type custom locations and press Enter</p>
               </div>
 
               <div className="space-y-1.5">

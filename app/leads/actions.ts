@@ -23,6 +23,7 @@ export async function createLeadAction(prevState: any, formData: FormData) {
     next_followup_date: formData.get('next_followup_date') || null,
     status: formData.get('status') || 'Hot',
     notes: formData.get('notes'),
+    is_active: true,
     created_at: new Date().toISOString()
   };
 

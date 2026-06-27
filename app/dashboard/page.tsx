@@ -1,440 +1,501 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useProfile } from '@/lib/auth';
 import { fetchLeads, fetchProperties, Lead, Property } from '@/lib/queries';
+import { fetchSiteVisits, SiteVisit } from '@/lib/siteVisits';
+import { supabase } from '@/lib/supabaseClient';
 import Link from 'next/link';
 import { 
   Users, 
   Home, 
   DollarSign, 
-  Percent, 
   ArrowUpRight, 
+  ArrowDownRight,
   Plus, 
   Calendar, 
-  ChevronDown, 
-  MapPin, 
-  BedDouble, 
-  Bath, 
-  Maximize2,
+  MapPin,
   TrendingUp,
-  MessageSquare,
-  Activity,
-  Sparkles
+  CheckCircle,
+  Clock,
+  Eye,
+  Phone,
+  AlertCircle,
+  Target,
+  Activity
 } from 'lucide-react';
-import { formatCurrency, formatPriceShort } from '@/lib/formatters';
-import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip as ChartTooltip } from 'recharts';
-import { ChartTooltipContent } from '@/components/application/charts/charts-base';
+import { formatPriceShort } from '@/lib/formatters';
+import { getPermissions } from '@/lib/permissions';
 
 export default function DashboardPage() {
   const profile = useProfile();
+  const perms = getPermissions(profile?.role);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
+  const [siteVisits, setSiteVisits] = useState<SiteVisit[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Date range filter (synced with global if available)
+  const [dateRange, setDateRange] = useState<'today' | '7d' | '30d' | '90d' | 'all'>('30d');
 
   useEffect(() => {
     Promise.all([
       fetchLeads(profile).catch(() => []),
-      fetchProperties(profile).catch(() => [])
+      fetchProperties(profile).catch(() => []),
+      fetchSiteVisits(profile).catch(() => [])
     ])
-      .then(([fetchedLeads, fetchedProperties]) => {
+      .then(([fetchedLeads, fetchedProperties, fetchedVisits]) => {
         setLeads(fetchedLeads);
         setProperties(fetchedProperties);
+        setSiteVisits(fetchedVisits);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [profile]);
 
-  // Combined fallback and live properties
-  const displayProperties = properties.length > 0 ? properties.map((p, idx) => ({
-    id: p.id,
-    title: p.title || 'Luxury Estate',
-    price: p.price ? formatCurrency(p.price) : '₹1.25 Cr',
-    location: p.address || p.location || 'Kalyani Nagar, Pune',
-    type: p.property_type || 'Apartment',
-    status: (p as any).status || p.status_id || 'Available',
-    image: idx % 4 === 0 ? '/images/luxe-1.webp' : idx % 4 === 1 ? '/images/luxe-2.webp' : idx % 4 === 2 ? '/images/luxe-3.webp' : '/images/luxe-5.webp',
-    beds: (p as any).bedrooms || 3,
-    baths: (p as any).bathrooms || 3,
-    sqft: p.carpet_area || p.built_up_area || 1800
-  })).slice(0, 4) : [
-    {
-      id: '1',
-      title: 'Pristine Kyra',
-      price: '₹3.1 Cr',
-      location: 'Kalyani Nagar, Pune',
-      type: 'Penthouse',
-      status: 'Available',
-      image: '/images/luxe-1.webp',
-      beds: 4,
-      baths: 5,
-      sqft: 4500
-    },
-    {
-      id: '2',
-      title: 'Power Heights',
-      price: '₹1.3 Cr',
-      location: 'Koregaon Park, Pune',
-      type: 'Luxury Apartment',
-      status: 'Available',
-      image: '/images/luxe-2.webp',
-      beds: 3,
-      baths: 4,
-      sqft: 3200
-    },
-    {
-      id: '3',
-      title: 'Vivencia',
-      price: '₹2.2 Cr',
-      location: 'Baner, Pune',
-      type: 'Villa',
-      status: 'Under Offer',
-      image: '/images/luxe-3.webp',
-      beds: 5,
-      baths: 6,
-      sqft: 8500
-    },
-    {
-      id: '4',
-      title: 'NYATI Evoque',
-      price: '₹3.5 Cr',
-      location: 'Viman Nagar, Pune',
-      type: 'Apartment',
-      status: 'Available',
-      image: '/images/luxe-5.webp',
-      beds: 3,
-      baths: 3,
-      sqft: 2400
+  // Date filtering helper
+  const getDateCutoff = (range: string): Date | null => {
+    const now = new Date();
+    switch (range) {
+      case 'today': 
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        return today;
+      case '7d': return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      case '30d': return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      case '90d': return new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+      default: return null;
     }
-  ];
+  };
 
-  // Pipeline stages chart data
-  const pipelineStages = [
-    { label: 'New inquiry', value: 120, height: 'h-[100%]', percentage: '120 leads' },
-    { label: 'Site visit', value: 85, height: 'h-[71%]', percentage: '85 leads' },
-    { label: 'Follow up', value: 62, height: 'h-[52%]', percentage: '62 leads' },
-    { label: 'Closure', value: 30, height: 'h-[25%]', percentage: '30 deals' }
-  ];
+  // Filtered data based on date range
+  const filteredLeads = useMemo(() => {
+    const cutoff = getDateCutoff(dateRange);
+    if (!cutoff) return leads;
+    return leads.filter(l => l.created_at && new Date(l.created_at) >= cutoff);
+  }, [leads, dateRange]);
 
-  // Recent client interactions
-  const recentInteractions = [
-    { id: 1, name: 'Ananya Sharma', action: 'Inquired on Vivencia', status: 'Hot', time: '10m ago', initial: 'AS' },
-    { id: 2, name: 'Vikram Malhotra', action: 'Requested Site Visit', status: 'Warm', time: '1h ago', initial: 'VM' },
-    { id: 3, name: 'Rajesh Gupta', action: 'Submitted Offer (₹14.7 Cr)', status: 'Closed', time: '3h ago', initial: 'RG' },
-    { id: 4, name: 'Deepika Rao', action: 'Inquired on Power Heights', status: 'Warm', time: '5h ago', initial: 'DR' },
-    { id: 5, name: 'Sanjay Kapoor', action: 'Signed Contract', status: 'Closed', time: '1d ago', initial: 'SK' }
+  const filteredVisits = useMemo(() => {
+    const cutoff = getDateCutoff(dateRange);
+    if (!cutoff) return siteVisits;
+    return siteVisits.filter(v => v.visit_date && new Date(v.visit_date) >= cutoff);
+  }, [siteVisits, dateRange]);
+
+  // KPI calculations
+  const totalLeads = filteredLeads.length;
+  const hotLeads = filteredLeads.filter(l => l.status === 'Hot').length;
+  const warmLeads = filteredLeads.filter(l => l.status === 'Warm').length;
+  const closedLeads = filteredLeads.filter(l => l.status === 'Closed').length;
+  const newInquiries = filteredLeads.filter(l => l.stage_id === 'New inquiry').length;
+  const inSiteVisitStage = filteredLeads.filter(l => l.stage_id === 'Site visit').length;
+  const inFollowUp = filteredLeads.filter(l => l.stage_id === 'Follow up').length;
+  const inClosure = filteredLeads.filter(l => l.stage_id === 'Closure').length;
+
+  const totalProperties = properties.length;
+  const availableProperties = properties.filter(p => p.status_id === 'Available').length;
+  const underOffer = properties.filter(p => p.status_id === 'Under Offer').length;
+  const soldProperties = properties.filter(p => p.status_id === 'Sold').length;
+
+  const totalVisits = filteredVisits.length;
+  const scheduledVisits = filteredVisits.filter(v => v.status === 'Scheduled').length;
+  const completedVisits = filteredVisits.filter(v => v.status === 'Completed' || v.status === 'Done').length;
+
+  // Revenue from sold properties (estimated)
+  const soldRevenue = properties
+    .filter(p => p.status_id === 'Sold' && p.price)
+    .reduce((sum, p) => sum + (p.price || 0), 0);
+
+  // Conversion rate: closed leads / total leads
+  const conversionRate = totalLeads > 0 ? ((closedLeads / totalLeads) * 100).toFixed(1) : '0';
+
+  // Today's visits
+  const today = new Date().toISOString().split('T')[0];
+  const todaysVisits = siteVisits.filter(v => v.visit_date === today);
+
+  // Leads needing followup today
+  const leadsNeedingFollowup = leads.filter(l => l.next_followup_date === today);
+
+  // Recent leads (last 5)
+  const recentLeads = [...leads]
+    .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
+    .slice(0, 6);
+
+  // Pipeline stage data for visual
+  const pipelineData = [
+    { label: 'New Inquiry', count: newInquiries, color: 'bg-blue-500' },
+    { label: 'Site Visit', count: inSiteVisitStage, color: 'bg-amber-500' },
+    { label: 'Follow Up', count: inFollowUp, color: 'bg-violet-500' },
+    { label: 'Closure', count: inClosure, color: 'bg-emerald-500' },
   ];
+  const maxPipeline = Math.max(...pipelineData.map(d => d.count), 1);
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-12 text-zinc-900">
-      {/* Header Section */}
+    <div className="space-y-6 max-w-7xl mx-auto pb-12 text-zinc-900">
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
-            Welcome, {profile?.full_name?.split(' ')[0] || 'Rahul'}! Today&apos;s Overview
+            Dashboard
           </h1>
           <p className="text-xs text-zinc-500">
-            Real-time visual monitoring of your listings, leads, and sales conversion pipelines.
+            Key performance indicators for your property management operations.
           </p>
         </div>
 
-        {/* Action Controls */}
-        <div className="flex items-center gap-3 self-start md:self-center">
-          {/* TEMP SEED BUTTON */}
-          <button 
-            onClick={async () => {
-              try {
-                const tokenStr = localStorage.getItem('sb-sjnwbezerwxdreyhdpci-auth-token');
-                if (!tokenStr) return alert('Not logged in!');
-                const token = JSON.parse(tokenStr).access_token;
-                
-                const res = await fetch('/api/seed-db', {
-                  method: 'POST',
-                  headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (res.ok) window.location.reload();
-                else alert('Failed to seed: ' + await res.text());
-              } catch (e) {
-                alert('Error: ' + e);
-              }
-            }}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-50 border border-zinc-200 text-xs font-semibold text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100 transition-all"
-          >
-            <Sparkles className="h-4 w-4" />
-            Seed Dummy Data
-          </button>
-
-          {/* Date Selector */}
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-zinc-200 text-xs text-zinc-600 font-medium hover:bg-zinc-50 cursor-pointer transition-colors">
-            <Calendar className="h-4 w-4 text-zinc-500" />
-            <span>Last 30 Days</span>
-            <ChevronDown className="h-3 w-3 text-zinc-500" />
+        <div className="flex items-center gap-3">
+          {/* Date Range Selector */}
+          <div className="flex items-center gap-1 p-1 bg-zinc-100/80 rounded-xl">
+            {[
+              { key: 'today', label: 'Today' },
+              { key: '7d', label: '7 Days' },
+              { key: '30d', label: '30 Days' },
+              { key: '90d', label: '90 Days' },
+              { key: 'all', label: 'All Time' },
+            ].map((opt) => (
+              <button
+                key={opt.key}
+                onClick={() => setDateRange(opt.key as any)}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                  dateRange === opt.key 
+                    ? 'bg-white text-zinc-900 shadow-sm' 
+                    : 'text-zinc-500 hover:text-zinc-700'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
           </div>
 
-          {/* Quick CTA Actions */}
           <Link href="/leads/create">
-            <button className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-zinc-200 text-xs font-semibold text-zinc-700 hover:text-zinc-900 hover:bg-zinc-50 transition-all">
-              <Plus className="h-4 w-4 text-zinc-400" />
+            <button className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800 transition-all shadow-sm">
+              <Plus className="h-3.5 w-3.5" />
               Add Lead
             </button>
           </Link>
-          <Link href="/properties/create">
-            <button className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-zinc-500 to-teal-400 text-xs font-bold text-zinc-950 hover:brightness-110 shadow-md shadow-zinc-500/10 transition-all">
-              <Plus className="h-4 w-4" />
-              Add Property
-            </button>
-          </Link>
         </div>
       </div>
 
-      {/* Metrics Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {/* Metric 1: Active Leads */}
-        <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl p-5 flex flex-col justify-between h-36">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-zinc-500">Active Leads</span>
-            <div className="p-2 rounded-lg bg-zinc-500/10 text-zinc-600">
-              <Users className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="flex items-end justify-between mt-2">
-            <div>
-              <h3 className="text-2xl font-bold text-zinc-900 tracking-tight">1,248</h3>
-              <span className="flex items-center gap-1 mt-0.5 text-[10px] font-semibold text-zinc-600">
-                <ArrowUpRight className="h-3 w-3" />
-                +12% vs last month
-              </span>
-            </div>
-            {/* SVG Sparkline */}
-            <div className="w-20 h-10">
-              <svg viewBox="0 0 100 30" className="w-full h-full text-zinc-500 stroke-2 fill-none">
-                <path d="M0,25 Q15,5 30,22 T60,8 T90,2" stroke="currentColor" strokeLinecap="round" />
-              </svg>
-            </div>
-          </div>
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1,2,3,4,5,6,7,8].map(i => (
+            <div key={i} className="h-28 bg-white border border-zinc-200 rounded-2xl animate-pulse" />
+          ))}
         </div>
-
-        {/* Metric 2: Open Listings */}
-        <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl p-5 flex flex-col justify-between h-36">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-zinc-500">Open Listings</span>
-            <div className="p-2 rounded-lg bg-zinc-500/10 text-zinc-600">
-              <Home className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="flex items-end justify-between mt-2">
-            <div>
-              <h3 className="text-2xl font-bold text-zinc-900 tracking-tight">315</h3>
-              <span className="flex items-center gap-1 mt-0.5 text-[10px] font-semibold text-zinc-600">
-                <ArrowUpRight className="h-3 w-3" />
-                +8% vs last week
-              </span>
-            </div>
-            {/* SVG Sparkline */}
-            <div className="w-20 h-10">
-              <svg viewBox="0 0 100 30" className="w-full h-full text-zinc-500 stroke-2 fill-none">
-                <path d="M0,20 Q15,8 30,18 T60,25 T90,5" stroke="currentColor" strokeLinecap="round" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        {/* Metric 3: Closed Deals */}
-        <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl p-5 flex flex-col justify-between h-36">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-zinc-500">Closed Deals (YTD)</span>
-            <div className="p-2 rounded-lg bg-zinc-500/10 text-zinc-600">
-              <DollarSign className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="flex items-end justify-between mt-2">
-            <div>
-              <h3 className="text-2xl font-bold text-zinc-900 tracking-tight">₹36.7 Cr</h3>
-              <span className="flex items-center gap-1 mt-0.5 text-[10px] font-semibold text-zinc-600">
-                <ArrowUpRight className="h-3 w-3" />
-                +24% vs last Qtr
-              </span>
-            </div>
-            {/* SVG Sparkline */}
-            <div className="w-20 h-10">
-              <svg viewBox="0 0 100 30" className="w-full h-full text-zinc-500 stroke-2 fill-none">
-                <path d="M0,28 Q15,20 30,5 T60,15 T90,2" stroke="currentColor" strokeLinecap="round" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        {/* Metric 4: Client Retention */}
-        <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl p-5 flex flex-col justify-between h-36">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-zinc-500">Client Retention</span>
-            <div className="p-2 rounded-lg bg-zinc-500/10 text-zinc-600">
-              <Percent className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="flex items-end justify-between mt-2">
-            <div>
-              <h3 className="text-2xl font-bold text-zinc-900 tracking-tight">91%</h3>
-              <span className="flex items-center gap-1 mt-0.5 text-[10px] font-semibold text-zinc-600">
-                <ArrowUpRight className="h-3 w-3" />
-                +4.5% vs last year
-              </span>
-            </div>
-            {/* SVG Sparkline */}
-            <div className="w-20 h-10">
-              <svg viewBox="0 0 100 30" className="w-full h-full text-zinc-500 stroke-2 fill-none">
-                <path d="M0,22 Q15,10 30,12 T60,8 T90,6" stroke="currentColor" strokeLinecap="round" />
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content Layout Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Left Column: Property Listings Grid */}
-        <div className="lg:col-span-7 xl:col-span-8 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-bold text-zinc-800 tracking-tight">Property Listings Overview</h2>
-              <p className="text-xs text-zinc-500">A curated portfolio of high-value luxury real estate properties.</p>
-            </div>
-            <Link href="/properties" className="text-xs font-bold text-zinc-600 hover:text-zinc-700 hover:underline flex items-center gap-1">
-              View All Properties
-              <ArrowUpRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-
-          {/* Property Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {displayProperties.map((prop) => (
-              <div 
-                key={prop.id} 
-                className="bg-white border border-zinc-200 shadow-sm hover:shadow-md rounded-2xl overflow-hidden hover:translate-y-[-2px] transition-all duration-300 group"
-              >
-                {/* House Photo Section */}
-                <div className="relative h-44 w-full bg-zinc-100 overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img 
-                    src={prop.image} 
-                    alt={prop.title} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  {/* Status Overlay Badge */}
-                  <span className={`absolute top-3.5 right-3.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border backdrop-blur-md ${
-                    prop.status === 'Available' 
-                      ? 'bg-zinc-50 text-zinc-600 border-zinc-100' 
-                      : 'bg-amber-50 text-amber-600 border-amber-100'
-                  }`}>
-                    {prop.status}
-                  </span>
-                  {/* Type Overlay Badge */}
-                  <span className="absolute bottom-3.5 left-3.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-white/80 border border-zinc-200 text-zinc-700 tracking-wider uppercase">
-                    {prop.type}
-                  </span>
+      ) : (
+        <>
+          {/* Primary KPI Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Total Leads */}
+            <div className="bg-white border border-zinc-200 rounded-2xl p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Total Leads</span>
+                <div className="p-1.5 rounded-lg bg-blue-50 text-blue-600">
+                  <Users className="h-4 w-4" />
                 </div>
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-zinc-900">{totalLeads}</h3>
+                <div className="flex items-center gap-3 mt-1">
+                  <span className="text-[10px] font-bold text-rose-600">{hotLeads} Hot</span>
+                  <span className="text-[10px] font-bold text-amber-600">{warmLeads} Warm</span>
+                  <span className="text-[10px] font-bold text-emerald-600">{closedLeads} Closed</span>
+                </div>
+              </div>
+            </div>
 
-                {/* Listing Details */}
-                <div className="p-5 space-y-3">
+            {/* Properties */}
+            <div className="bg-white border border-zinc-200 rounded-2xl p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Properties</span>
+                <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">
+                  <Home className="h-4 w-4" />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-zinc-900">{totalProperties}</h3>
+                <div className="flex items-center gap-3 mt-1">
+                  <span className="text-[10px] font-bold text-emerald-600">{availableProperties} Available</span>
+                  <span className="text-[10px] font-bold text-amber-600">{underOffer} Under Offer</span>
+                  <span className="text-[10px] font-bold text-zinc-500">{soldProperties} Sold</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Site Visits */}
+            <div className="bg-white border border-zinc-200 rounded-2xl p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Site Visits</span>
+                <div className="p-1.5 rounded-lg bg-violet-50 text-violet-600">
+                  <Eye className="h-4 w-4" />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-zinc-900">{totalVisits}</h3>
+                <div className="flex items-center gap-3 mt-1">
+                  <span className="text-[10px] font-bold text-blue-600">{scheduledVisits} Scheduled</span>
+                  <span className="text-[10px] font-bold text-emerald-600">{completedVisits} Completed</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Revenue / Deals Closed */}
+            <div className="bg-white border border-zinc-200 rounded-2xl p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Revenue (Sold)</span>
+                <div className="p-1.5 rounded-lg bg-amber-50 text-amber-600">
+                  <DollarSign className="h-4 w-4" />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-zinc-900">{formatPriceShort(soldRevenue)}</h3>
+                <div className="flex items-center gap-3 mt-1">
+                  <span className="text-[10px] font-bold text-zinc-600">{soldProperties} deals closed</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Secondary KPIs */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-white border border-zinc-200 rounded-xl p-4 flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-rose-50 text-rose-500">
+                <Target className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-lg font-bold text-zinc-900">{conversionRate}%</p>
+                <p className="text-[10px] font-medium text-zinc-500">Conversion Rate</p>
+              </div>
+            </div>
+            <div className="bg-white border border-zinc-200 rounded-xl p-4 flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-blue-50 text-blue-500">
+                <Calendar className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-lg font-bold text-zinc-900">{todaysVisits.length}</p>
+                <p className="text-[10px] font-medium text-zinc-500">Visits Today</p>
+              </div>
+            </div>
+            <div className="bg-white border border-zinc-200 rounded-xl p-4 flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-amber-50 text-amber-500">
+                <Phone className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-lg font-bold text-zinc-900">{leadsNeedingFollowup.length}</p>
+                <p className="text-[10px] font-medium text-zinc-500">Follow-ups Due</p>
+              </div>
+            </div>
+            <div className="bg-white border border-zinc-200 rounded-xl p-4 flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-emerald-50 text-emerald-500">
+                <Activity className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-lg font-bold text-zinc-900">{newInquiries}</p>
+                <p className="text-[10px] font-medium text-zinc-500">New Inquiries</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Left: Pipeline + Today's Schedule */}
+            <div className="lg:col-span-7 space-y-6">
+              {/* Pipeline Funnel */}
+              <div className="bg-white border border-zinc-200 rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h4 className="text-xs font-semibold text-zinc-500 tracking-wider flex items-center gap-1">
-                      <MapPin className="h-3 w-3 text-zinc-500" />
-                      {prop.location}
-                    </h4>
-                    <h3 className="text-base font-bold text-zinc-800 truncate mt-1 group-hover:text-zinc-600 transition-colors">
-                      {prop.title}
-                    </h3>
+                    <h3 className="text-sm font-bold text-zinc-900">Sales Pipeline</h3>
+                    <p className="text-[10px] text-zinc-500 mt-0.5">Lead progression through stages</p>
                   </div>
-
-                  {/* Pricing and Attributes */}
-                  <div className="flex items-center justify-between pt-1 border-t border-zinc-100">
-                    <span className="text-base font-extrabold text-zinc-600">{prop.price}</span>
-                    <div className="flex items-center gap-3.5 text-zinc-500 text-xs font-medium">
-                      <span className="flex items-center gap-1" title="Bedrooms">
-                        <BedDouble className="h-3.5 w-3.5 text-zinc-400" />
-                        {prop.beds}
-                      </span>
-                      <span className="flex items-center gap-1" title="Bathrooms">
-                        <Bath className="h-3.5 w-3.5 text-zinc-400" />
-                        {prop.baths}
-                      </span>
-                      <span className="flex items-center gap-1" title="Area Sqft">
-                        <Maximize2 className="h-3.5 w-3.5 text-zinc-400" />
-                        {prop.sqft.toLocaleString()}
-                      </span>
+                  <Link href="/pipeline" className="text-[10px] font-bold text-zinc-500 hover:text-zinc-700 flex items-center gap-1">
+                    View Pipeline <ArrowUpRight className="h-3 w-3" />
+                  </Link>
+                </div>
+                <div className="space-y-3">
+                  {pipelineData.map((stage) => (
+                    <div key={stage.label} className="flex items-center gap-3">
+                      <span className="text-[10px] font-bold text-zinc-600 w-20 shrink-0">{stage.label}</span>
+                      <div className="flex-1 h-7 bg-zinc-100 rounded-lg overflow-hidden relative">
+                        <div 
+                          className={`h-full ${stage.color} rounded-lg transition-all duration-500`}
+                          style={{ width: `${(stage.count / maxPipeline) * 100}%` }}
+                        />
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-zinc-600">
+                          {stage.count}
+                        </span>
+                      </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Right Column: Pipeline & Client Interactions */}
-        <div className="lg:col-span-5 xl:col-span-4 space-y-6">
-          
-          {/* Sales Pipeline stages */}
-          <div className="space-y-4">
-            <div>
-              <h2 className="text-lg font-bold text-zinc-800 tracking-tight">Sales Pipeline Stages</h2>
-              <p className="text-xs text-zinc-500">Active deal tracking across the sales funnel stages.</p>
+              {/* Today's Schedule */}
+              <div className="bg-white border border-zinc-200 rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-sm font-bold text-zinc-900">Today&apos;s Schedule</h3>
+                    <p className="text-[10px] text-zinc-500 mt-0.5">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                  </div>
+                  <Link href="/site-visits" className="text-[10px] font-bold text-zinc-500 hover:text-zinc-700 flex items-center gap-1">
+                    All Visits <ArrowUpRight className="h-3 w-3" />
+                  </Link>
+                </div>
+                {todaysVisits.length === 0 ? (
+                  <div className="py-6 text-center">
+                    <Calendar className="h-8 w-8 text-zinc-300 mx-auto mb-2" />
+                    <p className="text-xs text-zinc-500">No site visits scheduled for today.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {todaysVisits.map((visit) => (
+                      <div key={visit.id} className="flex items-center justify-between p-3 rounded-xl bg-zinc-50 border border-zinc-100">
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center">
+                            <Eye className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-zinc-900">Site Visit</p>
+                            <p className="text-[10px] text-zinc-500">{visit.visit_time || 'TBD'}</p>
+                          </div>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${
+                          visit.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-blue-50 text-blue-700 border-blue-200'
+                        }`}>
+                          {visit.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Follow-ups Due Today */}
+              {leadsNeedingFollowup.length > 0 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <AlertCircle className="h-4 w-4 text-amber-600" />
+                    <h3 className="text-sm font-bold text-amber-900">Follow-ups Due Today ({leadsNeedingFollowup.length})</h3>
+                  </div>
+                  <div className="space-y-2">
+                    {leadsNeedingFollowup.slice(0, 5).map((lead) => (
+                      <Link key={lead.id} href={`/leads/${lead.id}`} className="flex items-center justify-between p-3 rounded-xl bg-white/70 border border-amber-100 hover:bg-white transition-colors">
+                        <div className="flex items-center gap-2">
+                          <div className="h-7 w-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center text-[10px] font-bold">
+                            {lead.client_name?.charAt(0) || '?'}
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-zinc-900">{lead.client_name}</p>
+                            <p className="text-[10px] text-zinc-500">{lead.phone}</p>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-bold text-amber-700">{lead.stage_id}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm">
-              <div className="h-48 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={pipelineStages} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
-                    <XAxis dataKey="label" stroke="#71717a" fontSize={10} tickLine={false} axisLine={false} />
-                    <YAxis stroke="#71717a" fontSize={10} tickLine={false} axisLine={false} />
-                    <ChartTooltip content={<ChartTooltipContent />} cursor={{ fill: 'rgba(0, 0, 0, 0.02)', radius: 4 }} />
-                    <Bar dataKey="value" fill="#14b8a6" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+            {/* Right: Recent Leads + Property Stats */}
+            <div className="lg:col-span-5 space-y-6">
+              {/* Recent Leads */}
+              <div className="bg-white border border-zinc-200 rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-sm font-bold text-zinc-900">Recent Leads</h3>
+                    <p className="text-[10px] text-zinc-500 mt-0.5">Latest inquiries and client entries</p>
+                  </div>
+                  <Link href="/leads" className="text-[10px] font-bold text-zinc-500 hover:text-zinc-700 flex items-center gap-1">
+                    All Leads <ArrowUpRight className="h-3 w-3" />
+                  </Link>
+                </div>
+                {recentLeads.length === 0 ? (
+                  <div className="py-6 text-center">
+                    <Users className="h-8 w-8 text-zinc-300 mx-auto mb-2" />
+                    <p className="text-xs text-zinc-500">No leads yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {recentLeads.map((lead) => (
+                      <Link key={lead.id} href={`/leads/${lead.id}`} className="flex items-center justify-between p-3 rounded-xl hover:bg-zinc-50 transition-colors border border-transparent hover:border-zinc-100">
+                        <div className="flex items-center gap-3">
+                          <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-[10px] font-bold ${
+                            lead.status === 'Hot' ? 'bg-rose-100 text-rose-700' :
+                            lead.status === 'Warm' ? 'bg-amber-100 text-amber-700' :
+                            lead.status === 'Closed' ? 'bg-emerald-100 text-emerald-700' :
+                            'bg-zinc-100 text-zinc-600'
+                          }`}>
+                            {lead.client_name?.split(' ').map(n => n[0]).join('') || '?'}
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-zinc-900">{lead.client_name}</p>
+                            <p className="text-[10px] text-zinc-500">{lead.preferred_location || 'Flexible'} • {lead.property_type || 'Any'}</p>
+                          </div>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold border ${
+                          lead.status === 'Hot' ? 'bg-rose-50 text-rose-600 border-rose-200' :
+                          lead.status === 'Warm' ? 'bg-amber-50 text-amber-600 border-amber-200' :
+                          lead.status === 'Closed' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
+                          'bg-zinc-50 text-zinc-600 border-zinc-200'
+                        }`}>
+                          {lead.status || 'New'}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Property Breakdown by Type */}
+              <div className="bg-white border border-zinc-200 rounded-2xl p-6">
+                <h3 className="text-sm font-bold text-zinc-900 mb-4">Properties by Type</h3>
+                <div className="space-y-2">
+                  {Object.entries(
+                    properties.reduce<Record<string, number>>((acc, p) => {
+                      const type = p.property_type || 'Other';
+                      acc[type] = (acc[type] || 0) + 1;
+                      return acc;
+                    }, {})
+                  ).sort((a, b) => b[1] - a[1]).map(([type, count]) => (
+                    <div key={type} className="flex items-center justify-between py-2 border-b border-zinc-50 last:border-0">
+                      <span className="text-xs font-medium text-zinc-700">{type}</span>
+                      <span className="text-xs font-bold text-zinc-900">{count}</span>
+                    </div>
+                  ))}
+                  {properties.length === 0 && (
+                    <p className="text-xs text-zinc-500 text-center py-4">No properties data</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Lead Sources Breakdown */}
+              <div className="bg-white border border-zinc-200 rounded-2xl p-6">
+                <h3 className="text-sm font-bold text-zinc-900 mb-4">Lead Sources</h3>
+                <div className="space-y-2">
+                  {Object.entries(
+                    filteredLeads.reduce<Record<string, number>>((acc, l) => {
+                      const source = l.lead_source_id || 'Unknown';
+                      acc[source] = (acc[source] || 0) + 1;
+                      return acc;
+                    }, {})
+                  ).sort((a, b) => b[1] - a[1]).map(([source, count]) => (
+                    <div key={source} className="flex items-center justify-between py-2 border-b border-zinc-50 last:border-0">
+                      <span className="text-xs font-medium text-zinc-700">{source}</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-16 h-2 bg-zinc-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-zinc-500 rounded-full" style={{ width: `${(count / totalLeads) * 100}%` }} />
+                        </div>
+                        <span className="text-xs font-bold text-zinc-900 w-6 text-right">{count}</span>
+                      </div>
+                    </div>
+                  ))}
+                  {filteredLeads.length === 0 && (
+                    <p className="text-xs text-zinc-500 text-center py-4">No leads data</p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-
-          {/* Recent Client Interactions */}
-          <div className="space-y-4">
-            <div>
-              <h2 className="text-base font-bold text-zinc-800 tracking-tight">Recent Client Interactions</h2>
-              <p className="text-xs text-zinc-500">Chronological feed of database updates and client actions.</p>
-            </div>
-
-            <div className="bg-white border border-zinc-200 rounded-2xl p-4 shadow-sm divide-y divide-zinc-100">
-              {recentInteractions.map((log) => (
-                <div key={log.id} className="py-3 flex items-start justify-between first:pt-1 last:pb-1 group">
-                  <div className="flex items-center gap-3">
-                    {/* Initials Circle */}
-                    <div className="h-8 w-8 rounded-lg bg-zinc-100 border border-zinc-200 text-xs font-bold text-zinc-600 flex items-center justify-center group-hover:bg-zinc-50 transition-colors">
-                      {log.initial}
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-zinc-800">{log.name}</h4>
-                      <p className="text-[10px] text-zinc-500 mt-0.5">{log.action}</p>
-                    </div>
-                  </div>
-                  
-                  {/* Status Badge & Time */}
-                  <div className="flex flex-col items-end gap-1.5">
-                    <span className="text-[9px] text-zinc-500 font-medium">{log.time}</span>
-                    <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-widest border ${
-                      log.status === 'Hot' 
-                        ? 'bg-red-50 text-red-600 border-red-100' 
-                        : log.status === 'Warm' 
-                          ? 'bg-amber-50 text-amber-600 border-amber-100' 
-                          : 'bg-zinc-50 text-zinc-600 border-zinc-100'
-                    }`}>
-                      {log.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 }
