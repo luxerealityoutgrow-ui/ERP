@@ -10,9 +10,12 @@ import {
   Users, 
   Home, 
   CornerDownLeft,
-  Calendar
+  Calendar,
+  Settings,
+  LogOut
 } from 'lucide-react';
 import { useProfile } from '@/lib/auth';
+import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { fetchLeads, fetchProperties, Lead, Property } from '@/lib/queries';
@@ -23,6 +26,7 @@ export function Header() {
 
   // Search Palette State
   const [isOpen, setIsOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [leads, setLeads] = useState<Lead[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
@@ -211,20 +215,107 @@ export function Header() {
           {/* Vertical Separator */}
           <div className="h-5 w-[1px] bg-zinc-200" />
 
-          {/* Profile Details */}
-          <div className="flex items-center gap-3 cursor-pointer group">
-            <div className="flex flex-col text-right">
-              <span className="text-xs font-semibold text-zinc-850 group-hover:text-zinc-950 transition-colors">
-                {profile?.full_name || 'Rahul Sharma'}
-              </span>
-              <span className="text-[9px] font-bold text-zinc-400 tracking-wider uppercase">
-                {profile?.role || 'Senior Agent'}
-              </span>
-            </div>
-            <div className="h-8.5 w-8.5 rounded-xl bg-zinc-50 border border-zinc-250 flex items-center justify-center font-bold text-xs text-zinc-600 shadow-xs">
-              {profile?.full_name?.charAt(0)?.toUpperCase() || 'R'}
-            </div>
-            <ChevronDown className="h-3.5 w-3.5 text-zinc-400 group-hover:text-zinc-650 transition-colors" />
+          {/* Profile Dropdown */}
+          <div className="relative">
+            <button 
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+              className="flex items-center gap-3 cursor-pointer group"
+            >
+              <div className="flex flex-col text-right">
+                <span className="text-xs font-semibold text-zinc-800 group-hover:text-zinc-950 transition-colors">
+                  {profile?.full_name || 'User'}
+                </span>
+                <span className="text-[9px] font-bold text-zinc-400 tracking-wider uppercase">
+                  {profile?.role || 'Loading...'}
+                </span>
+              </div>
+              <div className="h-9 w-9 rounded-xl bg-zinc-900 flex items-center justify-center font-bold text-xs text-white shadow-sm">
+                {profile?.full_name?.split(' ').map(n => n[0]).join('') || 'U'}
+              </div>
+              <ChevronDown className={`h-3.5 w-3.5 text-zinc-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Dropdown Panel */}
+            {isProfileOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsProfileOpen(false)} />
+                <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-zinc-200 rounded-2xl shadow-2xl z-50 overflow-hidden">
+                  {/* User Info Header */}
+                  <div className="p-4 border-b border-zinc-100 bg-zinc-50/50">
+                    <div className="flex items-center gap-3">
+                      <div className="h-11 w-11 rounded-xl bg-zinc-900 flex items-center justify-center text-sm font-bold text-white">
+                        {profile?.full_name?.split(' ').map(n => n[0]).join('')}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-zinc-900">{profile?.full_name}</p>
+                        <p className="text-[10px] text-zinc-500">{profile?.email}</p>
+                        <span className={`inline-flex items-center mt-1 px-2 py-0.5 rounded-full text-[9px] font-bold border ${
+                          profile?.role === 'SuperAdmin' ? 'bg-violet-50 text-violet-700 border-violet-200' :
+                          profile?.role === 'Admin' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                          'bg-zinc-50 text-zinc-600 border-zinc-200'
+                        }`}>
+                          {profile?.role === 'SalesPerson' ? 'Sales Executive' : profile?.role}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Access Summary */}
+                  <div className="p-3 border-b border-zinc-100">
+                    <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Your Access</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {profile?.role === 'SuperAdmin' || profile?.role === 'Admin' ? (
+                        <>
+                          <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-[9px] font-bold text-emerald-700 border border-emerald-100">Dashboard</span>
+                          <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-[9px] font-bold text-emerald-700 border border-emerald-100">Reporting</span>
+                          <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-[9px] font-bold text-emerald-700 border border-emerald-100">Export</span>
+                          <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-[9px] font-bold text-emerald-700 border border-emerald-100">Settings</span>
+                        </>
+                      ) : null}
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-[9px] font-bold text-emerald-700 border border-emerald-100">Leads</span>
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-[9px] font-bold text-emerald-700 border border-emerald-100">Properties</span>
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-[9px] font-bold text-emerald-700 border border-emerald-100">Calendar</span>
+                      {profile?.role === 'SuperAdmin' && (
+                        <span className="px-2 py-0.5 rounded-md bg-violet-50 text-[9px] font-bold text-violet-700 border border-violet-100">User Mgmt</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="p-2">
+                    <button
+                      onClick={() => { setIsProfileOpen(false); window.location.href = '/settings'; }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors text-left"
+                    >
+                      <Settings className="h-3.5 w-3.5 text-zinc-400" />
+                      Account Settings
+                    </button>
+                    {profile?.role === 'SuperAdmin' && (
+                      <button
+                        onClick={() => { setIsProfileOpen(false); window.location.href = '/users'; }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors text-left"
+                      >
+                        <Users className="h-3.5 w-3.5 text-zinc-400" />
+                        User Management
+                      </button>
+                    )}
+                    <div className="border-t border-zinc-100 mt-1 pt-1">
+                      <button
+                        onClick={async () => {
+                          await supabase.auth.signOut();
+                          localStorage.removeItem('luxe-role-override');
+                          window.location.href = '/login';
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-red-600 hover:bg-red-50 transition-colors text-left"
+                      >
+                        <LogOut className="h-3.5 w-3.5" />
+                        Sign Out
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </header>

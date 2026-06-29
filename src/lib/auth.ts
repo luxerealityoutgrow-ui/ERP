@@ -30,7 +30,7 @@ export function useProfile(): Profile | null {
             id: 'dev-user',
             role: roleOverride || 'SuperAdmin',
             full_name: 'Husain Badri',
-            email: 'husain@luxerealty.in',
+            email: 'husain@outgrowintelligence.com',
           };
           setProfile(devProfile);
           setLoading(false);
