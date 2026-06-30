@@ -86,12 +86,6 @@ export function SidebarNav() {
       icon: Calendar,
     },
     {
-      title: 'Reporting',
-      href: '/reporting',
-      icon: BarChart3,
-      badge: 'PRO',
-    },
-    {
       title: 'Settings',
       href: '/settings',
       icon: Settings,
