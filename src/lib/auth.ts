@@ -19,20 +19,14 @@ export function useProfile(): Profile | null {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        // Check for role override first (demo/dev mode)
-        const roleOverride = typeof window !== 'undefined' ? localStorage.getItem('luxe-role-override') : null;
-
         const { data: { user } } = await supabase.auth.getUser();
         
         if (!user) {
-          // No auth user — create a dev profile with role override or default SuperAdmin
-          const devProfile: Profile = {
-            id: 'dev-user',
-            role: roleOverride || 'SuperAdmin',
-            full_name: 'Husain Badri',
-            email: 'husain@outgrowintelligence.com',
-          };
-          setProfile(devProfile);
+          // Not authenticated — redirect to login
+          if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+            window.location.href = '/login';
+          }
+          setProfile(null);
           setLoading(false);
           return;
         }
@@ -44,17 +38,18 @@ export function useProfile(): Profile | null {
           .single();
 
         if (error || !data) {
-          // User exists in auth but no profile — create fallback
+          // User in auth but no profile — fallback
           const fallbackProfile: Profile = {
             id: user.id,
-            role: roleOverride || 'SuperAdmin',
+            role: 'SalesPerson',
             full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
             email: user.email || '',
           };
           setProfile(fallbackProfile);
         } else {
           const profileData = data as Profile;
-          // Apply role override if set
+          // Apply role override if set (demo mode)
+          const roleOverride = localStorage.getItem('luxe-role-override');
           if (roleOverride && ['SuperAdmin', 'Admin', 'SalesPerson'].includes(roleOverride)) {
             profileData.role = roleOverride;
           }
@@ -62,14 +57,7 @@ export function useProfile(): Profile | null {
         }
       } catch (err) {
         console.error('Error in fetchProfile:', err);
-        // Even on error, provide a working dev profile
-        const roleOverride = typeof window !== 'undefined' ? localStorage.getItem('luxe-role-override') : null;
-        setProfile({
-          id: 'dev-user',
-          role: roleOverride || 'SuperAdmin',
-          full_name: 'Husain Badri',
-          email: 'husain@luxerealty.in',
-        });
+        setProfile(null);
       } finally {
         setLoading(false);
       }

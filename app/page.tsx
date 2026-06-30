@@ -2,21 +2,19 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getPermissions } from '@/lib/permissions';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function RootPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check role override from localStorage for immediate redirect
-    const roleOverride = localStorage.getItem('luxe-role-override');
-    const perms = getPermissions(roleOverride);
-    
-    if (perms.canViewDashboard) {
-      router.replace('/dashboard');
-    } else {
-      router.replace('/leads');
-    }
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        router.replace('/dashboard');
+      } else {
+        router.replace('/login');
+      }
+    });
   }, [router]);
 
   return null;
