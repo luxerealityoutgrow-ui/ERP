@@ -383,15 +383,22 @@ export default function LeadsPage() {
     }
   };
   const handleRowStageChange = async (leadId: string, newStage: string) => {
-    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stage_id: newStage } : l));
+    // If stage is set to Closure, auto-deactivate the lead
+    const shouldDeactivate = newStage === 'Closure';
+    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stage_id: newStage, ...(shouldDeactivate ? { is_active: false } : {}) } : l));
     if (selectedLead && selectedLead.id === leadId) {
-      setSelectedLead(prev => prev ? { ...prev, stage_id: newStage } : null);
+      setSelectedLead(prev => prev ? { ...prev, stage_id: newStage, ...(shouldDeactivate ? { is_active: false } : {}) } : null);
     }
-    setToast({ msg: "Stage updated.", tone: "ok" });
+    setToast({ msg: shouldDeactivate ? "Deal closed — lead marked inactive." : "Stage updated.", tone: "ok" });
     try {
+      const updateData: Record<string, unknown> = { stage_id: newStage };
+      if (shouldDeactivate) {
+        updateData.is_active = false;
+        updateData.status = 'Closed';
+      }
       const { error } = await supabase
         .from('leads')
-        .update({ stage_id: newStage })
+        .update(updateData)
         .eq('id', leadId);
       if (error) {
         console.error("Database update error:", error);
