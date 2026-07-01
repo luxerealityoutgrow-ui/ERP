@@ -343,15 +343,22 @@ export default function LeadsPage() {
 
   // Inline DB updates
   const handleRowStatusChange = async (leadId: string, newStatus: string) => {
-    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status: newStatus } : l));
+    // If status is "Closed", auto-move to Inactive. Otherwise, ensure it's Active.
+    const shouldDeactivate = newStatus === 'Closed';
+    const shouldActivate = newStatus !== 'Closed';
+    
+    setLeads(prev => prev.map(l => {
+      if (l.id !== leadId) return l;
+      return { ...l, status: newStatus, is_active: shouldActivate };
+    }));
     if (selectedLead && selectedLead.id === leadId) {
-      setSelectedLead(prev => prev ? { ...prev, status: newStatus } : null);
+      setSelectedLead(prev => prev ? { ...prev, status: newStatus, is_active: shouldActivate } : null);
     }
-    setToast({ msg: "Status updated.", tone: "ok" });
+    setToast({ msg: shouldDeactivate ? "Lead closed — moved to Inactive." : "Status updated.", tone: "ok" });
     try {
       const { error } = await supabase
         .from('leads')
-        .update({ status: newStatus })
+        .update({ status: newStatus, is_active: shouldActivate })
         .eq('id', leadId);
       if (error) {
         console.error("Database update error:", error);
