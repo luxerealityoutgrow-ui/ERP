@@ -572,14 +572,18 @@ export default function LeadsPage() {
 
   // Sharing Helper Functions
   const generateShareText = (l: Lead) => {
-    return `📋 *LUXE REALTY LEAD DETAILS*
-👤 *Client Name:* ${l.client_name}
+    const createdDate = l.created_at ? new Date(l.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'N/A';
+    return `📋 *Luxe Realty Lead Details*
+👤 *Name:* ${l.client_name}
 📞 *Phone:* ${l.phone || 'N/A'}
 ✉️ *Email:* ${l.email || 'N/A'}
+🌐 *Source:* ${l.lead_source_id || 'N/A'}
+🏷️ *Status:* ${l.status || 'New'}
+📅 *Created:* ${createdDate}
+📍 *Location:* ${l.preferred_location || 'Flexible'}
+🏢 *Property:* ${l.property_type || 'N/A'} (${l.configuration || 'Any'})
 💰 *Budget:* ${l.budget_min ? `${formatBudgetAbbreviated(l.budget_min)} - ${formatBudgetAbbreviated(l.budget_max)}` : 'Flexible'}
-📍 *Preferred Location:* ${l.preferred_location || 'Flexible'}
-🏢 *Property Type:* ${l.property_type || 'N/A'} (${l.configuration || 'Any'})
-💼 *Transaction:* ${l.transaction_type || 'Outright'} / ${l.category || 'Residential'}
+💼 *Type:* ${l.transaction_type || 'Outright'} / ${l.category || 'Residential'}
 📝 *Notes:* ${l.notes || 'None'}`;
   };
 
