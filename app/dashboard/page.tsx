@@ -480,32 +480,6 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Lead Sources Breakdown */}
-              <div className="bg-white border border-zinc-200 rounded-2xl p-6">
-                <h3 className="text-sm font-bold text-zinc-900 mb-4">Lead Sources</h3>
-                <div className="space-y-2">
-                  {Object.entries(
-                    filteredLeads.reduce<Record<string, number>>((acc, l) => {
-                      const source = l.lead_source_id || 'Unknown';
-                      acc[source] = (acc[source] || 0) + 1;
-                      return acc;
-                    }, {})
-                  ).sort((a, b) => b[1] - a[1]).map(([source, count]) => (
-                    <div key={source} className="flex items-center justify-between py-2 border-b border-zinc-50 last:border-0">
-                      <span className="text-xs font-medium text-zinc-700">{source}</span>
-                      <div className="flex items-center gap-2">
-                        <div className="w-16 h-2 bg-zinc-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-zinc-500 rounded-full" style={{ width: `${(count / totalLeads) * 100}%` }} />
-                        </div>
-                        <span className="text-xs font-bold text-zinc-900 w-6 text-right">{count}</span>
-                      </div>
-                    </div>
-                  ))}
-                  {filteredLeads.length === 0 && (
-                    <p className="text-xs text-zinc-500 text-center py-4">No leads data</p>
-                  )}
-                </div>
-              </div>
             </div>
           </div>
         </>
