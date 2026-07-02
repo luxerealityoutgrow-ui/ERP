@@ -112,7 +112,7 @@ export default function LeadsPage() {
 
   // Drill-down advanced filters
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [filterLocation, setFilterLocation] = useState('');
+  const [filterLocations, setFilterLocations] = useState<string[]>([]);
   const [filterPropertyType, setFilterPropertyType] = useState('');
   const [filterConfiguration, setFilterConfiguration] = useState('');
   const [filterSource, setFilterSource] = useState('');
@@ -121,6 +121,15 @@ export default function LeadsPage() {
   const [filterBudgetMax, setFilterBudgetMax] = useState('');
   const [filterStage, setFilterStage] = useState('');
   const [activeState, setActiveState] = useState<'Active' | 'Inactive' | 'All'>('Active');
+  const [availableLocations, setAvailableLocations] = useState<string[]>([]);
+  const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
+
+  // Fetch locations for filter dropdown
+  useEffect(() => {
+    supabase.from('locations').select('name').order('name').then(({ data }) => {
+      if (data) setAvailableLocations(data.map(l => l.name));
+    });
+  }, []);
 
   // Fetch leads on load
   useEffect(() => {
@@ -264,7 +273,9 @@ export default function LeadsPage() {
       }
 
       // Drill-down advanced filters
-      const matchesLocation = !filterLocation || (lead.preferred_location || '').toLowerCase().includes(filterLocation.toLowerCase());
+      const matchesLocation = filterLocations.length === 0 || filterLocations.some(loc => 
+        (lead.preferred_location || '').toLowerCase().includes(loc.toLowerCase())
+      );
       const matchesPropertyType = !filterPropertyType || lead.property_type === filterPropertyType;
       const matchesConfiguration = !filterConfiguration || lead.configuration === filterConfiguration;
       const matchesSource = !filterSource || lead.lead_source_id === filterSource;
@@ -288,7 +299,7 @@ export default function LeadsPage() {
 
       return matchesSearch && matchesStatus && matchesActiveState && matchesLocation && matchesPropertyType && matchesConfiguration && matchesSource && matchesTransactionType && matchesStage && matchesBudget;
     });
-  }, [displayLeads, searchQuery, statusFilter, activeState, filterLocation, filterPropertyType, filterConfiguration, filterSource, filterTransactionType, filterBudgetMin, filterBudgetMax, filterStage]);
+  }, [displayLeads, searchQuery, statusFilter, activeState, filterLocations, filterPropertyType, filterConfiguration, filterSource, filterTransactionType, filterBudgetMin, filterBudgetMax, filterStage]);
 
   // Sort logic
   const sortedLeads = useMemo(() => {
@@ -747,9 +758,9 @@ export default function LeadsPage() {
                 >
                   <SlidersHorizontal className="h-3.5 w-3.5" />
                   Drill Down
-                  {(filterLocation || filterPropertyType || filterConfiguration || filterSource || filterTransactionType || filterBudgetMin || filterBudgetMax || filterStage) && (
+                  {(filterLocations.length > 0 || filterPropertyType || filterConfiguration || filterSource || filterTransactionType || filterBudgetMin || filterBudgetMax || filterStage) && (
                     <span className="ml-1 h-4 w-4 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
-                      {[filterLocation, filterPropertyType, filterConfiguration, filterSource, filterTransactionType, filterBudgetMin || filterBudgetMax, filterStage].filter(Boolean).length}
+                      {[filterLocations.length > 0, filterPropertyType, filterConfiguration, filterSource, filterTransactionType, filterBudgetMin || filterBudgetMax, filterStage].filter(Boolean).length}
                     </span>
                   )}
                 </button>
@@ -797,7 +808,7 @@ export default function LeadsPage() {
                 </h3>
                 <button
                   onClick={() => {
-                    setFilterLocation('');
+                    setFilterLocations([]);
                     setFilterPropertyType('');
                     setFilterConfiguration('');
                     setFilterSource('');
@@ -812,15 +823,51 @@ export default function LeadsPage() {
                 </button>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                <div className="space-y-1">
+                <div className="space-y-1 relative">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Location</label>
-                  <input
-                    type="text"
-                    placeholder="Any location..."
-                    value={filterLocation}
-                    onChange={(e) => setFilterLocation(e.target.value)}
-                    className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all"
-                  />
+                  <button
+                    type="button"
+                    onClick={() => setLocationDropdownOpen(!locationDropdownOpen)}
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-left outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all min-h-[30px]"
+                  >
+                    {filterLocations.length === 0 
+                      ? <span className="text-zinc-400">All locations</span>
+                      : <span className="text-zinc-800">{filterLocations.length} selected</span>
+                    }
+                  </button>
+                  {filterLocations.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {filterLocations.map(loc => (
+                        <span key={loc} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-zinc-100 text-[9px] font-bold text-zinc-700">
+                          {loc}
+                          <button onClick={() => setFilterLocations(prev => prev.filter(l => l !== loc))} className="text-zinc-400 hover:text-zinc-700">×</button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {locationDropdownOpen && (
+                    <>
+                      <div className="fixed inset-0 z-30" onClick={() => setLocationDropdownOpen(false)} />
+                      <div className="absolute top-full left-0 mt-1 w-56 max-h-52 overflow-y-auto bg-white border border-zinc-200 rounded-xl shadow-lg z-40 p-1">
+                        {availableLocations.map(loc => (
+                          <button
+                            key={loc}
+                            onClick={() => {
+                              setFilterLocations(prev => 
+                                prev.includes(loc) ? prev.filter(l => l !== loc) : [...prev, loc]
+                              );
+                            }}
+                            className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                              filterLocations.includes(loc) ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-600 hover:bg-zinc-50'
+                            }`}
+                          >
+                            {loc}
+                            {filterLocations.includes(loc) && <span className="text-emerald-500 font-bold">✓</span>}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Property Type</label>

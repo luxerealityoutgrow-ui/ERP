@@ -46,6 +46,14 @@ export async function createPropertyAction(prevState: any, formData: FormData) {
     return { error: error.message };
   }
 
+  // Auto-add new locations to the locations table
+  if (data.location) {
+    const locations = String(data.location).split(',').map(l => l.trim()).filter(Boolean);
+    for (const loc of locations) {
+      await supabase.from('locations').upsert({ name: loc }, { onConflict: 'name' });
+    }
+  }
+
   await supabase
     .from('audit_logs')
     .insert({ user_id: profile?.id, event: 'Property created', changes: data });

@@ -46,7 +46,7 @@ export default function PropertyInventoryPage() {
 
   // Drill-down advanced filters
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [filterLocation, setFilterLocation] = useState('');
+  const [filterLocations, setFilterLocations] = useState<string[]>([]);
   const [filterPropertyType, setFilterPropertyType] = useState('');
   const [filterConfiguration, setFilterConfiguration] = useState('');
   const [filterListingType, setFilterListingType] = useState('');
@@ -54,6 +54,15 @@ export default function PropertyInventoryPage() {
   const [filterPriceMax, setFilterPriceMax] = useState('');
   const [filterAreaMin, setFilterAreaMin] = useState('');
   const [filterAreaMax, setFilterAreaMax] = useState('');
+  const [availableLocations, setAvailableLocations] = useState<string[]>([]);
+  const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
+
+  // Fetch available locations
+  useEffect(() => {
+    supabase.from('locations').select('name').order('name').then(({ data }) => {
+      if (data) setAvailableLocations(data.map(l => l.name));
+    });
+  }, []);
 
   // Fetch properties on load
   useEffect(() => {
@@ -156,7 +165,9 @@ export default function PropertyInventoryPage() {
         || (activeState === 'Active' && prop.is_active !== false)
         || (activeState === 'Inactive' && prop.is_active === false);
 
-      const matchesLocation = !filterLocation || (prop.location || '').toLowerCase().includes(filterLocation.toLowerCase());
+      const matchesLocation = filterLocations.length === 0 || filterLocations.some(loc => 
+        (prop.location || '').toLowerCase().includes(loc.toLowerCase())
+      );
       const matchesPropertyType = !filterPropertyType || prop.property_type === filterPropertyType;
       const matchesConfiguration = !filterConfiguration || (prop.configuration || '').includes(filterConfiguration);
       const matchesListingType = !filterListingType || prop.listing_type === filterListingType;
@@ -183,7 +194,7 @@ export default function PropertyInventoryPage() {
 
       return matchesSearch && matchesTab && matchesActiveState && matchesLocation && matchesPropertyType && matchesConfiguration && matchesListingType && matchesPrice && matchesArea;
     });
-  }, [displayProperties, searchQuery, activeTab, activeState, filterLocation, filterPropertyType, filterConfiguration, filterListingType, filterPriceMin, filterPriceMax, filterAreaMin, filterAreaMax]);
+  }, [displayProperties, searchQuery, activeTab, activeState, filterLocations, filterPropertyType, filterConfiguration, filterListingType, filterPriceMin, filterPriceMax, filterAreaMin, filterAreaMax]);
 
   // Selection helpers
   const allVisibleSelected = filteredProperties.length > 0 && filteredProperties.every(p => selectedIds.has(p.id));
@@ -329,9 +340,9 @@ ${prop.description ? `\n${prop.description}` : ''}`;
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
               Drill Down
-              {(filterLocation || filterPropertyType || filterConfiguration || filterListingType || filterPriceMin || filterPriceMax || filterAreaMin || filterAreaMax) && (
+              {(filterLocations.length > 0 || filterPropertyType || filterConfiguration || filterListingType || filterPriceMin || filterPriceMax || filterAreaMin || filterAreaMax) && (
                 <span className="ml-1 h-4 w-4 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
-                  {[filterLocation, filterPropertyType, filterConfiguration, filterListingType, filterPriceMin || filterPriceMax, filterAreaMin || filterAreaMax].filter(Boolean).length}
+                  {[filterLocations.length > 0, filterPropertyType, filterConfiguration, filterListingType, filterPriceMin || filterPriceMax, filterAreaMin || filterAreaMax].filter(Boolean).length}
                 </span>
               )}
             </button>
@@ -393,7 +404,7 @@ ${prop.description ? `\n${prop.description}` : ''}`;
             </h3>
             <button
               onClick={() => {
-                setFilterLocation('');
+                setFilterLocations([]);
                 setFilterPropertyType('');
                 setFilterConfiguration('');
                 setFilterListingType('');
@@ -408,15 +419,51 @@ ${prop.description ? `\n${prop.description}` : ''}`;
             </button>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            <div className="space-y-1">
+            <div className="space-y-1 relative">
               <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Location</label>
-              <input
-                type="text"
-                placeholder="Any location..."
-                value={filterLocation}
-                onChange={(e) => setFilterLocation(e.target.value)}
-                className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-2 text-xs font-medium outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all"
-              />
+              <button
+                type="button"
+                onClick={() => setLocationDropdownOpen(!locationDropdownOpen)}
+                className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-2 text-xs font-medium text-left outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all"
+              >
+                {filterLocations.length === 0 
+                  ? <span className="text-zinc-400">All locations</span>
+                  : <span className="text-zinc-800">{filterLocations.length} selected</span>
+                }
+              </button>
+              {filterLocations.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {filterLocations.map(loc => (
+                    <span key={loc} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-zinc-100 text-[9px] font-bold text-zinc-700">
+                      {loc}
+                      <button onClick={() => setFilterLocations(prev => prev.filter(l => l !== loc))} className="text-zinc-400 hover:text-zinc-700">×</button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              {locationDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-30" onClick={() => setLocationDropdownOpen(false)} />
+                  <div className="absolute top-full left-0 mt-1 w-56 max-h-52 overflow-y-auto bg-white border border-zinc-200 rounded-xl shadow-lg z-40 p-1">
+                    {availableLocations.map(loc => (
+                      <button
+                        key={loc}
+                        onClick={() => {
+                          setFilterLocations(prev => 
+                            prev.includes(loc) ? prev.filter(l => l !== loc) : [...prev, loc]
+                          );
+                        }}
+                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                          filterLocations.includes(loc) ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-600 hover:bg-zinc-50'
+                        }`}
+                      >
+                        {loc}
+                        {filterLocations.includes(loc) && <span className="text-emerald-500 font-bold">✓</span>}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Property Type</label>
