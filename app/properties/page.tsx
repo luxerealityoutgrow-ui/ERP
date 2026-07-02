@@ -56,7 +56,6 @@ export default function PropertyInventoryPage() {
   const [filterAreaMax, setFilterAreaMax] = useState('');
   const [availableLocations, setAvailableLocations] = useState<string[]>([]);
   const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
-  const [newLocationInput, setNewLocationInput] = useState('');
 
   // Fetch available locations
   useEffect(() => {
@@ -446,7 +445,7 @@ ${prop.description ? `\n${prop.description}` : ''}`;
               {locationDropdownOpen && (
                 <>
                   <div className="fixed inset-0 z-30" onClick={() => setLocationDropdownOpen(false)} />
-                  <div className="absolute top-full left-0 mt-1 w-56 max-h-60 overflow-y-auto bg-white border border-zinc-200 rounded-xl shadow-lg z-40 p-1">
+                  <div className="absolute top-full left-0 mt-1 w-56 max-h-52 overflow-y-auto bg-white border border-zinc-200 rounded-xl shadow-lg z-40 p-1">
                     {availableLocations.map(loc => (
                       <button
                         key={loc}
@@ -463,45 +462,6 @@ ${prop.description ? `\n${prop.description}` : ''}`;
                         {filterLocations.includes(loc) && <span className="text-emerald-500 font-bold">✓</span>}
                       </button>
                     ))}
-                    {/* Add New Location */}
-                    <div className="border-t border-zinc-100 mt-1 pt-1 px-1">
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="text"
-                          value={newLocationInput}
-                          onChange={(e) => setNewLocationInput(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && newLocationInput.trim()) {
-                              e.preventDefault();
-                              const loc = newLocationInput.trim();
-                              supabase.from('locations').upsert({ name: loc }, { onConflict: 'name' }).then(() => {
-                                setAvailableLocations(prev => [...prev, loc].sort());
-                                setFilterLocations(prev => [...prev, loc]);
-                                setNewLocationInput('');
-                              });
-                            }
-                          }}
-                          placeholder="+ Add new area..."
-                          className="flex-1 px-2 py-1.5 rounded-lg border border-zinc-200 text-[11px] font-medium outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400/20"
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!newLocationInput.trim()) return;
-                            const loc = newLocationInput.trim();
-                            supabase.from('locations').upsert({ name: loc }, { onConflict: 'name' }).then(() => {
-                              setAvailableLocations(prev => [...prev, loc].sort());
-                              setFilterLocations(prev => [...prev, loc]);
-                              setNewLocationInput('');
-                            });
-                          }}
-                          className="px-2 py-1.5 rounded-lg bg-zinc-900 text-white text-[10px] font-bold hover:bg-zinc-800 transition-colors"
-                        >
-                          Add
-                        </button>
-                      </div>
-                    </div>
                   </div>
                 </>
               )}
