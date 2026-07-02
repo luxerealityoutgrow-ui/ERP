@@ -1032,7 +1032,7 @@ export default function LeadsPage() {
                     />
                   </button>
                 </Table.Head>
-                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left">Name</Table.Head>
+                <Table.Head isRowHeader className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left">Name</Table.Head>
                 <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left">Email</Table.Head>
                 <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left">Phone</Table.Head>
                 <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left">Source</Table.Head>
