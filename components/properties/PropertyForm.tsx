@@ -1,7 +1,8 @@
 "use client";
 import { useActionState } from 'react';
 import { useState, useEffect } from 'react';
-import { createPropertyAction } from '@/app/properties/actions';
+import { useRouter } from 'next/navigation';
+import { createPropertyAction, updatePropertyAction } from '@/app/properties/actions';
 import { supabase } from '@/lib/supabaseClient';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,12 +14,21 @@ import { TagsInput } from '@/components/ui/tags-input';
 import { MediaPicker } from '@/components/ui/media-picker';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Building2, MapPin, User, FileText, ImageIcon, DollarSign, Ruler } from 'lucide-react';
+import { Building2, MapPin, User, FileText, ImageIcon, DollarSign, Ruler, Trash2, ArrowLeft } from 'lucide-react';
 
-export function PropertyForm({ initialValues = {} }: { initialValues?: Partial<any> }) {
-  const [state, formAction] = useActionState(createPropertyAction, null);
+interface PropertyFormProps {
+  initialValues?: Partial<any>;
+  mode?: 'create' | 'edit';
+}
+
+export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFormProps) {
+  const router = useRouter();
+  const isEdit = mode === 'edit' && !!initialValues.id;
+  const [state, formAction] = useActionState(isEdit ? updatePropertyAction : createPropertyAction, null);
+  const [deleting, setDeleting] = useState(false);
+
   const [configuration, setConfiguration] = useState<string[]>(
-    initialValues.configuration ? initialValues.configuration.split(',') : []
+    initialValues.configuration ? initialValues.configuration.split(',').map((s: string) => s.trim()) : []
   );
   const [locations, setLocations] = useState<string[]>(
     initialValues.location
@@ -36,26 +46,87 @@ export function PropertyForm({ initialValues = {} }: { initialValues?: Partial<a
     });
   }, []);
 
-  // When form submits successfully, auto-add new locations to DB
+  // On success, redirect and sync locations
   useEffect(() => {
-    if (state?.success && locations.length > 0) {
-      locations.forEach(loc => {
-        supabase.from('locations').upsert({ name: loc }, { onConflict: 'name' });
-      });
+    if (state?.success) {
+      // Auto-add new locations to DB
+      if (locations.length > 0) {
+        locations.forEach(loc => {
+          supabase.from('locations').upsert({ name: loc }, { onConflict: 'name' });
+        });
+      }
+      router.push('/properties');
+      router.refresh();
     }
   }, [state]);
 
+  const handleDelete = async () => {
+    if (!initialValues.id) return;
+    if (!confirm('Are you sure you want to delete this property? This cannot be undone.')) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from('properties').delete().eq('id', initialValues.id);
+      if (!error) {
+        router.push('/properties');
+        router.refresh();
+      } else {
+        alert('Failed to delete: ' + error.message);
+      }
+    } catch (err) {
+      alert('Error deleting property');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <form action={formAction} className="max-w-5xl mx-auto space-y-8 pb-10">
+      {isEdit && <input type="hidden" name="id" value={initialValues.id} />}
+
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">Property Details</h1>
-          <p className="text-sm text-zinc-500">Manage your real estate listings and their specifications.</p>
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="p-2 rounded-xl hover:bg-zinc-100 transition-colors"
+          >
+            <ArrowLeft className="h-5 w-5 text-zinc-500" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">
+              {isEdit ? 'Edit Property' : 'New Property'}
+            </h1>
+            <p className="text-sm text-zinc-500">
+              {isEdit ? 'Update the property details below.' : 'Add a new listing to your inventory.'}
+            </p>
+          </div>
         </div>
-        <Button type="submit" className="bg-zinc-600 hover:bg-zinc-700 text-white shadow-lg shadow-zinc-500/20">
-          Save Property
-        </Button>
+        <div className="flex items-center gap-3">
+          {isEdit && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleDelete}
+              disabled={deleting}
+              className="gap-1.5 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              {deleting ? 'Deleting...' : 'Delete'}
+            </Button>
+          )}
+          <Button type="submit" className="bg-zinc-600 hover:bg-zinc-700 text-white shadow-lg shadow-zinc-500/20 px-6">
+            {isEdit ? 'Update Property' : 'Save Property'}
+          </Button>
+        </div>
       </div>
+
+      {/* Error state */}
+      {state?.error && (
+        <div className="p-4 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-xs font-bold">
+          Error: {state.error}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-2 space-y-8">
@@ -91,10 +162,16 @@ export function PropertyForm({ initialValues = {} }: { initialValues?: Partial<a
                   <Select name="property_type" defaultValue={initialValues.property_type ?? ''}>
                     <option value="">Select Type</option>
                     <option value="Apartment">Apartment</option>
-                    <option value="Villa">Villa</option>
+                    <option value="Penthouse">Penthouse</option>
+                    <option value="Duplex">Duplex</option>
                     <option value="Row House">Row House</option>
-                    <option value="Commercial">Commercial</option>
+                    <option value="Bungalow">Bungalow</option>
+                    <option value="Independent Building">Independent Building</option>
                     <option value="Plot">Plot</option>
+                    <option value="Shop">Shop</option>
+                    <option value="Showroom">Showroom</option>
+                    <option value="Office">Office</option>
+                    <option value="Restaurant Space">Restaurant Space</option>
                   </Select>
                 </div>
                 <div className="space-y-1.5">
@@ -106,6 +183,19 @@ export function PropertyForm({ initialValues = {} }: { initialValues?: Partial<a
                   </Select>
                 </div>
               </div>
+
+              {isEdit && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="status_id" className="text-xs font-bold text-foreground uppercase tracking-wider">Status</Label>
+                  <Select name="status_id" defaultValue={initialValues.status_id ?? 'Available'}>
+                    <option value="Available">Available</option>
+                    <option value="Under Offer">Under Offer</option>
+                    <option value="Hold">Hold</option>
+                    <option value="Sold">Sold</option>
+                    <option value="Rented">Rented</option>
+                  </Select>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -116,11 +206,10 @@ export function PropertyForm({ initialValues = {} }: { initialValues?: Partial<a
                 <MapPin className="w-4 h-4 text-zinc-600" />
                 <CardTitle className="text-base font-bold">Location</CardTitle>
               </div>
-              <CardDescription>Specify where the property is situated.</CardDescription>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="location" className="text-xs font-bold text-foreground uppercase tracking-wider">Location / Area</Label>
+                <Label className="text-xs font-bold text-foreground uppercase tracking-wider">Location / Area</Label>
                 <TagsInput
                   value={locations}
                   onChange={setLocations}
@@ -129,23 +218,22 @@ export function PropertyForm({ initialValues = {} }: { initialValues?: Partial<a
                   placeholder="Type or select locations..."
                 />
                 <input type="hidden" name="location" value={locations.join(', ')} />
-                <p className="text-[10px] text-zinc-400 italic">Select from suggestions or type custom locations and press Enter</p>
+                <p className="text-[10px] text-zinc-400 italic">Select or type custom locations. New locations will be saved for future use.</p>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="address" className="text-xs font-bold text-foreground uppercase tracking-wider">Full Address</Label>
-                <Textarea id="address" name="address" placeholder="Street name, Building number, Apt #" defaultValue={initialValues.address ?? ''} rows={2} className="resize-none" />
+                <Textarea id="address" name="address" placeholder="Street name, Building number, Area" defaultValue={initialValues.address ?? ''} rows={2} className="resize-none" />
               </div>
             </CardContent>
           </Card>
 
-          {/* Ownership Information */}
+          {/* Ownership */}
           <Card className="border-zinc-200/80 shadow-sm overflow-hidden">
             <CardHeader className="border-b border-zinc-100">
               <div className="flex items-center gap-2">
                 <User className="w-4 h-4 text-zinc-600" />
                 <CardTitle className="text-base font-bold">Ownership</CardTitle>
               </div>
-              <CardDescription>Contact information for the property owner.</CardDescription>
             </CardHeader>
             <CardContent className="p-6">
               <div className="grid grid-cols-2 gap-4">
@@ -176,10 +264,9 @@ export function PropertyForm({ initialValues = {} }: { initialValues?: Partial<a
                 <Label htmlFor="price" className="text-xs font-bold text-foreground uppercase tracking-wider">Price</Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">₹</span>
-                  <Input id="price" type="number" name="price" className="pl-7" placeholder="e.g. 5,00,00,000" defaultValue={initialValues.price ?? ''} />
+                  <Input id="price" type="number" name="price" className="pl-7" placeholder="e.g. 50000000" defaultValue={initialValues.price ?? ''} />
                 </div>
               </div>
-
               <div className="space-y-4 pt-2 border-t border-zinc-100">
                 <div className="space-y-1.5">
                   <Label htmlFor="carpet_area" className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
@@ -210,10 +297,22 @@ export function PropertyForm({ initialValues = {} }: { initialValues?: Partial<a
                 <Label className="text-xs font-bold text-foreground uppercase tracking-wider">Configuration (BHK/Rooms)</Label>
                 <TagPicker value={configuration} onChange={setConfiguration} />
                 <input type="hidden" name="configuration" value={configuration.join(',')} />
-                <p className="text-[10px] text-zinc-400 italic">Press enter to add multiple values (e.g. 2 BHK, 3 BHK)</p>
+                <p className="text-[10px] text-zinc-400 italic">Press enter to add (e.g. 2 BHK, 3 BHK)</p>
               </div>
             </CardContent>
           </Card>
+
+          {/* Internal Notes (edit only) */}
+          {isEdit && (
+            <Card className="border-zinc-200/80 shadow-sm overflow-hidden">
+              <CardHeader className="border-b border-zinc-100">
+                <CardTitle className="text-base font-bold">Internal Notes</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <Textarea name="internal_notes" placeholder="Private notes for the team..." defaultValue={initialValues.internal_notes ?? ''} rows={4} className="resize-none" />
+              </CardContent>
+            </Card>
+          )}
 
           {/* Media */}
           <Card className="border-zinc-200/80 shadow-sm overflow-hidden">
@@ -232,16 +331,6 @@ export function PropertyForm({ initialValues = {} }: { initialValues?: Partial<a
           </Card>
         </div>
       </div>
-
-      <div className="flex justify-end pt-6 border-t border-zinc-200">
-        <div className="flex gap-3">
-          <Button variant="outline" type="button" className="px-8 border-zinc-300 text-zinc-600">Cancel</Button>
-          <Button type="submit" className="px-8 bg-zinc-600 hover:bg-zinc-700 text-white shadow-lg shadow-zinc-500/20">
-            Save Property Listing
-          </Button>
-        </div>
-      </div>
     </form>
   );
 }
-
