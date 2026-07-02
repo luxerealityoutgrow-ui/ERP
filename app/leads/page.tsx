@@ -1014,122 +1014,107 @@ export default function LeadsPage() {
             </div>
           )}
 
-          <div className="overflow-x-auto w-full">
-            <Table size="sm" aria-label="Leads" className="min-w-[1940px]">
+          <div className="w-full">
+            <Table size="sm" aria-label="Leads">
               <Table.Header>
-                <Table.Head className="w-12 text-center shrink-0">
+                <Table.Head className="w-10 text-center">
                   <button
                     type="button"
                     aria-label="Select all leads"
                     onClick={() => toggleVisibleSelection(!allVisibleSelected)}
-                    className="inline-flex items-center justify-center rounded outline-none shrink-0"
+                    className="inline-flex items-center justify-center rounded outline-none"
                   >
                     <CheckboxBase 
                       size="sm" 
                       isSelected={allVisibleSelected} 
                       isIndeterminate={!allVisibleSelected && someVisibleSelected} 
-                      className={cx("transition-colors shrink-0", !allVisibleSelected && !someVisibleSelected && "!bg-white !ring-zinc-300")}
+                      className={cx("transition-colors", !allVisibleSelected && !someVisibleSelected && "bg-white! ring-zinc-300!")}
                     />
                   </button>
                 </Table.Head>
-                <Table.Head className={cx("min-w-[150px] shrink-0", STICKY_DATE_HEADER_CLASS)}>
-                  <button onClick={() => toggleSort("created_at")} className="flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 hover:text-zinc-800">
-                    Created At {sortKey === "created_at" && (sortDir === "asc" ? "↑" : "↓")}
-                  </button>
-                </Table.Head>
-                <Table.Head isRowHeader className={cx("min-w-[180px] shrink-0", STICKY_NAME_HEADER_CLASS)}>
-                  <button onClick={() => toggleSort("client_name")} className="flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 hover:text-zinc-800">
-                    Name {sortKey === "client_name" && (sortDir === "asc" ? "↑" : "↓")}
-                  </button>
-                </Table.Head>
-                <Table.Head className="min-w-[220px] text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 shrink-0">Email ID</Table.Head>
-                <Table.Head className="min-w-[140px] text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 shrink-0">Phone</Table.Head>
-                <Table.Head className="min-w-[150px] text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 shrink-0">Source</Table.Head>
-                <Table.Head className="min-w-[160px] text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 shrink-0">Status</Table.Head>
-                <Table.Head className="min-w-[180px] text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 shrink-0">Location</Table.Head>
-                <Table.Head className="min-w-[180px] text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 text-right shrink-0">Budget</Table.Head>
-                <Table.Head className="min-w-[150px] text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 shrink-0">Property Type</Table.Head>
-                <Table.Head className="min-w-[140px] text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 shrink-0">Configuration</Table.Head>
-                <Table.Head className="min-w-[160px] text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 shrink-0">Commercial / Residential</Table.Head>
-                <Table.Head className="min-w-[140px] text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 shrink-0">Rent / Outright</Table.Head>
-                <Table.Head className="min-w-[160px] text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 shrink-0">Stage</Table.Head>
-                <Table.Head className="min-w-[170px] text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 shrink-0">Next Follow-Up</Table.Head>
-                <Table.Head className="min-w-[240px] text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 shrink-0">Notes</Table.Head>
-                <Table.Head className="w-44 text-center text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 shrink-0">Actions</Table.Head>
+                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left">Name</Table.Head>
+                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left">Email</Table.Head>
+                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left">Phone</Table.Head>
+                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left">Source</Table.Head>
+                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left">Config</Table.Head>
+                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left">Location</Table.Head>
+                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left">Status</Table.Head>
+                <Table.Head className="w-24 text-xs font-semibold uppercase tracking-wide text-zinc-500 text-center">Actions</Table.Head>
               </Table.Header>
               <Table.Body>
                 {sortedLeads.map((lead) => (
                   <Table.Row 
                     key={lead.id} 
                     onClick={() => handleOpenLead(lead)} 
-                    className="cursor-pointer hover:bg-zinc-50/70 transition-colors group/row whitespace-nowrap"
+                    className="cursor-pointer hover:bg-zinc-50/70 transition-colors group/row"
                   >
                     {/* Checkbox */}
-                    <Table.Cell className="w-12 text-center shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <Table.Cell className="w-10 text-center" onClick={(e) => e.stopPropagation()}>
                       <button
                         type="button"
                         aria-label={`Select ${lead.client_name}`}
                         onClick={() => toggleLeadSelection(lead.id, !selectedLeadIds.has(lead.id))}
-                        className="inline-flex items-center justify-center rounded outline-none shrink-0"
+                        className="inline-flex items-center justify-center rounded outline-none"
                       >
                         <CheckboxBase 
                           size="sm" 
                           isSelected={selectedLeadIds.has(lead.id)} 
-                          className={cx("transition-colors shrink-0", !selectedLeadIds.has(lead.id) && "!bg-white !ring-zinc-300")}
+                          className={cx("transition-colors", !selectedLeadIds.has(lead.id) && "bg-white! ring-zinc-300!")}
                         />
                       </button>
                     </Table.Cell>
 
-                    {/* Created At - Sticky */}
-                    <Table.Cell className={cx(STICKY_DATE_CLASS, "whitespace-nowrap shrink-0")}>
-                      <div className="space-y-0.5">
-                        <div className="text-xs font-semibold text-zinc-900">{formatShortDate(lead.created_at)}</div>
-                        <div className="text-[10px] text-zinc-400">{formatDate(lead.created_at)}</div>
-                      </div>
-                    </Table.Cell>
-
-                    {/* Name - Sticky */}
-                    <Table.Cell className={cx(STICKY_NAME_CLASS, "whitespace-nowrap shrink-0")}>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <div className="relative h-6 w-6 rounded-md bg-zinc-100 text-zinc-700 font-extrabold flex items-center justify-center text-[10px] shrink-0">
+                    {/* Name */}
+                    <Table.Cell className="text-left">
+                      <div className="flex items-center gap-2">
+                        <div className="relative h-6 w-6 rounded-md bg-zinc-100 text-zinc-700 font-extrabold flex items-center justify-center text-[10px]">
                           {lead.client_name ? lead.client_name.split(' ').map(n => n[0]).join('') : '?'}
-                          <span className={`absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white ${
+                          <span className={`absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full border-2 border-white ${
                             lead.status === 'Hot' ? 'bg-rose-500' :
                             lead.status === 'Warm' ? 'bg-amber-500' :
                             lead.status === 'Closed' ? 'bg-zinc-400' :
                             'bg-zinc-300'
                           }`} />
                         </div>
-                        <div className="space-y-0.5 shrink-0">
-                          <div className="text-xs font-bold text-zinc-900 truncate max-w-[120px] shrink-0">{lead.client_name}</div>
-                          <div className="text-[10px] text-zinc-400">{lead.status || 'Hot'}</div>
-                        </div>
+                        <span className="text-xs font-bold text-zinc-900 truncate max-w-[140px]">{lead.client_name}</span>
                       </div>
                     </Table.Cell>
 
                     {/* Email */}
-                    <Table.Cell className="text-zinc-600 font-medium whitespace-nowrap shrink-0">
-                      <div className="max-w-[200px] truncate text-xs shrink-0">{lead.email || "\u2014"}</div>
+                    <Table.Cell className="text-left">
+                      <span className="text-xs text-zinc-600 truncate max-w-[180px] block">{lead.email || '—'}</span>
                     </Table.Cell>
 
                     {/* Phone */}
-                    <Table.Cell className="text-zinc-600 font-semibold text-xs whitespace-nowrap shrink-0">{lead.phone || "\u2014"}</Table.Cell>
+                    <Table.Cell className="text-left">
+                      <span className="text-xs font-medium text-zinc-700">{lead.phone || '—'}</span>
+                    </Table.Cell>
 
                     {/* Source */}
-                    <Table.Cell className="whitespace-nowrap shrink-0">
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold border shrink-0 ${getSourceStyle(lead.lead_source_id)}`}>
-                        {lead.lead_source_id || "\u2014"}
+                    <Table.Cell className="text-left">
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold border ${getSourceStyle(lead.lead_source_id)}`}>
+                        {lead.lead_source_id || '—'}
                       </span>
                     </Table.Cell>
 
-                    {/* Status dropdown */}
-                    <Table.Cell className="whitespace-nowrap shrink-0" onClick={(e) => e.stopPropagation()}>
-                      <div className="relative w-28 shrink-0">
+                    {/* Config */}
+                    <Table.Cell className="text-left">
+                      <span className="text-xs font-medium text-zinc-700">{lead.configuration || '—'}</span>
+                    </Table.Cell>
+
+                    {/* Location */}
+                    <Table.Cell className="text-left">
+                      <span className="text-xs text-zinc-600 truncate max-w-[140px] block">{lead.preferred_location || '—'}</span>
+                    </Table.Cell>
+
+                    {/* Status */}
+                    <Table.Cell className="text-left" onClick={(e) => e.stopPropagation()}>
+                      <div className="relative w-28">
                         <select
                           value={lead.status || "Hot"}
                           onChange={(e) => handleRowStatusChange(lead.id, e.target.value)}
                           className={cx(
-                            "w-full cursor-pointer rounded-lg border pl-2.5 pr-6 py-1 text-xs font-semibold shadow-sm outline-none transition-all focus:ring-2 focus:ring-zinc-500/20 appearance-none text-left shrink-0",
+                            "w-full cursor-pointer rounded-lg border pl-2 pr-6 py-1 text-[11px] font-semibold shadow-sm outline-none transition-all focus:ring-2 focus:ring-zinc-500/20 appearance-none text-left",
                             getStatusStyle(lead.status || "Hot")
                           )}
                         >
@@ -1137,104 +1122,24 @@ export default function LeadsPage() {
                             <option key={s} value={s}>{s}</option>
                           ))}
                         </select>
-                        <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 pointer-events-none opacity-60 shrink-0" />
+                        <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 pointer-events-none opacity-60" />
                       </div>
                     </Table.Cell>
 
-                    {/* Location */}
-                    <Table.Cell className="text-zinc-700 font-semibold text-xs whitespace-nowrap shrink-0">
-                      <span className="flex items-center gap-1 shrink-0">
-                        <MapPin className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
-                        <span className="truncate max-w-[140px] shrink-0">{lead.preferred_location || "\u2014"}</span>
-                      </span>
-                    </Table.Cell>
-
-                    {/* Budget formatted in Indian units (Cr/L) */}
-                    <Table.Cell className="text-right font-extrabold text-zinc-800 text-xs whitespace-nowrap shrink-0">
-                      {lead.budget_min 
-                        ? `${formatBudgetAbbreviated(lead.budget_min)} - ${formatBudgetAbbreviated(lead.budget_max || 0)}`
-                        : 'Flexible'}
-                    </Table.Cell>
-
-                    {/* Property Type */}
-                    <Table.Cell className="text-zinc-700 font-semibold text-xs whitespace-nowrap shrink-0">{lead.property_type || "\u2014"}</Table.Cell>
-
-                    {/* Configuration */}
-                    <Table.Cell className="whitespace-nowrap shrink-0">
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border border-zinc-200 bg-zinc-50 text-zinc-600 shrink-0">
-                        {lead.configuration || 'Any'}
-                      </span>
-                    </Table.Cell>
-
-                    {/* Category */}
-                    <Table.Cell className="text-zinc-600 font-semibold text-xs whitespace-nowrap shrink-0">{lead.category || 'Residential'}</Table.Cell>
-
-                    {/* Transaction type */}
-                    <Table.Cell className="whitespace-nowrap shrink-0">
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border shrink-0 ${
-                        lead.transaction_type === 'Outright' 
-                          ? 'border-emerald-100 bg-emerald-50 text-emerald-700' 
-                          : 'border-blue-100 bg-blue-50 text-blue-700'
-                      }`}>
-                        {lead.transaction_type || 'Outright'}
-                      </span>
-                    </Table.Cell>
-
-                    {/* Stage dropdown */}
-                    <Table.Cell className="whitespace-nowrap shrink-0" onClick={(e) => e.stopPropagation()}>
-                      <select
-                        value={lead.stage_id || "New inquiry"}
-                        onChange={(e) => handleRowStageChange(lead.id, e.target.value)}
-                        className="w-full cursor-pointer rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-semibold text-zinc-700 shadow-sm outline-none transition-all hover:border-zinc-300 focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20 appearance-none text-center shrink-0"
-                      >
-                        {['New inquiry', 'Site visit', 'Follow up', 'Closure'].map((stg) => (
-                          <option key={stg} value={stg}>{stg}</option>
-                        ))}
-                      </select>
-                    </Table.Cell>
-
-                    {/* Next followup date picker */}
-                    <Table.Cell className="whitespace-nowrap shrink-0" onClick={(e) => e.stopPropagation()}>
-                      <div className="relative shrink-0">
-                        <input
-                          type="date"
-                          value={lead.next_followup_date || ""}
-                          onChange={(e) => handleRowFollowUpChange(lead.id, e.target.value)}
-                          className={CELL_INPUT_CLASS}
-                        />
-                        <div className="mt-0.5 text-[10px] text-zinc-400 text-center shrink-0">{formatShortDate(lead.next_followup_date)}</div>
-                      </div>
-                    </Table.Cell>
-
-                    {/* Notes textarea */}
-                    <Table.Cell className="whitespace-nowrap shrink-0" onClick={(e) => e.stopPropagation()}>
-                      <textarea
-                        defaultValue={lead.notes || ""}
-                        onBlur={(e) => handleRowNotesChange(lead.id, e.target.value)}
-                        rows={1}
-                        placeholder="Add notes..."
-                        className={CELL_TEXTAREA_CLASS}
-                      />
-                    </Table.Cell>
-
-                    {/* Actions cell */}
-                    <Table.Cell className="text-center whitespace-nowrap shrink-0" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-center gap-1.5 shrink-0">
+                    {/* Actions */}
+                    <Table.Cell className="text-center" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-center gap-1">
                         <button
                           onClick={() => handleOpenLead(lead)}
-                          className="rounded-lg px-2.5 py-1 border border-zinc-200 bg-white text-zinc-700 text-xs font-bold hover:bg-zinc-50 hover:text-zinc-900 transition-colors shadow-xs inline-flex items-center gap-1 cursor-pointer shrink-0"
+                          className="rounded-lg px-2 py-1 border border-zinc-200 bg-white text-zinc-700 text-[10px] font-bold hover:bg-zinc-50 transition-colors shadow-xs cursor-pointer"
                           title="View Details"
                         >
-                          <ArrowUpRight className="h-3.5 w-3.5 text-zinc-500" />
-                          View Details
+                          View
                         </button>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <button 
-                              className="rounded-lg p-1.5 text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 transition-colors border border-zinc-200 bg-white shadow-xs shrink-0"
-                              title="Share Lead"
-                            >
-                              <Share2 className="h-3.5 w-3.5" />
+                            <button className="rounded-lg p-1.5 text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 transition-colors border border-zinc-200 bg-white shadow-xs">
+                              <Share2 className="h-3 w-3" />
                             </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48 bg-white border border-zinc-200 rounded-xl shadow-lg p-1 z-30">
@@ -1242,31 +1147,16 @@ export default function LeadsPage() {
                               <Copy className="h-3.5 w-3.5 text-zinc-400" />
                               Copy details
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => copyToClipboard(getShareableUrl(lead), "Shareable link copied!")} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
-                              <ExternalLink className="h-3.5 w-3.5 text-zinc-400" />
-                              Copy link
-                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => shareWhatsApp(lead)} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
                               <MessageSquare className="h-3.5 w-3.5 text-emerald-500" />
-                              Share to WhatsApp
+                              WhatsApp
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => shareEmail(lead)} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
                               <Mail className="h-3.5 w-3.5 text-zinc-400" />
-                              Share via Email
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => { setQrLead(lead); setIsQrOpen(true); }} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
-                              <QrCode className="h-3.5 w-3.5 text-zinc-400" />
-                              Show QR code
+                              Email
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                        <button
-                          onClick={() => handleDeleteLead(lead.id)}
-                          className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 inline-flex items-center justify-center border border-transparent hover:border-red-100 shrink-0"
-                          title="Delete lead"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
                       </div>
                     </Table.Cell>
                   </Table.Row>

@@ -141,11 +141,6 @@ export function SidebarNav() {
                   }`} />
                   {!isCollapsed && <span>{item.title}</span>}
                 </div>
-                {!isCollapsed && item.badge && (
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-zinc-800 text-gold-500 tracking-wider">
-                    {item.badge}
-                  </span>
-                )}
               </Link>
             );
           })}
