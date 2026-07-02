@@ -129,7 +129,7 @@ export default function LeadsPage() {
     supabase.from('locations').select('name').order('name').then(({ data }) => {
       if (data) setAvailableLocations(data.map(l => l.name));
     });
-  }, []);
+  }, [leads]); // Re-fetch when leads update (in case new locations were added via properties)
 
   // Fetch leads on load
   useEffect(() => {
@@ -828,12 +828,13 @@ export default function LeadsPage() {
                   <button
                     type="button"
                     onClick={() => setLocationDropdownOpen(!locationDropdownOpen)}
-                    className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-left outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all min-h-[30px]"
+                    className="w-full flex items-center justify-between rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-left outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all min-h-[30px]"
                   >
                     {filterLocations.length === 0 
                       ? <span className="text-zinc-400">All locations</span>
                       : <span className="text-zinc-800">{filterLocations.length} selected</span>
                     }
+                    <ChevronDown className={`h-3.5 w-3.5 text-zinc-400 transition-transform ${locationDropdownOpen ? 'rotate-180' : ''}`} />
                   </button>
                   {filterLocations.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1">

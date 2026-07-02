@@ -1,7 +1,8 @@
 "use client";
 import { useActionState } from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createPropertyAction } from '@/app/properties/actions';
+import { supabase } from '@/lib/supabaseClient';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -14,24 +15,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Label } from '@/components/ui/label';
 import { Building2, MapPin, User, FileText, ImageIcon, DollarSign, Ruler } from 'lucide-react';
 
-const LOCATION_OPTIONS = [
-  { value: 'Kalyani Nagar', label: 'Kalyani Nagar' },
-  { value: 'Koregaon Park', label: 'Koregaon Park' },
-  { value: 'Baner', label: 'Baner' },
-  { value: 'Viman Nagar', label: 'Viman Nagar' },
-  { value: 'Hinjewadi', label: 'Hinjewadi' },
-  { value: 'Kharadi', label: 'Kharadi' },
-  { value: 'Wakad', label: 'Wakad' },
-  { value: 'Aundh', label: 'Aundh' },
-  { value: 'Hadapsar', label: 'Hadapsar' },
-  { value: 'Magarpatta', label: 'Magarpatta' },
-  { value: 'Boat Club Road', label: 'Boat Club Road' },
-  { value: 'Camp', label: 'Camp' },
-  { value: 'Pimpri-Chinchwad', label: 'Pimpri-Chinchwad' },
-  { value: 'Bavdhan', label: 'Bavdhan' },
-  { value: 'Pashan', label: 'Pashan' },
-];
-
 export function PropertyForm({ initialValues = {} }: { initialValues?: Partial<any> }) {
   const [state, formAction] = useActionState(createPropertyAction, null);
   const [configuration, setConfiguration] = useState<string[]>(
@@ -42,6 +25,25 @@ export function PropertyForm({ initialValues = {} }: { initialValues?: Partial<a
       ? initialValues.location.split(',').map((s: string) => s.trim()).filter(Boolean)
       : []
   );
+  const [locationOptions, setLocationOptions] = useState<{ value: string; label: string }[]>([]);
+
+  // Fetch locations from DB
+  useEffect(() => {
+    supabase.from('locations').select('name').order('name').then(({ data }) => {
+      if (data) {
+        setLocationOptions(data.map(l => ({ value: l.name, label: l.name })));
+      }
+    });
+  }, []);
+
+  // When form submits successfully, auto-add new locations to DB
+  useEffect(() => {
+    if (state?.success && locations.length > 0) {
+      locations.forEach(loc => {
+        supabase.from('locations').upsert({ name: loc }, { onConflict: 'name' });
+      });
+    }
+  }, [state]);
 
   return (
     <form action={formAction} className="max-w-5xl mx-auto space-y-8 pb-10">
@@ -122,7 +124,7 @@ export function PropertyForm({ initialValues = {} }: { initialValues?: Partial<a
                 <TagsInput
                   value={locations}
                   onChange={setLocations}
-                  options={LOCATION_OPTIONS}
+                  options={locationOptions}
                   allowCustom={true}
                   placeholder="Type or select locations..."
                 />

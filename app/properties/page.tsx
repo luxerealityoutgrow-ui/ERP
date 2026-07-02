@@ -62,7 +62,7 @@ export default function PropertyInventoryPage() {
     supabase.from('locations').select('name').order('name').then(({ data }) => {
       if (data) setAvailableLocations(data.map(l => l.name));
     });
-  }, []);
+  }, [properties]); // Re-fetch when properties change (new property added may have new location)
 
   // Fetch properties on load
   useEffect(() => {
@@ -424,12 +424,13 @@ ${prop.description ? `\n${prop.description}` : ''}`;
               <button
                 type="button"
                 onClick={() => setLocationDropdownOpen(!locationDropdownOpen)}
-                className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-2 text-xs font-medium text-left outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all"
+                className="w-full flex items-center justify-between rounded-lg border border-zinc-200 bg-white px-2.5 py-2 text-xs font-medium text-left outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all"
               >
                 {filterLocations.length === 0 
                   ? <span className="text-zinc-400">All locations</span>
                   : <span className="text-zinc-800">{filterLocations.length} selected</span>
                 }
+                <ChevronDown className={`h-3.5 w-3.5 text-zinc-400 transition-transform ${locationDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
               {filterLocations.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-1">
