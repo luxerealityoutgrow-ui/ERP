@@ -17,7 +17,7 @@ import {
 import { useProfile } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { fetchLeads, fetchProperties, Lead, Property } from '@/lib/queries';
 
 export function Header() {
@@ -323,6 +323,7 @@ export function Header() {
       {/* Global Search Dialog Modal */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="max-w-xl p-0 overflow-hidden border-zinc-200/80 rounded-2xl shadow-2xl bg-white">
+          <DialogTitle className="sr-only">Search</DialogTitle>
           <div className="flex items-center border-b border-zinc-150 px-4 py-3 bg-zinc-50/50">
             <Search className="h-4.5 w-4.5 text-zinc-400 shrink-0 mr-3" />
             <input
