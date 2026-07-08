@@ -35,7 +35,7 @@ const sections: { id: SettingSection; label: string; icon: React.ElementType; de
   { id: 'notifications', label: 'Notifications', icon: Bell, description: 'Configure alerts and notification preferences.' },
   { id: 'security', label: 'Security', icon: Shield, description: 'Passwords, 2FA, and access control settings.' },
   { id: 'appearance', label: 'Appearance', icon: Palette, description: 'Theme, layout, and display preferences.' },
-  { id: 'integrations', label: 'Integrations', icon: Database, description: 'Connect third-party tools and data sources.' },
+  { id: 'integrations', label: 'Integrations', icon: Database, description: 'Connect third-party tools and data sources.', superAdminOnly: true },
 ];
 
 const notifOptions = [
