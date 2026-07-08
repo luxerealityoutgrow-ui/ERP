@@ -74,6 +74,11 @@ export default function SettingsPage() {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordUpdating, setPasswordUpdating] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState<{ text: string; type: 'ok' | 'err' } | null>(null);
   const [twoFAEnabled, setTwoFAEnabled] = useState(false);
 
   // Notification toggles
@@ -175,6 +180,38 @@ export default function SettingsPage() {
   const handleSaveProfile = () => {
     setProfileSaved(true);
     setTimeout(() => setProfileSaved(false), 2000);
+  };
+
+  const handleUpdatePassword = async () => {
+    setPasswordMessage(null);
+    if (!newPassword || !confirmPassword) {
+      setPasswordMessage({ text: 'Please fill in all password fields.', type: 'err' });
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPasswordMessage({ text: 'New password must be at least 6 characters.', type: 'err' });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordMessage({ text: 'New password and confirmation do not match.', type: 'err' });
+      return;
+    }
+    setPasswordUpdating(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        setPasswordMessage({ text: error.message, type: 'err' });
+      } else {
+        setPasswordMessage({ text: 'Password updated successfully!', type: 'ok' });
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      }
+    } catch (err) {
+      setPasswordMessage({ text: 'An unexpected error occurred.', type: 'err' });
+    } finally {
+      setPasswordUpdating(false);
+    }
   };
 
   const handleSaveIntegrations = async () => {
@@ -397,12 +434,19 @@ export default function SettingsPage() {
                   <p className="text-[11px] text-zinc-500 mt-0.5">Keep your account secure with a strong password.</p>
                 </div>
                 <div className="p-6 space-y-4">
+                  {passwordMessage && (
+                    <div className={`p-3 rounded-xl text-xs font-medium ${passwordMessage.type === 'ok' ? 'bg-emerald-50 border border-emerald-200 text-emerald-700' : 'bg-rose-50 border border-rose-200 text-rose-700'}`}>
+                      {passwordMessage.text}
+                    </div>
+                  )}
                   <div>
                     <label className={labelClass}>Current Password</label>
                     <div className="relative">
                       <input
                         type={showCurrent ? 'text' : 'password'}
                         placeholder="••••••••"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
                         className={`${inputClass} pr-10`}
                       />
                       <button
@@ -418,7 +462,9 @@ export default function SettingsPage() {
                     <div className="relative">
                       <input
                         type={showNew ? 'text' : 'password'}
-                        placeholder="Min. 8 characters"
+                        placeholder="Min. 6 characters"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
                         className={`${inputClass} pr-10`}
                       />
                       <button
@@ -435,6 +481,8 @@ export default function SettingsPage() {
                       <input
                         type={showConfirm ? 'text' : 'password'}
                         placeholder="Repeat new password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
                         className={`${inputClass} pr-10`}
                       />
                       <button
@@ -446,9 +494,13 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <div className="flex justify-end">
-                    <button className="px-5 py-2.5 rounded-xl bg-zinc-600 text-white text-xs font-bold hover:bg-zinc-700 shadow-sm transition-all flex items-center gap-2">
+                    <button
+                      onClick={handleUpdatePassword}
+                      disabled={passwordUpdating}
+                      className="px-5 py-2.5 rounded-xl bg-zinc-600 text-white text-xs font-bold hover:bg-zinc-700 shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
+                    >
                       <Save className="h-3.5 w-3.5" />
-                      Update Password
+                      {passwordUpdating ? 'Updating...' : 'Update Password'}
                     </button>
                   </div>
                 </div>
