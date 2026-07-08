@@ -198,17 +198,19 @@ export default function SettingsPage() {
     }
     setPasswordUpdating(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      const { data, error } = await supabase.auth.updateUser({ password: newPassword });
+      console.log('Password update response:', { data, error });
       if (error) {
-        setPasswordMessage({ text: error.message, type: 'err' });
+        setPasswordMessage({ text: `Error: ${error.message}`, type: 'err' });
       } else {
         setPasswordMessage({ text: 'Password updated successfully!', type: 'ok' });
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
       }
-    } catch (err) {
-      setPasswordMessage({ text: 'An unexpected error occurred.', type: 'err' });
+    } catch (err: any) {
+      console.error('Password update error:', err);
+      setPasswordMessage({ text: `Error: ${err?.message || 'An unexpected error occurred.'}`, type: 'err' });
     } finally {
       setPasswordUpdating(false);
     }
