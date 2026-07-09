@@ -20,7 +20,8 @@ import {
   MessageSquare,
   Mail,
   ChevronDown,
-  Image as ImageIcon
+  Image as ImageIcon,
+  DollarSign
 } from 'lucide-react';
 import Link from 'next/link';
 import { formatCurrency, formatPriceShort } from '@/lib/formatters';
@@ -149,6 +150,24 @@ export default function PropertyInventoryPage() {
   ];
 
   const displayProperties = properties.length > 0 ? properties : mockProperties;
+
+  const stats = useMemo(() => {
+    let total = displayProperties.length;
+    let available = 0;
+    let underOffer = 0;
+    let valuation = 0;
+    
+    displayProperties.forEach(p => {
+      if (p.status_id === 'Available') {
+        available++;
+        valuation += p.price || 0;
+      } else if (p.status_id === 'Under Offer') {
+        underOffer++;
+      }
+    });
+
+    return { total, available, underOffer, valuation };
+  }, [displayProperties]);
 
   // Filter and search logic
   const filteredProperties = useMemo(() => {
@@ -306,59 +325,85 @@ ${prop.description ? `\n${prop.description}` : ''}`;
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-20">
+    <div className="space-y-6 max-w-7xl mx-auto pb-20 text-zinc-900 px-4 md:px-0">
       {/* Header */}
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-zinc-900 flex items-center gap-2">
-              <Home className="h-6 w-6 text-zinc-500" />
-              Property Inventory
-            </h1>
-            <p className="text-xs text-zinc-500 font-medium">Manage and track your exclusive real-estate listings across regions.</p>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <div className="relative group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 group-focus-within:text-zinc-500 transition-colors" />
-              <input 
-                type="text" 
-                placeholder="Search properties, codes, locations..." 
-                className="pl-10 pr-4 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 w-64 md:w-80 transition-all"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+      <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm text-left">
+        {/* Properties KPI Board */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 bg-zinc-50 border border-zinc-150 rounded-xl flex items-center gap-3 shadow-3xs text-left">
+            <div className="p-2 bg-white border border-zinc-200 rounded-lg text-zinc-600 shadow-3xs">
+              <Home className="h-4.5 w-4.5" />
             </div>
-
-            <button 
-              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className={`flex items-center gap-1.5 px-4 py-2 border rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer ${
-                showAdvancedFilters 
-                  ? 'bg-zinc-900 text-white border-zinc-900 hover:bg-zinc-800' 
-                  : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
-              }`}
-            >
-              <SlidersHorizontal className="h-3.5 w-3.5" />
-              Drill Down
-              {(filterLocations.length > 0 || filterPropertyType || filterConfiguration || filterListingType || filterPriceMin || filterPriceMax || filterAreaMin || filterAreaMax) && (
-                <span className="ml-1 h-4 w-4 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
-                  {[filterLocations.length > 0, filterPropertyType, filterConfiguration, filterListingType, filterPriceMin || filterPriceMax, filterAreaMin || filterAreaMax].filter(Boolean).length}
-                </span>
-              )}
-            </button>
-            
-            <Link href="/properties/create">
-              <button className="flex items-center gap-1.5 px-4 py-2 bg-zinc-900 text-white rounded-xl text-xs font-bold hover:bg-zinc-800 transition-all shadow-sm">
-                <Plus className="h-4 w-4" />
-                New Listing
-              </button>
-            </Link>
+            <div>
+              <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Total Listings</p>
+              <p className="text-base font-black text-zinc-900 mt-0.5">{stats.total}</p>
+            </div>
           </div>
+          <div className="p-4 bg-zinc-50 border border-zinc-150 rounded-xl flex items-center gap-3 shadow-3xs text-left">
+            <div className="p-2 bg-white border border-zinc-200 rounded-lg text-emerald-600 shadow-3xs">
+              <CheckCircle className="h-4.5 w-4.5" />
+            </div>
+            <div>
+              <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Available Inventory</p>
+              <p className="text-base font-black text-zinc-900 mt-0.5">{stats.available}</p>
+            </div>
+          </div>
+          <div className="p-4 bg-zinc-50 border border-zinc-150 rounded-xl flex items-center gap-3 shadow-3xs text-left">
+            <div className="p-2 bg-white border border-zinc-200 rounded-lg text-amber-600 shadow-3xs">
+              <SlidersHorizontal className="h-4.5 w-4.5" />
+            </div>
+            <div>
+              <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Under Offer</p>
+              <p className="text-base font-black text-zinc-900 mt-0.5">{stats.underOffer}</p>
+            </div>
+          </div>
+          <div className="p-4 bg-zinc-50 border border-zinc-150 rounded-xl flex items-center gap-3 shadow-3xs text-left">
+            <div className="p-2 bg-white border border-zinc-200 rounded-lg text-zinc-700 shadow-3xs">
+              <DollarSign className="h-4.5 w-4.5" />
+            </div>
+            <div>
+              <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Available Valuation</p>
+              <p className="text-base font-black text-zinc-900 mt-0.5">{formatPriceShort(stats.valuation)}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters and Search Row */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-zinc-200 shadow-sm">
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="relative group flex-1 md:flex-initial">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 group-focus-within:text-zinc-500 transition-colors" />
+            <input 
+              type="text" 
+              placeholder="Search properties, codes, locations..." 
+              className="pl-10 pr-4 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 w-full md:w-80 transition-all"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          <button 
+            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            className={`flex items-center gap-1.5 px-4 py-2 border rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer shrink-0 ${
+              showAdvancedFilters 
+                ? 'bg-zinc-900 text-white border-zinc-900 hover:bg-zinc-800' 
+                : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
+            }`}
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+            Drill Down
+            {(filterLocations.length > 0 || filterPropertyType || filterConfiguration || filterListingType || filterPriceMin || filterPriceMax || filterAreaMin || filterAreaMax) && (
+              <span className="ml-1 h-4 w-4 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
+                {[filterLocations.length > 0, filterPropertyType, filterConfiguration, filterListingType, filterPriceMin || filterPriceMax, filterAreaMin || filterAreaMax].filter(Boolean).length}
+              </span>
+            )}
+          </button>
         </div>
 
         {/* Tab Filters */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1 p-1 bg-zinc-100/80 rounded-xl">
+        <div className="flex items-center gap-4 shrink-0 overflow-x-auto">
+          <div className="flex items-center gap-1 p-0.5 bg-zinc-100 rounded-lg">
             {['Active', 'Inactive', 'All'].map((state) => (
               <button
                 key={state}
@@ -375,8 +420,8 @@ ${prop.description ? `\n${prop.description}` : ''}`;
               </button>
             ))}
           </div>
-          <div className="h-5 w-px bg-zinc-200" />
-          <div className="flex items-center gap-1 p-1 bg-zinc-100/80 rounded-xl">
+          <div className="h-5 w-px bg-zinc-250 hidden md:block" />
+          <div className="flex items-center gap-1 p-0.5 bg-zinc-100 rounded-lg">
             {['All', 'Available', 'Under Offer', 'Sold'].map((tab) => (
               <button
                 key={tab}
@@ -556,37 +601,7 @@ ${prop.description ? `\n${prop.description}` : ''}`;
 
       {/* Property Table */}
       <div className="bg-white border border-zinc-200 rounded-2xl overflow-hidden shadow-sm">
-        {/* Bulk Action Bar */}
-        {selectedIds.size > 0 && (
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 bg-zinc-50 px-5 py-3">
-            <div className="text-xs font-semibold text-zinc-700">
-              {selectedIds.size} propert{selectedIds.size === 1 ? 'y' : 'ies'} selected
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => handleShareWhatsApp()}
-                className="flex items-center gap-1.5 px-3 py-1.5 border border-emerald-200 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-all cursor-pointer"
-              >
-                <MessageSquare className="h-3.5 w-3.5" />
-                Send via WhatsApp
-              </button>
-              <button
-                onClick={() => handleShareEmail()}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-zinc-200 text-zinc-700 rounded-lg text-xs font-bold hover:bg-zinc-50 transition-all cursor-pointer"
-              >
-                <Mail className="h-3.5 w-3.5" />
-                Send via Email
-              </button>
-              <button
-                onClick={() => handleCopyDetails()}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-zinc-200 text-zinc-700 rounded-lg text-xs font-bold hover:bg-zinc-50 transition-all cursor-pointer"
-              >
-                <Copy className="h-3.5 w-3.5" />
-                Copy Details
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Old Bulk Action Bar removed */}
 
         {loading ? (
           <div className="p-6 space-y-4">
@@ -876,6 +891,51 @@ ${prop.description ? `\n${prop.description}` : ''}`;
               </Link>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Floating Bulk Action Dock */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-zinc-950 text-white rounded-2xl shadow-2xl border border-zinc-800 px-5 py-3 flex items-center gap-6 animate-in slide-in-from-bottom-5 duration-300">
+          <div className="flex items-center gap-2.5 shrink-0 border-r border-zinc-800 pr-5">
+            <span className="h-5 w-5 rounded-full bg-zinc-800 text-white text-[10px] font-black flex items-center justify-center">
+              {selectedIds.size}
+            </span>
+            <span className="text-[11px] font-bold tracking-wide uppercase text-zinc-400">Listings Selected</span>
+          </div>
+          
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => handleShareWhatsApp()}
+              className="px-3.5 py-2 bg-emerald-950/60 border border-emerald-800 text-emerald-250 rounded-xl text-xs font-bold hover:bg-emerald-900 hover:text-white transition-all shadow-xs shrink-0 flex items-center gap-1.5 cursor-pointer"
+            >
+              <MessageSquare className="h-3.5 w-3.5 text-emerald-500" />
+              WhatsApp
+            </button>
+
+            <button
+              onClick={() => handleShareEmail()}
+              className="px-3.5 py-2 bg-zinc-900 border border-zinc-800 text-zinc-200 rounded-xl text-xs font-bold hover:bg-zinc-800 hover:text-white transition-all shadow-xs shrink-0 flex items-center gap-1.5 cursor-pointer"
+            >
+              <Mail className="h-3.5 w-3.5 text-zinc-500" />
+              Email
+            </button>
+
+            <button
+              onClick={() => handleCopyDetails()}
+              className="px-3.5 py-2 bg-zinc-900 border border-zinc-800 text-zinc-200 rounded-xl text-xs font-bold hover:bg-zinc-800 hover:text-white transition-all shadow-xs shrink-0 flex items-center gap-1.5 cursor-pointer"
+            >
+              <Copy className="h-3.5 w-3.5 text-zinc-550" />
+              Copy Spec
+            </button>
+          </div>
+
+          <button 
+            onClick={() => setSelectedIds(new Set())}
+            className="p-1.5 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors ml-2"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
       )}
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Calendar, 
   Clock, 
@@ -14,9 +14,12 @@ import {
   Home,
   AlertCircle
 } from 'lucide-react';
+import { supabase } from '@/lib/supabaseClient';
 
 interface SiteVisit {
   id: string;
+  lead_id?: string;
+  property_id?: string;
   client_name: string;
   property_title: string;
   location: string;
@@ -31,13 +34,10 @@ export default function SiteVisitsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   
   // Form input states
-  const [clientName, setClientName] = useState('');
-  const [propertyTitle, setPropertyTitle] = useState('');
   const [visitTime, setVisitTime] = useState('02:00 PM');
   const [notes, setNotes] = useState('');
 
-  // Initial visits state (for June 2026)
-  const [visits, setVisits] = useState<SiteVisit[]>([
+  const mockVisits: SiteVisit[] = [
     {
       id: 'visit-1',
       client_name: 'Ananya Sharma',
@@ -78,7 +78,92 @@ export default function SiteVisitsPage() {
       status: 'Cancelled',
       agent_notes: 'Rescheduled due to client flight conflict.'
     }
-  ]);
+  ];
+
+  const [visits, setVisits] = useState<SiteVisit[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [leadsList, setLeadsList] = useState<any[]>([]);
+  const [propertiesList, setPropertiesList] = useState<any[]>([]);
+  const [selectedLeadId, setSelectedLeadId] = useState('');
+  const [selectedPropertyId, setSelectedPropertyId] = useState('');
+
+  useEffect(() => {
+    async function loadData() {
+      setLoading(true);
+      try {
+        const { data: visitsData } = await supabase
+          .from('site_visits')
+          .select(`
+            *,
+            leads (
+              id,
+              client_name
+            ),
+            properties (
+              id,
+              title,
+              location
+            )
+          `)
+          .order('visit_date', { ascending: true });
+
+        const { data: leadsData } = await supabase
+          .from('leads')
+          .select('id, client_name')
+          .eq('is_active', true)
+          .order('client_name');
+
+        const { data: propsData } = await supabase
+          .from('properties')
+          .select('id, title, location')
+          .eq('is_active', true)
+          .order('title');
+
+        if (leadsData) setLeadsList(leadsData);
+        if (propsData) setPropertiesList(propsData);
+
+        if (visitsData && visitsData.length > 0) {
+          const mapped: SiteVisit[] = visitsData.map((v: any) => {
+            const dateParts = v.visit_date ? v.visit_date.split('-') : [];
+            const dayNum = dateParts.length === 3 ? parseInt(dateParts[2], 10) : 17;
+            return {
+              id: v.id,
+              lead_id: v.lead_id,
+              property_id: v.property_id,
+              client_name: v.leads?.client_name || 'Unknown Client',
+              property_title: v.properties?.title || 'Unknown Property',
+              location: v.properties?.location || 'TBD',
+              visit_date: dayNum,
+              visit_time: v.visit_time || '02:00 PM',
+              status: (v.status === 'Confirmed' || v.status === 'Scheduled' ? 'Confirmed' : (v.status === 'Cancelled' ? 'Cancelled' : 'Pending')) as 'Confirmed' | 'Pending' | 'Cancelled',
+              agent_notes: v.outcome || v.client_feedback || 'No additional notes.'
+            };
+          });
+          setVisits(mapped);
+        } else {
+          setVisits(mockVisits);
+        }
+      } catch (err) {
+        console.error('Error loading site visits:', err);
+        setVisits(mockVisits);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const handleUpdateStatus = async (visitId: string, newStatus: 'Confirmed' | 'Cancelled') => {
+    setVisits(prev => prev.map(v => v.id === visitId ? { ...v, status: newStatus } : v));
+    try {
+      await supabase
+        .from('site_visits')
+        .update({ status: newStatus })
+        .eq('id', visitId);
+    } catch (err) {
+      console.error('Error updating status:', err);
+    }
+  };
 
   // June 2026 calendar configuration
   // June 1, 2026 is a Monday. June has 30 days.
@@ -104,23 +189,63 @@ export default function SiteVisitsPage() {
   };
 
   // Handle visit submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newVisit: SiteVisit = {
-      id: `visit-${Date.now()}`,
-      client_name: clientName,
-      property_title: propertyTitle,
-      location: 'TBD',
-      visit_date: selectedDay,
+    if (!selectedLeadId || !selectedPropertyId) return;
+
+    const leadObj = leadsList.find(l => l.id === selectedLeadId);
+    const propObj = propertiesList.find(p => p.id === selectedPropertyId);
+    const formattedDate = `2026-06-${selectedDay.toString().padStart(2, '0')}`;
+
+    const newVisitData = {
+      lead_id: selectedLeadId,
+      property_id: selectedPropertyId,
+      visit_date: formattedDate,
       visit_time: visitTime,
       status: 'Pending',
-      agent_notes: notes
+      outcome: notes
     };
-    setVisits([...visits, newVisit]);
+
+    try {
+      const { data, error } = await supabase
+        .from('site_visits')
+        .insert([newVisitData])
+        .select(`
+          *,
+          leads (
+            id,
+            client_name
+          ),
+          properties (
+            id,
+            title,
+            location
+          )
+        `)
+        .single();
+
+      if (data) {
+        const mappedNew = {
+          id: data.id,
+          lead_id: data.lead_id,
+          property_id: data.property_id,
+          client_name: data.leads?.client_name || leadObj?.client_name || 'Unknown',
+          property_title: data.properties?.title || propObj?.title || 'Unknown',
+          location: data.properties?.location || propObj?.location || 'TBD',
+          visit_date: selectedDay,
+          visit_time: data.visit_time,
+          status: 'Pending' as const,
+          agent_notes: data.outcome || 'No additional notes.'
+        };
+        setVisits(prev => [...prev, mappedNew]);
+      }
+    } catch (err) {
+      console.error('Error scheduling visit:', err);
+    }
+
     setIsFormOpen(false);
-    // Reset form
-    setClientName('');
-    setPropertyTitle('');
+    setSelectedLeadId('');
+    setSelectedPropertyId('');
     setVisitTime('02:00 PM');
     setNotes('');
   };
@@ -128,26 +253,7 @@ export default function SiteVisitsPage() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-12 text-zinc-900">
       
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="p-3 rounded-2xl bg-zinc-900 text-white">
-            <Calendar className="h-6 w-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Site Viewing Schedule</h1>
-            <p className="text-xs text-zinc-500 font-medium mt-0.5">June 2026 • Manage and track property tours for your high-intent leads.</p>
-          </div>
-        </div>
 
-        <button 
-          onClick={() => setIsFormOpen(true)}
-          className="flex items-center gap-2 px-5 py-2.5 bg-zinc-600 text-white rounded-xl text-xs font-bold hover:bg-zinc-500 transition-all shadow-md shadow-zinc-500/10"
-        >
-          <Plus className="h-4 w-4" />
-          Schedule Visit
-        </button>
-      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full min-h-[600px]">
         {/* Calendar View */}
@@ -259,10 +365,16 @@ export default function SiteVisitsPage() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <button className="h-10 w-10 rounded-xl bg-zinc-50 border border-zinc-200 flex items-center justify-center text-zinc-400 hover:text-zinc-500 hover:border-zinc-500 transition-all">
+                    <button 
+                      onClick={() => handleUpdateStatus(visit.id, 'Confirmed')}
+                      className="h-10 w-10 rounded-xl bg-zinc-50 border border-zinc-200 flex items-center justify-center text-zinc-400 hover:text-zinc-500 hover:border-zinc-500 transition-all cursor-pointer"
+                    >
                       <Check className="h-4 w-4" />
                     </button>
-                    <button className="h-10 w-10 rounded-xl bg-zinc-50 border border-zinc-200 flex items-center justify-center text-zinc-400 hover:text-rose-500 hover:border-rose-500 transition-all">
+                    <button 
+                      onClick={() => handleUpdateStatus(visit.id, 'Cancelled')}
+                      className="h-10 w-10 rounded-xl bg-zinc-50 border border-zinc-200 flex items-center justify-center text-zinc-400 hover:text-rose-500 hover:border-rose-500 transition-all cursor-pointer"
+                    >
                       <X className="h-4 w-4" />
                     </button>
                   </div>
@@ -302,28 +414,34 @@ export default function SiteVisitsPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-5">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Client Name</label>
-                <input 
-                  type="text" 
+              <div className="space-y-2 text-left">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Client Lead</label>
+                <select
                   required
-                  placeholder="e.g. Ananya Sharma"
-                  className="w-full px-4 py-3 rounded-xl bg-zinc-50 border border-zinc-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all"
-                  value={clientName}
-                  onChange={(e) => setClientName(e.target.value)}
-                />
+                  className="w-full px-4 py-3 rounded-xl bg-zinc-50 border border-zinc-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all cursor-pointer"
+                  value={selectedLeadId}
+                  onChange={(e) => setSelectedLeadId(e.target.value)}
+                >
+                  <option value="">Select a client...</option>
+                  {leadsList.map(l => (
+                    <option key={l.id} value={l.id}>{l.client_name}</option>
+                  ))}
+                </select>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Property</label>
-                <input 
-                  type="text" 
+              <div className="space-y-2 text-left">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Property Listing</label>
+                <select
                   required
-                  placeholder="e.g. Vivencia"
-                  className="w-full px-4 py-3 rounded-xl bg-zinc-50 border border-zinc-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all"
-                  value={propertyTitle}
-                  onChange={(e) => setPropertyTitle(e.target.value)}
-                />
+                  className="w-full px-4 py-3 rounded-xl bg-zinc-50 border border-zinc-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all cursor-pointer"
+                  value={selectedPropertyId}
+                  onChange={(e) => setSelectedPropertyId(e.target.value)}
+                >
+                  <option value="">Select a listing...</option>
+                  {propertiesList.map(p => (
+                    <option key={p.id} value={p.id}>{p.title} ({p.location})</option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

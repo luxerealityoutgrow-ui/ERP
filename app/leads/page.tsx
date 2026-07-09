@@ -700,13 +700,43 @@ export default function LeadsPage() {
     <div className="space-y-6 max-w-7xl mx-auto pb-20 px-4">
       {/* Page Header Area */}
       <div className="flex flex-col gap-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-zinc-900 flex items-center gap-2">
-              <Users className="h-6 w-6 text-zinc-500" />
-              Lead Management
-            </h1>
-            <p className="text-xs text-zinc-500 font-medium">Capture, track and nurture your sales prospects and high-intent clients.</p>
+        {/* Leads KPI Board */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-zinc-50/50 p-4 rounded-2xl border border-zinc-200/60">
+          <div className="p-4 bg-white border border-zinc-200 rounded-xl flex items-center gap-3 shadow-3xs text-left">
+            <div className="p-2 bg-zinc-50 border border-zinc-100 rounded-lg text-zinc-600">
+              <Users className="h-4.5 w-4.5" />
+            </div>
+            <div>
+              <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Total Leads</p>
+              <p className="text-base font-black text-zinc-900 mt-0.5">{displayLeads.length}</p>
+            </div>
+          </div>
+          <div className="p-4 bg-white border border-zinc-200 rounded-xl flex items-center gap-3 shadow-3xs text-left">
+            <div className="p-2 bg-emerald-50 border border-emerald-100 rounded-lg text-emerald-600">
+              <CheckCircle className="h-4.5 w-4.5" />
+            </div>
+            <div>
+              <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Active Leads</p>
+              <p className="text-base font-black text-zinc-900 mt-0.5">{displayLeads.filter(l => l.is_active !== false).length}</p>
+            </div>
+          </div>
+          <div className="p-4 bg-white border border-zinc-200 rounded-xl flex items-center gap-3 shadow-3xs text-left">
+            <div className="p-2 bg-rose-50 border border-rose-100 rounded-lg text-rose-600">
+              <Sparkles className="h-4.5 w-4.5" />
+            </div>
+            <div>
+              <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Hot Prospects</p>
+              <p className="text-base font-black text-zinc-900 mt-0.5">{displayLeads.filter(l => l.status === 'Hot').length}</p>
+            </div>
+          </div>
+          <div className="p-4 bg-white border border-zinc-200 rounded-xl flex items-center gap-3 shadow-3xs text-left">
+            <div className="p-2 bg-zinc-50 border border-zinc-100 rounded-lg text-zinc-600">
+              <Briefcase className="h-4.5 w-4.5" />
+            </div>
+            <div>
+              <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Closed Deals</p>
+              <p className="text-base font-black text-zinc-900 mt-0.5">{displayLeads.filter(l => l.status === 'Closed').length}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -723,7 +753,6 @@ export default function LeadsPage() {
           <TableCard.Header 
             title="All leads"
             badge={sortedLeads.length}
-            description="Capture, track and nurture your sales prospects and high-intent clients."
             contentTrailing={
               <div className="flex flex-wrap items-center gap-2">
                 <div className="relative group shrink-0">
@@ -788,12 +817,6 @@ export default function LeadsPage() {
                   <Download01 className="h-3.5 w-3.5" />
                   Export
                 </button>
-                <Link href="/leads/create">
-                  <button className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 text-white rounded-lg text-xs font-bold hover:bg-zinc-800 transition-all shadow-sm cursor-pointer shrink-0">
-                    <Plus className="h-3.5 w-3.5" />
-                    Add Lead
-                  </button>
-                </Link>
               </div>
             }
           />
@@ -968,51 +991,7 @@ export default function LeadsPage() {
             </div>
           )}
 
-          {/* Bulk Action Bar */}
-          {selectedLeadIds.size > 0 && (
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 bg-zinc-50 px-5 py-3 shrink-0">
-              <div className="text-xs font-semibold text-zinc-700">
-                {selectedLeadIds.size} selected
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => exportCsv(selectedLeads)}
-                  className="px-3 py-1.5 bg-white border border-zinc-200 text-zinc-700 rounded-lg text-xs font-bold hover:bg-zinc-50 transition-all shadow-xs cursor-pointer shrink-0"
-                >
-                  Export selected
-                </button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="px-3 py-1.5 bg-white border border-zinc-200 text-zinc-700 rounded-lg text-xs font-bold hover:bg-zinc-50 transition-all shadow-xs cursor-pointer shrink-0 flex items-center gap-1.5">
-                      <Share2 className="h-3.5 w-3.5 text-zinc-500" />
-                      Share selected
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48 bg-white border border-zinc-200 rounded-xl shadow-lg p-1 z-30">
-                    <DropdownMenuItem onClick={() => handleBulkShare('copy')} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
-                      <Copy className="h-3.5 w-3.5 text-zinc-400" />
-                      Copy summary text
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleBulkShare('whatsapp')} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
-                      <MessageSquare className="h-3.5 w-3.5 text-emerald-500" />
-                      Share to WhatsApp
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleBulkShare('email')} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
-                      <Mail className="h-3.5 w-3.5 text-zinc-400" />
-                      Share via Email
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <button
-                  onClick={bulkDeleteSelected}
-                  disabled={bulkDeleting}
-                  className="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700 transition-all shadow-xs disabled:opacity-50 cursor-pointer shrink-0"
-                >
-                  {bulkDeleting ? "Deleting..." : "Delete selected"}
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Old Bulk Action Bar removed */}
 
           <div className="w-full">
             <Table size="sm" aria-label="Leads">
@@ -1364,6 +1343,67 @@ export default function LeadsPage() {
         url={qrLead ? getShareableUrl(qrLead) : ''}
         title={qrLead ? `Scan to view ${qrLead.client_name}'s requirements` : ''}
       />
+
+      {/* Floating Bulk Action Dock */}
+      {selectedLeadIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-zinc-950 text-white rounded-2xl shadow-2xl border border-zinc-800 px-5 py-3 flex items-center gap-6 animate-in slide-in-from-bottom-5 duration-300">
+          <div className="flex items-center gap-2.5 shrink-0 border-r border-zinc-800 pr-5">
+            <span className="h-5 w-5 rounded-full bg-zinc-800 text-white text-[10px] font-black flex items-center justify-center">
+              {selectedLeadIds.size}
+            </span>
+            <span className="text-[11px] font-bold tracking-wide uppercase text-zinc-400">Leads Selected</span>
+          </div>
+          
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => exportCsv(selectedLeads)}
+              className="px-3.5 py-2 bg-zinc-900 border border-zinc-800 text-zinc-200 rounded-xl text-xs font-bold hover:bg-zinc-800 hover:text-white transition-all shadow-xs shrink-0 flex items-center gap-1.5 cursor-pointer"
+            >
+              <Download01 className="h-3.5 w-3.5 text-zinc-400" />
+              Export
+            </button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="px-3.5 py-2 bg-zinc-900 border border-zinc-800 text-zinc-200 rounded-xl text-xs font-bold hover:bg-zinc-800 hover:text-white transition-all shadow-xs shrink-0 flex items-center gap-1.5 cursor-pointer">
+                  <Share2 className="h-3.5 w-3.5 text-zinc-500" />
+                  Share
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 bg-zinc-950 border border-zinc-800 text-white rounded-xl shadow-2xl p-1 z-50">
+                <DropdownMenuItem onClick={() => handleBulkShare('copy')} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-300 hover:text-white px-2 py-1.5 rounded-lg hover:bg-zinc-900">
+                  <Copy className="h-3.5 w-3.5 text-zinc-550" />
+                  Copy Summary
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleBulkShare('whatsapp')} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-300 hover:text-white px-2 py-1.5 rounded-lg hover:bg-zinc-900">
+                  <MessageSquare className="h-3.5 w-3.5 text-emerald-500" />
+                  Share to WhatsApp
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleBulkShare('email')} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-300 hover:text-white px-2 py-1.5 rounded-lg hover:bg-zinc-900">
+                  <Mail className="h-3.5 w-3.5 text-zinc-550" />
+                  Share via Email
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <button
+              onClick={bulkDeleteSelected}
+              disabled={bulkDeleting}
+              className="px-3.5 py-2 bg-rose-950/60 border border-rose-800 text-rose-200 rounded-xl text-xs font-bold hover:bg-rose-900 hover:text-white transition-all shadow-xs disabled:opacity-50 shrink-0 flex items-center gap-1.5 cursor-pointer"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              {bulkDeleting ? "Deleting..." : "Delete"}
+            </button>
+          </div>
+
+          <button 
+            onClick={() => setSelectedLeadIds(new Set())}
+            className="p-1.5 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors ml-2"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* Floating Toast Notification */}
       {toast && (

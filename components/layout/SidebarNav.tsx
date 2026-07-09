@@ -71,17 +71,17 @@ export function SidebarNav() {
       icon: Home,
     },
     {
-      title: 'Sales',
+      title: 'Pipeline',
       href: '/pipeline',
       icon: TrendingUp,
     },
     {
-      title: 'Clients',
+      title: 'Matchmaker',
       href: '/matchmaking',
       icon: UserCheck,
     },
     {
-      title: 'Calendar',
+      title: 'Site Visits',
       href: '/site-visits',
       icon: Calendar,
     },

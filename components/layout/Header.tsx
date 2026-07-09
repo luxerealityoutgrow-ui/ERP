@@ -12,7 +12,9 @@ import {
   CornerDownLeft,
   Calendar,
   Settings,
-  LogOut
+  LogOut,
+  Plus,
+  TrendingUp
 } from 'lucide-react';
 import { useProfile } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
@@ -27,6 +29,7 @@ export function Header() {
   // Search Palette State
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [leads, setLeads] = useState<Lead[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
@@ -179,6 +182,54 @@ export function Header() {
 
         {/* Header Utilities */}
         <div className="flex items-center gap-5">
+          {/* Global Create Button Dropdown */}
+          <div className="relative">
+            <button 
+              onClick={() => setIsCreateOpen(!isCreateOpen)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 text-white hover:bg-zinc-800 transition-all rounded-xl text-xs font-bold shadow-sm cursor-pointer shrink-0"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>Create</span>
+              <ChevronDown className={`h-3 w-3 text-zinc-400 transition-transform ${isCreateOpen ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {isCreateOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsCreateOpen(false)} />
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-zinc-200 rounded-xl shadow-xl p-1 z-50 text-left">
+                  <button 
+                    onClick={() => { setIsCreateOpen(false); router.push('/leads/create'); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors text-left"
+                  >
+                    <Users className="h-3.5 w-3.5 text-zinc-450" />
+                    New Lead
+                  </button>
+                  <button 
+                    onClick={() => { setIsCreateOpen(false); router.push('/properties/create'); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors text-left"
+                  >
+                    <Home className="h-3.5 w-3.5 text-zinc-450" />
+                    New Listing
+                  </button>
+                  <button 
+                    onClick={() => { setIsCreateOpen(false); router.push('/pipeline?action=new-deal'); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors text-left"
+                  >
+                    <TrendingUp className="h-3.5 w-3.5 text-zinc-450" />
+                    New Deal
+                  </button>
+                  <button 
+                    onClick={() => { setIsCreateOpen(false); router.push('/site-visits/create'); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors text-left"
+                  >
+                    <Calendar className="h-3.5 w-3.5 text-zinc-450" />
+                    Schedule Visit
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
           {/* Connection status indicator */}
           <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-full bg-zinc-50 border border-zinc-100">
             <span className="h-1.5 w-1.5 rounded-full bg-zinc-500 animate-pulse" />

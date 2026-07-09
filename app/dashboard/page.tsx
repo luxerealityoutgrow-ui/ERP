@@ -145,16 +145,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 text-zinc-900">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
-            Dashboard
-          </h1>
-          <p className="text-xs text-zinc-500">
-            Key performance indicators for your property management operations.
-          </p>
-        </div>
-
+      <div className="flex flex-col md:flex-row md:items-center md:justify-end gap-4">
         <div className="flex items-center gap-3">
           {/* Date Range Selector */}
           <div className="flex items-center gap-1 p-1 bg-zinc-100/80 rounded-xl">
@@ -178,13 +169,6 @@ export default function DashboardPage() {
               </button>
             ))}
           </div>
-
-          <Link href="/leads/create">
-            <button className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800 transition-all shadow-sm">
-              <Plus className="h-3.5 w-3.5" />
-              Add Lead
-            </button>
-          </Link>
         </div>
       </div>
 

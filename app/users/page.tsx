@@ -216,14 +216,7 @@ export default function UserManagementPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 flex items-center gap-2">
-            <Users className="h-6 w-6 text-zinc-500" />
-            User Management
-          </h1>
-          <p className="text-xs text-zinc-500 mt-0.5">Manage team members, roles, and module-level permissions.</p>
-        </div>
+      <div className="flex items-center justify-end">
         <button
           onClick={() => setShowAddForm(!showAddForm)}
           className="flex items-center gap-1.5 px-4 py-2 bg-zinc-900 text-white rounded-xl text-xs font-bold hover:bg-zinc-800 transition-all shadow-sm"

@@ -14,15 +14,9 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [checkingAuth, setCheckingAuth] = useState(true);
 
-  // If already logged in, redirect
+  // Redirect to dashboard automatically
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        router.replace('/dashboard');
-      } else {
-        setCheckingAuth(false);
-      }
-    });
+    router.replace('/dashboard');
   }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {

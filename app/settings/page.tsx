@@ -237,16 +237,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 text-zinc-900">
 
-      {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-900 flex items-center gap-2">
-          <Settings className="h-6 w-6 text-zinc-500" />
-          Settings
-        </h1>
-        <p className="text-xs text-zinc-500 mt-0.5">
-          Manage your account preferences, security, and system integrations.
-        </p>
-      </div>
+
 
       {/* Settings Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">

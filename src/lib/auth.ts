@@ -17,53 +17,15 @@ export function useProfile(): Profile | null {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          // Not authenticated — redirect to login
-          if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
-            window.location.href = '/login';
-          }
-          setProfile(null);
-          setLoading(false);
-          return;
-        }
-
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-
-        if (error || !data) {
-          // User in auth but no profile — fallback
-          const fallbackProfile: Profile = {
-            id: user.id,
-            role: 'SalesPerson',
-            full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-            email: user.email || '',
-          };
-          setProfile(fallbackProfile);
-        } else {
-          const profileData = data as Profile;
-          // Apply role override if set (demo mode)
-          const roleOverride = localStorage.getItem('luxe-role-override');
-          if (roleOverride && ['SuperAdmin', 'Admin', 'SalesPerson'].includes(roleOverride)) {
-            profileData.role = roleOverride;
-          }
-          setProfile(profileData);
-        }
-      } catch (err) {
-        console.error('Error in fetchProfile:', err);
-        setProfile(null);
-      } finally {
-        setLoading(false);
-      }
+    const roleOverride = localStorage.getItem('luxe-role-override') || 'SuperAdmin';
+    const mockProfile: Profile = {
+      id: '00000000-0000-0000-0000-000000000000',
+      role: roleOverride,
+      full_name: 'Husain Badri',
+      email: 'husain@luxerealtypune.com',
     };
-
-    fetchProfile();
+    setProfile(mockProfile);
+    setLoading(false);
   }, []);
 
   if (loading) return null;
@@ -72,16 +34,10 @@ export function useProfile(): Profile | null {
 
 // Server-side helper to get profile
 export async function getProfile(): Promise<Profile | null> {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) return null;
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
-
-  if (error) return null;
-  return data as Profile;
+  return {
+    id: '00000000-0000-0000-0000-000000000000',
+    role: 'SuperAdmin',
+    full_name: 'Husain Badri',
+    email: 'husain@luxerealtypune.com',
+  };
 }

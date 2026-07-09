@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { fetchProperty, Property } from '@/lib/queries';
 import { PropertyForm } from '@/components/properties/PropertyForm';
 import { Building2, Loader2 } from 'lucide-react';
 
-export default function EditPropertyPage() {
+function EditPropertyContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const id = searchParams.get('id');
@@ -50,5 +50,17 @@ export default function EditPropertyPage() {
     <div>
       <PropertyForm initialValues={property} mode="edit" />
     </div>
+  );
+}
+
+export default function EditPropertyPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-6 w-6 text-zinc-400 animate-spin" />
+      </div>
+    }>
+      <EditPropertyContent />
+    </Suspense>
   );
 }
