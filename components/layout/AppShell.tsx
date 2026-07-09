@@ -4,7 +4,6 @@ import { ReactNode, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { SidebarNav } from './SidebarNav';
 import { Header } from './Header';
-import { RoleSwitcher } from './RoleSwitcher';
 import { RoleOverrideProvider } from '@/lib/role-context';
 import { supabase } from '@/lib/supabaseClient';
 import { Laptop, Building2, Loader2, ShieldCheck } from 'lucide-react';
@@ -138,7 +137,6 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Header />
             <main className="flex-1 overflow-y-auto p-6 bg-zinc-50 text-zinc-900">{children}</main>
           </div>
-          <RoleSwitcher />
         </div>
 
         {/* Restricted Mobile/Tablet View (< 1024px) */}
