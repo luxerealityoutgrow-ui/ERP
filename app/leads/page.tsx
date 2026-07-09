@@ -136,26 +136,26 @@ export default function LeadsPage() {
     const timer = setTimeout(() => {
       fetchLeads(profile)
         .then(data => {
-          if (data && data.length > 0) {
-            // Normalize lead status to ensure only allowed values are present in UI
-            const allowedStatuses = ['Hot', 'Warm', 'No answer', 'Not reachable', 'Switched off', 'Closed'];
-            const normalizedData = data.map(lead => {
-              let currentStatus = lead.status;
-              if (!currentStatus || !allowedStatuses.includes(currentStatus)) {
-                if (currentStatus === 'New' || currentStatus === 'Cold') {
-                  currentStatus = 'Hot';
-                } else if (currentStatus === 'Contacted' || currentStatus === 'Negotiating') {
-                  currentStatus = 'Warm';
-                } else {
-                  currentStatus = 'Hot'; // fallback
-                }
+          const allowedStatuses = ['Hot', 'Warm', 'No answer', 'Not reachable', 'Switched off', 'Closed'];
+          const normalizedData = (data || []).map(lead => {
+            let currentStatus = lead.status;
+            if (!currentStatus || !allowedStatuses.includes(currentStatus)) {
+              if (currentStatus === 'New' || currentStatus === 'Cold') {
+                currentStatus = 'Hot';
+              } else if (currentStatus === 'Contacted' || currentStatus === 'Negotiating') {
+                currentStatus = 'Warm';
+              } else {
+                currentStatus = 'Hot'; // fallback
               }
-              return { ...lead, status: currentStatus };
-            });
-            setLeads(normalizedData);
-          }
+            }
+            return { ...lead, status: currentStatus };
+          });
+          setLeads(normalizedData);
         })
-        .catch(console.error)
+        .catch((err) => {
+          console.error(err);
+          setLeads([]);
+        })
         .finally(() => setLoading(false));
     }, 500);
 
@@ -169,83 +169,7 @@ export default function LeadsPage() {
     return () => clearTimeout(t);
   }, [toast]);
 
-  // Fallback mock leads if DB is empty
-  const mockLeads: Lead[] = [
-    {
-      id: 'mock-1',
-      client_name: 'Ananya Sharma',
-      phone: '+91 98200 11223',
-      email: 'ananya.s@gmail.com',
-      budget_min: 40000000,
-      budget_max: 50000000,
-      preferred_location: 'Kalyani Nagar, Pune',
-      property_type: 'Apartment',
-      configuration: '3 BHK',
-      category: 'Residential',
-      transaction_type: 'Outright',
-      stage_id: 'New inquiry',
-      status: 'Hot',
-      notes: 'Prefers modern architectural designs. Needs sea view.',
-      created_at: '2026-06-15T12:00:00Z',
-      lead_source_id: '99 acres'
-    },
-    {
-      id: 'mock-2',
-      client_name: 'Vikram Malhotra',
-      phone: '+91 99100 55443',
-      email: 'vikram.m@corporatespace.in',
-      budget_min: 80000000,
-      budget_max: 100000000,
-      preferred_location: 'Koregaon Park, Pune',
-      property_type: 'Penthouse',
-      configuration: '4 BHK',
-      category: 'Residential',
-      transaction_type: 'Outright',
-      stage_id: 'Site visit',
-      status: 'Warm',
-      notes: 'Corporate client. Wants high-floor penthouse with city skyline views.',
-      created_at: '2026-06-14T09:30:00Z',
-      lead_source_id: 'Referral'
-    },
-    {
-      id: 'mock-3',
-      client_name: 'Rajesh Gupta',
-      phone: '+91 94400 88776',
-      email: 'rajesh.gupta@outlook.com',
-      budget_min: 120000000,
-      budget_max: 150000000,
-      preferred_location: 'Baner, Pune',
-      property_type: 'Villa',
-      configuration: '5 BHK',
-      category: 'Residential',
-      transaction_type: 'Outright',
-      stage_id: 'Follow up',
-      status: 'No answer',
-      notes: 'Has visited Heritage Villa twice. Discussing pricing and payment schedules.',
-      created_at: '2026-06-12T14:15:00Z',
-      lead_source_id: 'Website'
-    },
-    {
-      id: 'mock-4',
-      client_name: 'Deepika Rao',
-      phone: '+91 80500 44332',
-      email: 'deepika.rao@tech-leads.in',
-      budget_min: 25000000,
-      budget_max: 35000000,
-      preferred_location: 'Viman Nagar, Pune',
-      property_type: 'Apartment',
-      configuration: '3 BHK',
-      category: 'Residential',
-      transaction_type: 'Outright',
-      stage_id: 'Site visit',
-      status: 'Warm',
-      notes: 'Looking for property near ITPL. Primary interest in ready-to-move projects.',
-      created_at: '2026-06-10T11:00:00Z',
-      lead_source_id: 'Magicbricks'
-    }
-  ];
-
-  const displayLeads = leads.length > 0 ? leads : mockLeads;
+  const displayLeads = leads;
 
   // Filter logic
   const filteredLeads = useMemo(() => {

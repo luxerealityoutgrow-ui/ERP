@@ -37,49 +37,6 @@ export default function SiteVisitsPage() {
   const [visitTime, setVisitTime] = useState('02:00 PM');
   const [notes, setNotes] = useState('');
 
-  const mockVisits: SiteVisit[] = [
-    {
-      id: 'visit-1',
-      client_name: 'Ananya Sharma',
-      property_title: 'Vivencia',
-      location: 'Kalyani Nagar, Pune',
-      visit_date: 17,
-      visit_time: '11:00 AM',
-      status: 'Confirmed',
-      agent_notes: 'Wants to view the pool deck and automation systems.'
-    },
-    {
-      id: 'visit-2',
-      client_name: 'Vikram Malhotra',
-      property_title: 'Power Heights Penthouse',
-      location: 'Koregaon Park, Pune',
-      visit_date: 17,
-      visit_time: '03:00 PM',
-      status: 'Pending',
-      agent_notes: 'Awaiting client approval of schedule.'
-    },
-    {
-      id: 'visit-3',
-      client_name: 'Rajesh Gupta',
-      property_title: 'Vivencia',
-      location: 'Baner, Pune',
-      visit_date: 18,
-      visit_time: '02:00 PM',
-      status: 'Confirmed',
-      agent_notes: 'Second viewing. Bringing his architect.'
-    },
-    {
-      id: 'visit-4',
-      client_name: 'Deepika Rao',
-      property_title: 'NYATI Evoque',
-      location: 'Viman Nagar, Pune',
-      visit_date: 20,
-      visit_time: '10:30 AM',
-      status: 'Cancelled',
-      agent_notes: 'Rescheduled due to client flight conflict.'
-    }
-  ];
-
   const [visits, setVisits] = useState<SiteVisit[]>([]);
   const [loading, setLoading] = useState(true);
   const [leadsList, setLeadsList] = useState<any[]>([]);
@@ -122,7 +79,7 @@ export default function SiteVisitsPage() {
         if (leadsData) setLeadsList(leadsData);
         if (propsData) setPropertiesList(propsData);
 
-        if (visitsData && visitsData.length > 0) {
+        if (visitsData) {
           const mapped: SiteVisit[] = visitsData.map((v: any) => {
             const dateParts = v.visit_date ? v.visit_date.split('-') : [];
             const dayNum = dateParts.length === 3 ? parseInt(dateParts[2], 10) : 17;
@@ -141,11 +98,11 @@ export default function SiteVisitsPage() {
           });
           setVisits(mapped);
         } else {
-          setVisits(mockVisits);
+          setVisits([]);
         }
       } catch (err) {
         console.error('Error loading site visits:', err);
-        setVisits(mockVisits);
+        setVisits([]);
       } finally {
         setLoading(false);
       }

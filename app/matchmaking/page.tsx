@@ -126,154 +126,6 @@ export default function MatchmakingPage() {
   const [minMatchScore, setMinMatchScore] = useState<number>(60);
   const [fitFilter, setFitFilter] = useState<'all' | 'strong' | 'good'>('all');
 
-  // Fallback mock leads
-  const mockLeads: Lead[] = [
-    {
-      id: 'mock-1',
-      client_name: 'Ananya Sharma',
-      phone: '+91 98200 11223',
-      email: 'ananya.s@gmail.com',
-      budget_min: 40000000,
-      budget_max: 50000000,
-      preferred_location: 'Kalyani Nagar',
-      property_type: 'Apartment',
-      configuration: '3 BHK',
-      category: 'Residential',
-      transaction_type: 'Outright',
-      stage_id: 'New inquiry',
-      status: 'Hot',
-      notes: 'Prefers modern architectural designs. Needs sea view.',
-      created_at: '2026-06-15T12:00:00Z',
-      lead_source_id: '99 acres',
-      required_area: 1800
-    },
-    {
-      id: 'mock-2',
-      client_name: 'Vikram Malhotra',
-      phone: '+91 99100 55443',
-      email: 'vikram.m@corporatespace.in',
-      budget_min: 80000000,
-      budget_max: 100000000,
-      preferred_location: 'Koregaon Park',
-      property_type: 'Penthouse',
-      configuration: '4 BHK',
-      category: 'Residential',
-      transaction_type: 'Outright',
-      stage_id: 'Site visit',
-      status: 'Warm',
-      notes: 'Corporate client. Wants high-floor penthouse with city skyline views.',
-      created_at: '2026-06-14T09:30:00Z',
-      lead_source_id: 'Referral',
-      required_area: 3200
-    },
-    {
-      id: 'mock-3',
-      client_name: 'Rajesh Gupta',
-      phone: '+91 94400 88776',
-      email: 'rajesh.gupta@outlook.com',
-      budget_min: 120000000,
-      budget_max: 150000000,
-      preferred_location: 'Baner',
-      property_type: 'Villa',
-      configuration: '5 BHK',
-      category: 'Residential',
-      transaction_type: 'Outright',
-      stage_id: 'Follow up',
-      status: 'No answer',
-      notes: 'Has visited Heritage Villa twice. Discussing pricing and payment schedules.',
-      created_at: '2026-06-12T14:15:00Z',
-      lead_source_id: 'Website',
-      required_area: 6000
-    },
-    {
-      id: 'mock-4',
-      client_name: 'Deepika Rao',
-      phone: '+91 80500 44332',
-      email: 'deepika.rao@tech-leads.in',
-      budget_min: 25000000,
-      budget_max: 35000000,
-      preferred_location: 'Viman Nagar',
-      property_type: 'Apartment',
-      configuration: '3 BHK',
-      category: 'Residential',
-      transaction_type: 'Outright',
-      stage_id: 'Site visit',
-      status: 'Warm',
-      notes: 'Looking for property near ITPL. Primary interest in ready-to-move projects.',
-      created_at: '2026-06-10T11:00:00Z',
-      lead_source_id: 'Magicbricks',
-      required_area: 1500
-    }
-  ];
-
-  // Fallback mock properties
-  const mockProperties: Property[] = [
-    {
-      id: 'prop-1',
-      title: 'Pristine Kyra',
-      property_code: 'PROP-KYR-01',
-      location: 'Kalyani Nagar',
-      address: 'Pristine Kyra, Kalyani Nagar, Pune, Maharashtra 411006',
-      property_type: 'Penthouse',
-      configuration: '4 BHK',
-      price: 45000000,
-      carpet_area: 4500,
-      status_id: 'Available',
-      listing_type: 'Sale',
-      owner_name: 'Vikram Seth',
-      owner_contact: '+91 98200 12345',
-      description: 'Stunning organic modern architectural masterpiece in the heart of Pune. Features full-height glass walls, infinity edge balcony, and state-of-the-art home automation.'
-    },
-    {
-      id: 'prop-2',
-      title: 'Power Heights',
-      property_code: 'PROP-POW-02',
-      location: 'Koregaon Park',
-      address: 'Power Heights, North Main Road, Koregaon Park, Maharashtra 411001',
-      property_type: 'Luxury Apartment',
-      configuration: '3 BHK',
-      price: 130000000,
-      carpet_area: 3200,
-      status_id: 'Available',
-      listing_type: 'Sale',
-      owner_name: 'Aditya Birla',
-      owner_contact: '+91 99100 54321',
-      description: 'Exclusive double-height glass ceiling penthouse offering panoramic views of the city skyline. Includes private terrace pool and dedicated concierge services.'
-    },
-    {
-      id: 'prop-3',
-      title: 'Vivencia Villa',
-      property_code: 'PROP-VIV-03',
-      location: 'Baner',
-      address: 'Vivencia, Baner Road, Pune, Maharashtra 411045',
-      property_type: 'Villa',
-      configuration: '5 BHK',
-      price: 140000000,
-      carpet_area: 8500,
-      status_id: 'Under Offer',
-      listing_type: 'Sale',
-      owner_name: 'Nagarjuna Reddy',
-      owner_contact: '+91 94400 98765',
-      description: 'Minimalist contemporary villa blended with traditional Indian architectural elements. Features large courtyards and expansive landscaped gardens.'
-    },
-    {
-      id: 'prop-4',
-      title: 'NYATI Evoque',
-      property_code: 'PROP-NYA-04',
-      location: 'Viman Nagar',
-      address: 'NYATI Evoque, Viman Nagar, Pune, Maharashtra 411014',
-      property_type: 'Apartment',
-      configuration: '3 BHK',
-      price: 32000000,
-      carpet_area: 1600,
-      status_id: 'Available',
-      listing_type: 'Sale',
-      owner_name: 'Rohan Murthy',
-      owner_contact: '+91 80500 11223',
-      description: 'Modern high-rise apartment with premium finishes and smart home features. Located in the tech hub of the city with excellent connectivity.'
-    }
-  ];
-
   // Prevent Recharts hydration warnings in Next.js SSR
   useEffect(() => {
     setMounted(true);
@@ -286,8 +138,8 @@ export default function MatchmakingPage() {
         const leadsData = await fetchLeads(profile);
         const propsData = await fetchProperties(profile);
 
-        const finalLeads = leadsData && leadsData.length > 0 ? leadsData : mockLeads;
-        const finalProps = propsData && propsData.length > 0 ? propsData : mockProperties;
+        const finalLeads = leadsData || [];
+        const finalProps = propsData || [];
 
         setLeads(finalLeads);
         setProperties(finalProps);
@@ -296,10 +148,8 @@ export default function MatchmakingPage() {
         if (finalProps.length > 0) setSelectedPropertyId(finalProps[0].id);
       } catch (err) {
         console.error("Error loading matchmaking data:", err);
-        setLeads(mockLeads);
-        setProperties(mockProperties);
-        setSelectedLeadId(mockLeads[0].id);
-        setSelectedPropertyId(mockProperties[0].id);
+        setLeads([]);
+        setProperties([]);
       } finally {
         setLoading(false);
       }
@@ -654,6 +504,18 @@ Let us know if you would like to schedule a site visit!`);
       <div className="flex flex-col items-center justify-center min-h-[550px] gap-3">
         <div className="h-10 w-10 rounded-full border-2 border-zinc-300 border-t-zinc-900 animate-spin" />
         <p className="text-xs text-zinc-500 font-bold tracking-wide uppercase">Running cross-reference matchmaking engine...</p>
+      </div>
+    );
+  }
+
+  if (!loading && (leads.length === 0 || properties.length === 0)) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[500px] text-center p-8 bg-white border border-zinc-200 rounded-3xl max-w-xl mx-auto shadow-sm">
+        <Sparkles className="h-10 w-10 text-zinc-400 mb-3 animate-pulse" />
+        <h3 className="text-sm font-extrabold text-zinc-900 mb-1">No Matchmaking Data Available</h3>
+        <p className="text-xs text-zinc-500 max-w-xs leading-relaxed">
+          Matchmaking requires at least one active Lead and one active Property listing in your database to calculate affinity scores.
+        </p>
       </div>
     );
   }

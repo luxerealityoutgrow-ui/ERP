@@ -70,86 +70,19 @@ export default function PropertyInventoryPage() {
     const timer = setTimeout(() => {
       fetchProperties(profile)
         .then(data => {
-          if (data && data.length > 0) {
-            setProperties(data);
-          }
+          setProperties(data || []);
         })
-        .catch(console.error)
+        .catch((err) => {
+          console.error(err);
+          setProperties([]);
+        })
         .finally(() => setLoading(false));
     }, 500);
 
     return () => clearTimeout(timer);
   }, [profile]);
 
-  // Fallback mock properties if DB is empty
-  const mockProperties: Property[] = [
-    {
-      id: 'prop-1',
-      title: 'Pristine Kyra',
-      property_code: 'PROP-KYR-01',
-      location: 'Kalyani Nagar',
-      address: 'Pristine Kyra, Kalyani Nagar, Pune, Maharashtra 411006',
-      property_type: 'Penthouse',
-      configuration: '4 BHK',
-      price: 31000000,
-      carpet_area: 4500,
-      status_id: 'Available',
-      listing_type: 'Sale',
-      owner_name: 'Vikram Seth',
-      owner_contact: '+91 98200 12345',
-      description: 'Stunning organic modern architectural masterpiece in the heart of Pune.'
-    },
-    {
-      id: 'prop-2',
-      title: 'Power Heights',
-      property_code: 'PROP-POW-02',
-      location: 'Koregaon Park',
-      address: 'Power Heights, North Main Road, Koregaon Park, Maharashtra 411001',
-      property_type: 'Luxury Apartment',
-      configuration: '3 BHK',
-      price: 13000000,
-      carpet_area: 3200,
-      status_id: 'Available',
-      listing_type: 'Sale',
-      owner_name: 'Aditya Birla',
-      owner_contact: '+91 99100 54321',
-      description: 'Exclusive double-height glass ceiling penthouse offering panoramic views.'
-    },
-    {
-      id: 'prop-3',
-      title: 'Vivencia',
-      property_code: 'PROP-VIV-03',
-      location: 'Baner',
-      address: 'Vivencia, Baner Road, Pune, Maharashtra 411045',
-      property_type: 'Villa',
-      configuration: '5 BHK',
-      price: 22000000,
-      carpet_area: 8500,
-      status_id: 'Under Offer',
-      listing_type: 'Sale',
-      owner_name: 'Nagarjuna Reddy',
-      owner_contact: '+91 94400 98765',
-      description: 'Minimalist contemporary villa blended with traditional Indian architecture.'
-    },
-    {
-      id: 'prop-4',
-      title: 'NYATI Evoque',
-      property_code: 'PROP-NYA-04',
-      location: 'Viman Nagar',
-      address: 'NYATI Evoque, Viman Nagar, Pune, Maharashtra 411014',
-      property_type: 'Apartment',
-      configuration: '3 BHK',
-      price: 35000000,
-      carpet_area: 2400,
-      status_id: 'Available',
-      listing_type: 'Sale',
-      owner_name: 'Rohan Murthy',
-      owner_contact: '+91 80500 11223',
-      description: 'Modern high-rise apartment with premium finishes and smart home features.'
-    }
-  ];
-
-  const displayProperties = properties.length > 0 ? properties : mockProperties;
+  const displayProperties = properties;
 
   const stats = useMemo(() => {
     let total = displayProperties.length;

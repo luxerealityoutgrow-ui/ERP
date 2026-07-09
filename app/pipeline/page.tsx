@@ -74,69 +74,6 @@ const STAGE_CONFIGS: Record<string, {
 const LEAD_SOURCES = ['99 acres', 'Magicbricks', 'Website', 'Instagram', 'Referral', 'Manual Entry'];
 const PROPERTY_PREFERENCES = ['Pristine Kyra', 'Power Heights', 'Vivencia Villa', 'NYATI Evoque', 'TBD'];
 
-const mockDeals: Deal[] = [
-  {
-    id: 'deal-1',
-    client_name: 'Ananya Sharma',
-    property_preference: 'Vivencia Villa',
-    budget: 45000000,
-    stage: 'Follow up',
-    notes: 'Submitted proposal details. Client reviewing financing options with HDFC bank.',
-    source: '99 acres',
-    lastActive: '10m ago'
-  },
-  {
-    id: 'deal-2',
-    client_name: 'Vikram Malhotra',
-    property_preference: 'Power Heights',
-    budget: 130000000,
-    stage: 'Site visit',
-    notes: 'Requested site visit. Verified proof of funds. Highly interested in high-floor penthouses.',
-    source: 'Referral',
-    lastActive: '1h ago'
-  },
-  {
-    id: 'deal-3',
-    client_name: 'Rajesh Gupta',
-    property_preference: 'Vivencia Villa',
-    budget: 140000000,
-    stage: 'Follow up',
-    notes: 'Offered ₹13.5 Cr. Owner counter-offered ₹13.8 Cr. Negotiations ongoing.',
-    source: 'Website',
-    lastActive: '3h ago'
-  },
-  {
-    id: 'deal-4',
-    client_name: 'Deepika Rao',
-    property_preference: 'NYATI Evoque',
-    budget: 32000000,
-    stage: 'Closure',
-    notes: 'Contract signed. Token amount of ₹10 Lakhs received in escrow.',
-    source: 'Magicbricks',
-    lastActive: '1d ago'
-  },
-  {
-    id: 'deal-5',
-    client_name: 'Amitabh Kapoor',
-    property_preference: 'Pristine Kyra',
-    budget: 45000000,
-    stage: 'New inquiry',
-    notes: 'Initial call. Wants a modern compound in Kalyani Nagar. Scheduled call for tomorrow.',
-    source: 'Instagram',
-    lastActive: '2d ago'
-  },
-  {
-    id: 'deal-6',
-    client_name: 'Saira Banu',
-    property_preference: 'Power Heights',
-    budget: 130000000,
-    stage: 'Follow up',
-    notes: 'Sent floorplans and view packages. Scheduled a follow-up Zoom call.',
-    source: 'Website',
-    lastActive: '4h ago'
-  }
-];
-
 const mapLeadToDeal = (lead: any): Deal => {
   return {
     id: lead.id,
@@ -164,14 +101,14 @@ export default function PipelinePage() {
           .select('*')
           .eq('is_active', true)
           .order('created_at', { ascending: false });
-        if (data && data.length > 0) {
+        if (data) {
           setDeads(data.map(mapLeadToDeal));
         } else {
-          setDeads(mockDeals);
+          setDeads([]);
         }
       } catch (err) {
         console.error('Error loading deals:', err);
-        setDeads(mockDeals);
+        setDeads([]);
       } finally {
         setLoading(false);
       }
