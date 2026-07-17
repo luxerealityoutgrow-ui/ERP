@@ -34,7 +34,7 @@ const sections: { id: SettingSection; label: string; icon: React.ElementType; de
   { id: 'users', label: 'User Management', icon: Users, description: 'Manage team members and their roles.', superAdminOnly: true },
   { id: 'notifications', label: 'Notifications', icon: Bell, description: 'Configure alerts and notification preferences.' },
   { id: 'security', label: 'Security', icon: Shield, description: 'Passwords, 2FA, and access control settings.' },
-  { id: 'appearance', label: 'Appearance', icon: Palette, description: 'Theme, layout, and display preferences.' },
+  { id: 'appearance', label: 'Appearance', icon: Palette, description: 'Theme, layout, and display preferences.', superAdminOnly: true },
   { id: 'integrations', label: 'Integrations', icon: Database, description: 'Connect third-party tools and data sources.', superAdminOnly: true },
 ];
 
@@ -549,7 +549,7 @@ export default function SettingsPage() {
           )}
 
           {/* ── APPEARANCE SECTION ── */}
-          {activeSection === 'appearance' && (
+          {activeSection === 'appearance' && perms.canManageUsers && (
             <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl overflow-hidden">
               <div className="px-6 py-5 border-b border-zinc-100">
                 <h2 className="text-sm font-bold text-zinc-800">Appearance & Theme</h2>

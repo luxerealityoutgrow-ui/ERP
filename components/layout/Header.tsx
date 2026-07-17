@@ -30,6 +30,13 @@ export function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+  // Notifications State
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [profilesMap, setProfilesMap] = useState<Record<string, string>>({});
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [lastReadTime, setLastReadTime] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [leads, setLeads] = useState<Lead[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
@@ -162,9 +169,146 @@ export function Header() {
     }
   };
 
+  // Load profiles map and notifications
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        // Fetch profiles to map ID to Name
+        const { data: profs } = await supabase.from('profiles').select('id, full_name');
+        if (profs) {
+          const pMap: Record<string, string> = {};
+          profs.forEach((p) => {
+            pMap[p.id] = p.full_name || '';
+          });
+          setProfilesMap(pMap);
+        }
+
+        // Fetch recent audit logs
+        const { data: logs } = await supabase
+          .from('audit_logs')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(15);
+        if (logs) {
+          setNotifications(logs);
+          
+          // Calculate unread count
+          const lastRead = localStorage.getItem('luxe-last-read-notifications');
+          setLastReadTime(lastRead);
+          if (lastRead) {
+            const count = logs.filter(log => new Date(log.created_at) > new Date(lastRead)).length;
+            setUnreadCount(count);
+          } else {
+            setUnreadCount(logs.length);
+          }
+        }
+      } catch (err) {
+        console.error('Error loading notifications:', err);
+      }
+    };
+
+    loadInitialData();
+
+    // Subscribe to realtime audit logs
+    const channel = supabase
+      .channel('realtime-audit-logs')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'audit_logs' }, (payload) => {
+        const newLog = payload.new;
+        setNotifications((prev) => [newLog, ...prev.slice(0, 14)]);
+        
+        // Calculate unread count dynamically if dropdown is closed
+        setUnreadCount((c) => {
+          const lastRead = localStorage.getItem('luxe-last-read-notifications');
+          if (lastRead) {
+            if (new Date(newLog.created_at) > new Date(lastRead)) {
+              return c + 1;
+            }
+            return c;
+          }
+          return c + 1;
+        });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const handleToggleNotifications = async () => {
+    const nextState = !isNotificationsOpen;
+    setIsNotificationsOpen(nextState);
+    
+    if (nextState) {
+      // Clear badge count
+      const nowStr = new Date().toISOString();
+      localStorage.setItem('luxe-last-read-notifications', nowStr);
+      setLastReadTime(nowStr);
+      setUnreadCount(0);
+
+      // Fetch latest logs to refresh
+      try {
+        const { data: logs } = await supabase
+          .from('audit_logs')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(15);
+        if (logs) {
+          setNotifications(logs);
+        }
+      } catch (err) {
+        console.error('Error refreshing notifications:', err);
+      }
+    }
+  };
+
+  const handleMarkAllRead = () => {
+    const nowStr = new Date().toISOString();
+    localStorage.setItem('luxe-last-read-notifications', nowStr);
+    setLastReadTime(nowStr);
+    setUnreadCount(0);
+  };
+
+  const getEventDescription = (log: any) => {
+    const event = log.event;
+    const changes = log.changes || {};
+    const name = changes.client_name || changes.title || '';
+    
+    if (event === 'Lead created') {
+      return `created a new lead ${name ? `"${name}"` : ''}`;
+    }
+    if (event === 'Lead updated') {
+      return `updated lead ${name ? `"${name}"` : ''}`;
+    }
+    if (event === 'Property created') {
+      return `created a new property listing ${name ? `"${name}"` : ''}`;
+    }
+    if (event === 'Property updated') {
+      return `updated property listing ${name ? `"${name}"` : ''}`;
+    }
+    if (event === 'Site visit scheduled') {
+      return `scheduled a new site visit`;
+    }
+    return event.toLowerCase();
+  };
+
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (seconds < 60) return 'just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  };
+
   return (
     <>
-      <header className="bg-white/80 backdrop-blur-md border-b border-zinc-200/80 px-6 py-3.5 flex items-center justify-between z-10 select-none">
+      <header className="bg-white/80 backdrop-blur-md border-b border-zinc-200/80 px-6 py-3.5 flex items-center justify-between z-30 select-none">
         
         {/* Search Trigger Input (Opens CMD+K Dialog) */}
         <div 
@@ -244,23 +388,69 @@ export function Header() {
             </span>
           </div>
 
-          {/* Notifications and Mail Icons */}
-          <div className="flex items-center gap-3">
-            {/* Email button */}
-            <button className="relative p-2 rounded-xl bg-zinc-50 border border-zinc-200 text-zinc-500 hover:text-zinc-855 hover:bg-zinc-100 transition-all">
-              <Mail className="h-4 w-4" />
-              <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-zinc-500 text-[9px] font-bold text-white flex items-center justify-center border border-white">
-                2
-              </span>
+          {/* Notifications Dropdown */}
+          <div className="relative">
+            <button 
+              onClick={handleToggleNotifications}
+              className="relative p-2 rounded-xl bg-zinc-50 border border-zinc-200 text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 transition-all cursor-pointer"
+            >
+              <Bell className="h-4 w-4" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-amber-600 text-[9px] font-bold text-white flex items-center justify-center border border-white animate-pulse">
+                  {unreadCount}
+                </span>
+              )}
             </button>
 
-            {/* Notifications button */}
-            <button className="relative p-2 rounded-xl bg-zinc-50 border border-zinc-200 text-zinc-500 hover:text-zinc-855 hover:bg-zinc-100 transition-all">
-              <Bell className="h-4 w-4" />
-              <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-zinc-500 text-[9px] font-bold text-white flex items-center justify-center border border-white animate-pulse">
-                5
-              </span>
-            </button>
+            {isNotificationsOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsNotificationsOpen(false)} />
+                <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-zinc-200 rounded-2xl shadow-2xl z-50 overflow-hidden text-left">
+                  {/* Header */}
+                  <div className="p-4 border-b border-zinc-100 bg-zinc-50/50 flex justify-between items-center">
+                    <p className="text-[10px] font-extrabold text-zinc-800 uppercase tracking-wider">Recent Activity Logs</p>
+                    {unreadCount > 0 && (
+                      <button 
+                        onClick={handleMarkAllRead}
+                        className="text-[9px] font-black text-amber-600 hover:text-amber-700 uppercase cursor-pointer"
+                      >
+                        Mark as read
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Notifications List */}
+                  <div className="max-h-[300px] overflow-y-auto divide-y divide-zinc-100">
+                    {notifications.length > 0 ? (
+                      notifications.map((log) => {
+                        const userName = profilesMap[log.user_id] || 'System User';
+                        const isUnread = lastReadTime ? new Date(log.created_at) > new Date(lastReadTime) : true;
+                        return (
+                          <div key={log.id} className={`p-3.5 hover:bg-zinc-50 transition-colors flex gap-2.5 items-start ${isUnread ? 'bg-amber-50/10' : ''}`}>
+                            {/* Unread marker */}
+                            {isUnread && (
+                              <span className="h-1.5 w-1.5 rounded-full bg-amber-600 mt-1.5 shrink-0 animate-pulse" />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold text-zinc-700 leading-snug">
+                                <span className="font-bold text-zinc-900">{userName}</span> {getEventDescription(log)}
+                              </p>
+                              <p className="text-[9px] text-zinc-400 font-bold mt-1 tracking-wide">
+                                {formatTimeAgo(log.created_at)}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="p-8 text-center text-zinc-400 text-xs font-semibold">
+                        No recent activity logs.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Vertical Separator */}

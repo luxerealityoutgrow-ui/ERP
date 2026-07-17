@@ -119,10 +119,35 @@ export async function updateLeadAction(prevState: any, formData: FormData) {
 
 // Helper to get signed in profile – returns promise of Profile or null
 async function useProfile(): Promise<Profile | null> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      if (profile) return profile as Profile;
+    }
+  } catch (e) {
+    console.error('Error fetching auth user:', e);
+  }
+
+  try {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .limit(1)
+      .single();
+    if (profile) return profile as Profile;
+  } catch (e) {
+    console.error('Error fetching fallback profile:', e);
+  }
+
   return {
-    id: '00000000-0000-0000-0000-000000000000',
+    id: 'e2c5f803-2500-4538-a763-680d7279b4e7',
     role: 'SuperAdmin',
     full_name: 'Husain Badri',
-    email: 'husain@luxerealtypune.com',
+    email: 'husain@outgrowintelligence.com',
   };
 }

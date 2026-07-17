@@ -34,6 +34,7 @@ import {
   ResponsiveContainer 
 } from 'recharts';
 import { useProfile } from '@/lib/auth';
+import { supabase } from '@/lib/supabaseClient';
 import { fetchLeads, fetchProperties, Lead, Property } from '@/lib/queries';
 
 // Helper to abbreviate currency values into Indian units
@@ -126,10 +127,31 @@ export default function MatchmakingPage() {
   const [minMatchScore, setMinMatchScore] = useState<number>(60);
   const [fitFilter, setFitFilter] = useState<'all' | 'strong' | 'good'>('all');
 
+  // Multi-select state
+  const [multiSelectMode, setMultiSelectMode] = useState(false);
+  const [selectedMatchIds, setSelectedMatchIds] = useState<Set<string>>(new Set());
+
   // Prevent Recharts hydration warnings in Next.js SSR
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Clear selections when mode or main filters change
+  useEffect(() => {
+    setSelectedMatchIds(new Set());
+  }, [matchMode, selectedLeadId, selectedPropertyId, multiSelectMode]);
+
+  const handleToggleMatchSelect = (id: string) => {
+    setSelectedMatchIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
   // Fetch data
   useEffect(() => {
@@ -446,17 +468,56 @@ export default function MatchmakingPage() {
 
   // Active highlighted match for comparison panel
   const activeMatchData = useMemo(() => {
-    if (matchMode === 'leads') {
-      const activeProp = properties.find(p => p.id === selectedPropertyId) || properties[0];
-      return activeProp ? calculateDetailedMatch(currentLead, activeProp) : null;
+    if (multiSelectMode) {
+      if (selectedMatchIds.size !== 1) return null;
+      const singleId = Array.from(selectedMatchIds)[0];
+      if (matchMode === 'leads') {
+        const prop = properties.find(p => p.id === singleId);
+        return prop ? calculateDetailedMatch(currentLead, prop) : null;
+      } else {
+        const lead = leads.find(l => l.id === singleId);
+        return lead ? calculateDetailedMatch(lead, currentProperty) : null;
+      }
     } else {
-      const activeLead = leads.find(l => l.id === selectedLeadId) || leads[0];
-      return activeLead ? calculateDetailedMatch(activeLead, currentProperty) : null;
+      if (matchMode === 'leads') {
+        const activeProp = properties.find(p => p.id === selectedPropertyId) || properties[0];
+        return activeProp ? calculateDetailedMatch(currentLead, activeProp) : null;
+      } else {
+        const activeLead = leads.find(l => l.id === selectedLeadId) || leads[0];
+        return activeLead ? calculateDetailedMatch(activeLead, currentProperty) : null;
+      }
     }
-  }, [matchMode, currentLead, currentProperty, selectedPropertyId, selectedLeadId, properties, leads]);
+  }, [multiSelectMode, selectedMatchIds, matchMode, currentLead, currentProperty, selectedPropertyId, selectedLeadId, properties, leads]);
+
+  // Compute matched data for all selected items in multi-select mode
+  const selectedMatchesData = useMemo(() => {
+    if (!multiSelectMode || selectedMatchIds.size === 0) return [];
+    if (matchMode === 'leads') {
+      return Array.from(selectedMatchIds).map(id => {
+        const prop = properties.find(p => p.id === id);
+        if (!prop) return null;
+        const details = calculateDetailedMatch(currentLead, prop);
+        return {
+          item: prop,
+          details
+        };
+      }).filter(Boolean) as { item: Property; details: ReturnType<typeof calculateDetailedMatch> }[];
+    } else {
+      return Array.from(selectedMatchIds).map(id => {
+        const lead = leads.find(l => l.id === id);
+        if (!lead) return null;
+        const details = calculateDetailedMatch(lead, currentProperty);
+        return {
+          item: lead,
+          details
+        };
+      }).filter(Boolean) as { item: Lead; details: ReturnType<typeof calculateDetailedMatch> }[];
+    }
+  }, [multiSelectMode, selectedMatchIds, matchMode, currentLead, currentProperty, properties, leads]);
 
   // Set default comparison node when active list changes
   useEffect(() => {
+    if (multiSelectMode) return;
     if (matchMode === 'leads') {
       if (filteredPropertyMatches.length > 0) {
         setSelectedPropertyId(filteredPropertyMatches[0].id);
@@ -466,7 +527,55 @@ export default function MatchmakingPage() {
         setSelectedLeadId(filteredLeadMatches[0].id);
       }
     }
-  }, [matchMode, selectedLeadId, selectedPropertyId, leads, properties]);
+  }, [matchMode, selectedLeadId, selectedPropertyId, leads, properties, multiSelectMode, filteredPropertyMatches, filteredLeadMatches]);
+
+  const handleBookSingleTour = async () => {
+    if (!currentLead || !currentProperty) return;
+    
+    const { error } = await supabase.from('audit_logs').insert({
+      user_id: profile?.id || 'e2c5f803-2500-4538-a763-680d7279b4e7',
+      event: 'Site visit scheduled',
+      changes: {
+        client_name: currentLead.client_name,
+        title: currentProperty.title
+      }
+    });
+
+    if (error) {
+      console.error('Error inserting site visit log:', error);
+    } else {
+      alert(`Site visit successfully scheduled for ${currentLead.client_name} at ${currentProperty.title}! Check the notifications bell.`);
+    }
+  };
+
+  const handleBookBulkTours = async () => {
+    if (selectedMatchesData.length === 0) return;
+
+    const promises = selectedMatchesData.map(async ({ item, details }) => {
+      const isLeadMode = matchMode === 'leads';
+      const leadName = isLeadMode ? currentLead?.client_name : (item as Lead).client_name;
+      const propTitle = isLeadMode ? (item as Property).title : currentProperty?.title;
+
+      return supabase.from('audit_logs').insert({
+        user_id: profile?.id || 'e2c5f803-2500-4538-a763-680d7279b4e7',
+        event: 'Site visit scheduled',
+        changes: {
+          client_name: leadName,
+          title: propTitle
+        }
+      });
+    });
+
+    try {
+      await Promise.all(promises);
+      const isLeadMode = matchMode === 'leads';
+      const targetName = isLeadMode ? currentLead?.client_name : currentProperty?.title;
+      alert(`Successfully scheduled ${selectedMatchesData.length} site visits for ${targetName}! Check the notifications bell.`);
+      setSelectedMatchIds(new Set());
+    } catch (err) {
+      console.error('Error bulk booking tours:', err);
+    }
+  };
 
   // Filter main sidebar lists by search query
   const sidebarLeads = useMemo(() => {
@@ -705,41 +814,56 @@ Let us know if you would like to schedule a site visit!`);
               </span>
             </div>
 
-            {/* Quick Match Strength Filter Tabs */}
-            <div className="flex items-center bg-zinc-100 p-1 rounded-xl border border-zinc-200 text-[10px] font-bold max-w-fit">
-              <button 
-                onClick={() => setFitFilter('all')}
-                className={`px-3 py-1 rounded-lg transition-all ${
-                  fitFilter === 'all' ? 'bg-white text-zinc-950 shadow-2xs' : 'text-zinc-400 hover:text-zinc-800'
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              {/* Quick Match Strength Filter Tabs */}
+              <div className="flex items-center bg-zinc-100 p-1 rounded-xl border border-zinc-200 text-[10px] font-bold max-w-fit">
+                <button 
+                  onClick={() => setFitFilter('all')}
+                  className={`px-3 py-1 rounded-lg transition-all ${
+                    fitFilter === 'all' ? 'bg-white text-zinc-950 shadow-2xs' : 'text-zinc-400 hover:text-zinc-800'
+                  }`}
+                >
+                  All
+                </button>
+                <button 
+                  onClick={() => setFitFilter('strong')}
+                  className={`px-3 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                    fitFilter === 'strong' ? 'bg-white text-zinc-950 shadow-2xs' : 'text-zinc-400 hover:text-zinc-800'
+                  }`}
+                >
+                  <span>Strong</span>
+                  <span className="text-[8px] bg-zinc-900 text-white px-1.5 py-0.2 rounded-full font-black">
+                    {matchMode === 'leads' 
+                      ? propertyMatches.filter(m => m.score >= 80).length 
+                      : leadMatches.filter(m => m.score >= 80).length}
+                  </span>
+                </button>
+                <button 
+                  onClick={() => setFitFilter('good')}
+                  className={`px-3 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                    fitFilter === 'good' ? 'bg-white text-zinc-950 shadow-2xs' : 'text-zinc-400 hover:text-zinc-800'
+                  }`}
+                >
+                  <span>Good</span>
+                  <span className="text-[8px] bg-zinc-100 text-zinc-600 border border-zinc-200 px-1.5 py-0.2 rounded-full font-black">
+                    {matchMode === 'leads' 
+                      ? propertyMatches.filter(m => m.score >= 60 && m.score < 80).length 
+                      : leadMatches.filter(m => m.score >= 60 && m.score < 80).length}
+                  </span>
+                </button>
+              </div>
+
+              {/* Multi-select Toggle */}
+              <button
+                onClick={() => setMultiSelectMode(!multiSelectMode)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[10px] font-bold transition-all ${
+                  multiSelectMode
+                    ? 'bg-zinc-900 text-white border-zinc-900 shadow-sm'
+                    : 'bg-white text-zinc-600 border-zinc-250 hover:bg-zinc-50'
                 }`}
               >
-                All
-              </button>
-              <button 
-                onClick={() => setFitFilter('strong')}
-                className={`px-3 py-1 rounded-lg transition-all flex items-center gap-1 ${
-                  fitFilter === 'strong' ? 'bg-white text-zinc-950 shadow-2xs' : 'text-zinc-400 hover:text-zinc-800'
-                }`}
-              >
-                <span>Strong</span>
-                <span className="text-[8px] bg-zinc-900 text-white px-1.5 py-0.2 rounded-full font-black">
-                  {matchMode === 'leads' 
-                    ? propertyMatches.filter(m => m.score >= 80).length 
-                    : leadMatches.filter(m => m.score >= 80).length}
-                </span>
-              </button>
-              <button 
-                onClick={() => setFitFilter('good')}
-                className={`px-3 py-1 rounded-lg transition-all flex items-center gap-1 ${
-                  fitFilter === 'good' ? 'bg-white text-zinc-950 shadow-2xs' : 'text-zinc-400 hover:text-zinc-800'
-                }`}
-              >
-                <span>Good</span>
-                <span className="text-[8px] bg-zinc-100 text-zinc-600 border border-zinc-200 px-1.5 py-0.2 rounded-full font-black">
-                  {matchMode === 'leads' 
-                    ? propertyMatches.filter(m => m.score >= 60 && m.score < 80).length 
-                    : leadMatches.filter(m => m.score >= 60 && m.score < 80).length}
-                </span>
+                <Grid className="h-3.5 w-3.5" />
+                {multiSelectMode ? 'Multi-select: ON' : 'Multi-select'}
               </button>
             </div>
           </div>
@@ -751,14 +875,36 @@ Let us know if you would like to schedule a site visit!`);
                 filteredPropertyMatches.map((match) => (
                   <div 
                     key={match.id}
-                    onClick={() => setSelectedPropertyId(match.id)}
+                    onClick={() => {
+                      if (multiSelectMode) {
+                        handleToggleMatchSelect(match.id);
+                      } else {
+                        setSelectedPropertyId(match.id);
+                      }
+                    }}
                     className={`p-4 bg-white border rounded-2xl shadow-xs transition-all duration-300 text-left cursor-pointer group flex items-center justify-between gap-4 ${
-                      selectedPropertyId === match.id 
-                        ? 'border-zinc-950 ring-1 ring-zinc-950' 
-                        : 'border-zinc-200 hover:border-zinc-300'
+                      multiSelectMode
+                        ? selectedMatchIds.has(match.id)
+                          ? 'border-zinc-950 ring-1 ring-zinc-950 bg-zinc-50/30'
+                          : 'border-zinc-200 hover:border-zinc-300'
+                        : selectedPropertyId === match.id 
+                          ? 'border-zinc-950 ring-1 ring-zinc-950' 
+                          : 'border-zinc-200 hover:border-zinc-300'
                     }`}
                   >
                     <div className="flex gap-4 min-w-0 flex-1">
+                      {/* Checkbox when in multi-select mode */}
+                      {multiSelectMode && (
+                        <div className="flex items-center shrink-0" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selectedMatchIds.has(match.id)}
+                            onChange={() => handleToggleMatchSelect(match.id)}
+                            className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 cursor-pointer"
+                          />
+                        </div>
+                      )}
+                      
                       {/* Thumbnail */}
                       <div className="w-16 h-16 bg-zinc-100 rounded-xl overflow-hidden shrink-0 relative">
                         <img 
@@ -782,7 +928,7 @@ Let us know if you would like to schedule a site visit!`);
                         {/* Attribute Badges */}
                         <div className="flex items-center gap-1.5 mt-2 text-[9px] font-bold text-zinc-500">
                           <span className="text-zinc-950 font-black">{formatBudgetAbbreviated(match.price)}</span>
-                          <span className="text-zinc-300">•</span>
+                          <span className="text-zinc-350">•</span>
                           <span>{match.configuration}</span>
                           <span className="text-zinc-300">•</span>
                           <span>{match.property_type}</span>
@@ -805,14 +951,36 @@ Let us know if you would like to schedule a site visit!`);
                 filteredLeadMatches.map((match) => (
                   <div 
                     key={match.id}
-                    onClick={() => setSelectedLeadId(match.id)}
+                    onClick={() => {
+                      if (multiSelectMode) {
+                        handleToggleMatchSelect(match.id);
+                      } else {
+                        setSelectedLeadId(match.id);
+                      }
+                    }}
                     className={`p-4 bg-white border rounded-2xl shadow-xs transition-all duration-300 text-left cursor-pointer group flex items-center justify-between gap-4 ${
-                      selectedLeadId === match.id 
-                        ? 'border-zinc-950 ring-1 ring-zinc-950' 
-                        : 'border-zinc-200 hover:border-zinc-300'
+                      multiSelectMode
+                        ? selectedMatchIds.has(match.id)
+                          ? 'border-zinc-950 ring-1 ring-zinc-950 bg-zinc-50/30'
+                          : 'border-zinc-200 hover:border-zinc-300'
+                        : selectedLeadId === match.id 
+                          ? 'border-zinc-950 ring-1 ring-zinc-950' 
+                          : 'border-zinc-200 hover:border-zinc-300'
                     }`}
                   >
                     <div className="flex gap-4 min-w-0 flex-1">
+                      {/* Checkbox when in multi-select mode */}
+                      {multiSelectMode && (
+                        <div className="flex items-center shrink-0" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selectedMatchIds.has(match.id)}
+                            onChange={() => handleToggleMatchSelect(match.id)}
+                            className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 cursor-pointer"
+                          />
+                        </div>
+                      )}
+
                       {/* Circle Avatar */}
                       <div className="w-14 h-14 rounded-full overflow-hidden bg-zinc-150 flex items-center justify-center shrink-0">
                         <img src="/lead-avatar.png" alt="" className="h-full w-full object-cover" />
@@ -862,7 +1030,168 @@ Let us know if you would like to schedule a site visit!`);
             Visual Match Analysis
           </h3>
 
-          {activeMatchData ? (
+          {multiSelectMode && selectedMatchIds.size > 1 ? (
+            <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm p-5 space-y-6 text-left">
+              
+              {/* Header Info */}
+              <div className="flex items-center justify-between border-b border-zinc-150 pb-3">
+                <div>
+                  <p className="text-xs font-extrabold text-zinc-800 uppercase tracking-wide">Bulk Match Comparison</p>
+                  <p className="text-[10px] text-zinc-400 font-semibold mt-0.5">{selectedMatchIds.size} Items Selected</p>
+                </div>
+                <button 
+                  onClick={() => setSelectedMatchIds(new Set())}
+                  className="text-[10px] font-bold text-zinc-500 hover:text-zinc-800 border border-zinc-200 px-2 py-1 rounded-lg transition-colors"
+                >
+                  Clear
+                </button>
+              </div>
+
+              {/* Stacked comparison cards */}
+              <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">
+                {selectedMatchesData.map(({ item, details }, idx) => (
+                  <div key={idx} className="p-3 bg-zinc-50 border border-zinc-150 rounded-xl space-y-2">
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="font-extrabold text-zinc-900 text-xs truncate">
+                        {matchMode === 'leads' ? (item as Property).title : (item as Lead).client_name}
+                      </span>
+                      <span className="text-[10px] font-black text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-lg shrink-0">
+                        {details.totalScore}% Fit
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[9px] text-zinc-500 font-semibold pt-2 border-t border-zinc-200/50">
+                      {matchMode === 'leads' ? (
+                        <>
+                          <div>
+                            <span className="text-zinc-400 block text-[8px] uppercase tracking-wider">Price</span>
+                            <span className="font-bold text-zinc-850">{formatBudgetAbbreviated((item as Property).price)}</span>
+                          </div>
+                          <div>
+                            <span className="text-zinc-400 block text-[8px] uppercase tracking-wider">Location</span>
+                            <span className="font-bold text-zinc-850 truncate block">{(item as Property).location}</span>
+                          </div>
+                          <div>
+                            <span className="text-zinc-400 block text-[8px] uppercase tracking-wider">BHK / Type</span>
+                            <span className="font-bold text-zinc-850">{(item as Property).configuration} {(item as Property).property_type}</span>
+                          </div>
+                          <div>
+                            <span className="text-zinc-400 block text-[8px] uppercase tracking-wider">Area</span>
+                            <span className="font-bold text-zinc-850">{(item as Property).carpet_area} sq ft</span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div>
+                            <span className="text-zinc-400 block text-[8px] uppercase tracking-wider">Budget Max</span>
+                            <span className="font-bold text-zinc-850">{formatBudgetAbbreviated((item as Lead).budget_max)}</span>
+                          </div>
+                          <div>
+                            <span className="text-zinc-400 block text-[8px] uppercase tracking-wider">Preferred Location</span>
+                            <span className="font-bold text-zinc-850 truncate block">{(item as Lead).preferred_location || 'Flexible'}</span>
+                          </div>
+                          <div>
+                            <span className="text-zinc-400 block text-[8px] uppercase tracking-wider">BHK / Type</span>
+                            <span className="font-bold text-zinc-850">{(item as Lead).configuration || 'Any'} / {(item as Lead).property_type || 'Any'}</span>
+                          </div>
+                          <div>
+                            <span className="text-zinc-400 block text-[8px] uppercase tracking-wider">Status</span>
+                            <span className="font-bold text-zinc-850">{(item as Lead).status || 'Warm'}</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Bulk Actions */}
+              <div className="space-y-2 pt-4 border-t border-zinc-150">
+                {matchMode === 'leads' ? (
+                  <>
+                    <a 
+                      href={`https://wa.me/?text=${(() => {
+                        let text = `👋 Hello ${currentLead?.client_name},\nWe found some premium properties matching your requirements!\n\n`;
+                        selectedMatchesData.forEach(({ item, details }, idx) => {
+                          const p = item as Property;
+                          text += `🏠 *${idx + 1}. ${p.title}* (${details.totalScore}% Match)\n`;
+                          text += `📍 Location: ${p.location}\n`;
+                          text += `💰 Price: ${formatBudgetAbbreviated(p.price)}\n`;
+                          text += `🏢 Type: ${p.property_type} (${p.configuration})\n`;
+                          text += `📐 Area: ${p.carpet_area} sq ft\n\n`;
+                        });
+                        text += `Let us know if you would like to schedule site visits for any of these!`;
+                        return encodeURIComponent(text);
+                      })()}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-all shadow-xs"
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      WhatsApp Selected Properties
+                    </a>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <button 
+                        onClick={() => alert(`Brochures for ${selectedMatchIds.size} selected properties sent to ${currentLead?.client_name}!`)}
+                        className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-zinc-900 text-white text-[11px] font-bold hover:bg-zinc-800 transition-all border border-zinc-900 shadow-2xs"
+                      >
+                        <Send className="h-3.5 w-3.5" />
+                        Send Details
+                      </button>
+                      <button 
+                        onClick={handleBookBulkTours}
+                        className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white border border-zinc-200 text-zinc-855 text-[11px] font-bold hover:bg-zinc-50 transition-all shadow-2xs"
+                      >
+                        <Calendar className="h-3.5 w-3.5 text-zinc-500" />
+                        Book Tours
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <a 
+                      href={`https://wa.me/?text=${(() => {
+                        let text = `👋 Hello team,\nHere are potential buyers matching *${currentProperty?.title}*:\n\n`;
+                        selectedMatchesData.forEach(({ item, details }, idx) => {
+                          const l = item as Lead;
+                          text += `👤 *${idx + 1}. ${l.client_name}* (${details.totalScore}% Match)\n`;
+                          text += `📞 Phone: ${l.phone}\n`;
+                          text += `✉️ Email: ${l.email}\n`;
+                          text += `💰 Budget Limit: ${formatBudgetAbbreviated(l.budget_max)}\n\n`;
+                        });
+                        return encodeURIComponent(text);
+                      })()}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-all shadow-xs"
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      WhatsApp Selected Clients
+                    </a>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <button 
+                        onClick={() => alert(`Sent details of ${currentProperty?.title} to ${selectedMatchIds.size} client leads!`)}
+                        className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-zinc-900 text-white text-[11px] font-bold hover:bg-zinc-800 transition-all border border-zinc-900 shadow-2xs"
+                      >
+                        <Send className="h-3.5 w-3.5" />
+                        Send Details
+                      </button>
+                      <button 
+                        onClick={handleBookBulkTours}
+                        className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white border border-zinc-200 text-zinc-855 text-[11px] font-bold hover:bg-zinc-50 transition-all shadow-2xs"
+                      >
+                        <Calendar className="h-3.5 w-3.5 text-zinc-500" />
+                        Book Tours
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+
+            </div>
+          ) : activeMatchData ? (
             <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm p-5 space-y-6 text-left">
               
               {/* Radar Chart Display */}
@@ -964,8 +1293,8 @@ Let us know if you would like to schedule a site visit!`);
                     Send Details
                   </button>
                   <button 
-                    onClick={() => alert(`Scheduling site tour for ${currentLead.client_name} at ${currentProperty.title}...`)}
-                    className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white border border-zinc-200 text-zinc-850 text-[11px] font-bold hover:bg-zinc-50 transition-all shadow-2xs"
+                    onClick={handleBookSingleTour}
+                    className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white border border-zinc-200 text-zinc-855 text-[11px] font-bold hover:bg-zinc-50 transition-all shadow-2xs"
                   >
                     <Calendar className="h-3.5 w-3.5 text-zinc-500" />
                     Book Tour
