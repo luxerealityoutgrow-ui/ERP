@@ -814,8 +814,8 @@ Let us know if you would like to schedule a site visit!`);
                   >
                     <div className="flex gap-4 min-w-0 flex-1">
                       {/* Circle Avatar */}
-                      <div className="w-14 h-14 bg-zinc-150 rounded-full flex items-center justify-center shrink-0 font-bold text-zinc-700 text-sm">
-                        {match.client_name?.split(' ').map(n => n[0]).join('') || '?'}
+                      <div className="w-14 h-14 rounded-full overflow-hidden bg-zinc-150 flex items-center justify-center shrink-0">
+                        <img src="/lead-avatar.png" alt="" className="h-full w-full object-cover" />
                       </div>
 
                       {/* Meta info */}

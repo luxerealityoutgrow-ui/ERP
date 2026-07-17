@@ -309,6 +309,9 @@ export default function LeadsPage() {
   const handleToggleLeadActive = async (leadId: string, currentState: boolean) => {
     const newState = !currentState;
     setLeads(prev => prev.map(l => l.id === leadId ? { ...l, is_active: newState } : l));
+    if (selectedLead && selectedLead.id === leadId) {
+      setSelectedLead(prev => prev ? { ...prev, is_active: newState } : null);
+    }
     setToast({ msg: newState ? "Lead activated." : "Lead deactivated.", tone: "ok" });
     try {
       const { error } = await supabase
@@ -317,10 +320,16 @@ export default function LeadsPage() {
         .eq('id', leadId);
       if (error) {
         setLeads(prev => prev.map(l => l.id === leadId ? { ...l, is_active: currentState } : l));
+        if (selectedLead && selectedLead.id === leadId) {
+          setSelectedLead(prev => prev ? { ...prev, is_active: currentState } : null);
+        }
         setToast({ msg: `Failed: ${error.message}`, tone: "err" });
       }
     } catch (err) {
       setLeads(prev => prev.map(l => l.id === leadId ? { ...l, is_active: currentState } : l));
+      if (selectedLead && selectedLead.id === leadId) {
+        setSelectedLead(prev => prev ? { ...prev, is_active: currentState } : null);
+      }
       setToast({ msg: "Failed to toggle state", tone: "err" });
     }
   };
@@ -942,6 +951,7 @@ export default function LeadsPage() {
                 <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left">Config</Table.Head>
                 <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left">Location</Table.Head>
                 <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left">Status</Table.Head>
+                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-center">Active</Table.Head>
                 <Table.Head className="w-24 text-xs font-semibold uppercase tracking-wide text-zinc-500 text-center">Actions</Table.Head>
               </Table.Header>
               <Table.Body>
@@ -970,8 +980,8 @@ export default function LeadsPage() {
                     {/* Name */}
                     <Table.Cell className="text-left">
                       <div className="flex items-center gap-2">
-                        <div className="relative h-6 w-6 rounded-md bg-zinc-100 text-zinc-700 font-extrabold flex items-center justify-center text-[10px]">
-                          {lead.client_name ? lead.client_name.split(' ').map(n => n[0]).join('') : '?'}
+                        <div className="relative h-6 w-6 rounded-md overflow-hidden bg-zinc-100 flex items-center justify-center">
+                          <img src="/lead-avatar.png" alt="" className="h-full w-full object-cover" />
                           <span className={`absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full border-2 border-white ${
                             lead.status === 'Hot' ? 'bg-rose-500' :
                             lead.status === 'Warm' ? 'bg-amber-500' :
@@ -1029,6 +1039,22 @@ export default function LeadsPage() {
                       </div>
                     </Table.Cell>
 
+                    {/* Active Toggle */}
+                    <Table.Cell className="text-center" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => handleToggleLeadActive(lead.id, lead.is_active !== false)}
+                        className={cx(
+                          "px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border cursor-pointer transition-all",
+                          lead.is_active !== false
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100/70"
+                            : "bg-zinc-50 text-zinc-500 border-zinc-200 hover:bg-zinc-100"
+                        )}
+                        title={lead.is_active !== false ? "Click to Deactivate" : "Click to Activate"}
+                      >
+                        {lead.is_active !== false ? "Active" : "Inactive"}
+                      </button>
+                    </Table.Cell>
+
                     {/* Actions */}
                     <Table.Cell className="text-center" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-center gap-1">
@@ -1083,8 +1109,8 @@ export default function LeadsPage() {
             {/* Drawer Header */}
             <div className="p-6 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
               <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-2xl bg-zinc-900 text-white flex items-center justify-center font-bold text-xl shadow-lg shadow-zinc-900/20">
-                  {selectedLead.client_name.charAt(0)}
+                <div className="h-12 w-12 rounded-2xl overflow-hidden bg-zinc-100 flex items-center justify-center shadow-lg shadow-zinc-900/20">
+                  <img src="/lead-avatar.png" alt="" className="h-full w-full object-cover" />
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-zinc-900">{selectedLead.client_name}</h2>
@@ -1092,6 +1118,18 @@ export default function LeadsPage() {
                     <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-widest border transition-all ${getStatusStyle(selectedLead.status || 'Hot')}`}>
                       {selectedLead.status || 'Hot'}
                     </span>
+                    <button
+                      onClick={() => handleToggleLeadActive(selectedLead.id, selectedLead.is_active !== false)}
+                      className={cx(
+                        "px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-widest border transition-all cursor-pointer",
+                        selectedLead.is_active !== false
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100/70"
+                          : "bg-zinc-50 text-zinc-500 border-zinc-200 hover:bg-zinc-100"
+                      )}
+                      title={selectedLead.is_active !== false ? "Click to Deactivate" : "Click to Activate"}
+                    >
+                      {selectedLead.is_active !== false ? "Active" : "Inactive"}
+                    </button>
                     <span className="text-[10px] text-zinc-400 font-medium">Added {new Date(selectedLead.created_at || '').toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                   </div>
                 </div>

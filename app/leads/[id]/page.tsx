@@ -225,8 +225,8 @@ export default function LeadDetailPage() {
         <div className="md:col-span-2 space-y-6">
           <div className="bg-white border border-zinc-200/80 rounded-2xl p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
-              <div className="h-14 w-14 rounded-2xl bg-zinc-900 text-white flex items-center justify-center font-bold text-2xl shadow-lg shadow-zinc-900/20">
-                {lead.client_name.split(' ').map(n => n[0]).join('') || '?'}
+              <div className="h-14 w-14 rounded-2xl overflow-hidden bg-zinc-100 flex items-center justify-center shadow-lg shadow-zinc-900/20">
+                <img src="/lead-avatar.png" alt="" className="h-full w-full object-cover" />
               </div>
               <div className="space-y-1">
                 <h1 className="text-2xl font-extrabold text-zinc-900 tracking-tight">{lead.client_name}</h1>

@@ -102,7 +102,7 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
             </div>
           </CardHeader>
           <CardContent className="p-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
               <div className="space-y-1.5">
                 <Label htmlFor="lead_source_id" className="text-xs font-bold text-foreground uppercase tracking-wider">Lead Source <span className="text-rose-500">*</span></Label>
                 <Select name="lead_source_id" defaultValue={initialValues.lead_source_id ?? ''} required>
@@ -150,6 +150,20 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
                   <option value="Follow up">Follow up</option>
                   <option value="Closure">Closure</option>
                 </Select>
+              </div>
+              <div className="space-y-1.5 flex flex-col justify-end pb-1.5">
+                <Label className="text-xs font-bold text-foreground uppercase tracking-wider">Active Status</Label>
+                <div className="flex items-center gap-2 mt-2">
+                  <input
+                    type="checkbox"
+                    id="is_active"
+                    name="is_active"
+                    value="true"
+                    defaultChecked={initialValues.is_active !== false}
+                    className="h-4.5 w-4.5 rounded border-zinc-300 text-zinc-600 focus:ring-zinc-500/20 cursor-pointer"
+                  />
+                  <Label htmlFor="is_active" className="text-xs font-medium text-zinc-700 cursor-pointer select-none">Active</Label>
+                </div>
               </div>
             </div>
           </CardContent>

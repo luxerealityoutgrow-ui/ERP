@@ -427,9 +427,9 @@ export default function PipelinePage() {
                   >
                     <div className="flex items-start justify-between mb-3 gap-2">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        {/* Circular Initials Avatar */}
-                        <div className="h-7 w-7 rounded-full bg-zinc-900 text-white flex items-center justify-center font-bold text-[10px] shrink-0">
-                          {deal.client_name?.split(' ').map(n => n[0]).join('') || '?'}
+                        {/* Circular Avatar */}
+                        <div className="h-7 w-7 rounded-full overflow-hidden bg-zinc-100 flex items-center justify-center shrink-0">
+                          <img src="/lead-avatar.png" alt="" className="h-full w-full object-cover" />
                         </div>
                         <h4 className="text-xs font-extrabold text-zinc-900 group-hover:text-zinc-600 transition-colors truncate">
                           {deal.client_name}
@@ -602,8 +602,8 @@ export default function PipelinePage() {
           <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 text-left">
             <div className="p-6 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-bold text-sm">
-                  {selectedDeal.client_name?.charAt(0)}
+                <div className="h-9 w-9 rounded-xl overflow-hidden bg-zinc-100 flex items-center justify-center">
+                  <img src="/lead-avatar.png" alt="" className="h-full w-full object-cover" />
                 </div>
                 <div>
                   <h3 className="font-extrabold text-zinc-900 text-sm">Edit Deal Details</h3>

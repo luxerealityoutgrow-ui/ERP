@@ -23,7 +23,7 @@ export async function createLeadAction(prevState: any, formData: FormData) {
     next_followup_date: formData.get('next_followup_date') || null,
     status: formData.get('status') || 'Hot',
     notes: formData.get('notes'),
-    is_active: true,
+    is_active: formData.get('is_active') === 'true',
     created_at: new Date().toISOString()
   };
 
@@ -91,9 +91,10 @@ export async function updateLeadAction(prevState: any, formData: FormData) {
     purpose: formData.get('purpose'),
     assigned_to: profile?.id,
     stage_id: formData.get('stage_id'),
-    next_followup_date: formData.get('next_followup_date') || null,
     status: formData.get('status'),
-    notes: formData.get('notes')
+    next_followup_date: formData.get('next_followup_date') || null,
+    notes: formData.get('notes'),
+    is_active: formData.get('is_active') === 'true'
   };
 
   const { data: updated, error } = await supabase
