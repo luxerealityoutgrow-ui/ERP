@@ -619,7 +619,7 @@ Let us know if you would like to schedule a site visit!`);
 
   if (!loading && (leads.length === 0 || properties.length === 0)) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[500px] text-center p-8 bg-white border border-zinc-200 rounded-3xl max-w-xl mx-auto shadow-sm">
+      <div className="flex flex-col items-center justify-center min-h-[500px] text-center p-8 bg-white border border-zinc-200 rounded-2xl max-w-xl mx-auto shadow-md">
         <Sparkles className="h-10 w-10 text-zinc-400 mb-3 animate-pulse" />
         <h3 className="text-sm font-extrabold text-zinc-900 mb-1">No Matchmaking Data Available</h3>
         <p className="text-xs text-zinc-500 max-w-xs leading-relaxed">
@@ -633,18 +633,18 @@ Let us know if you would like to schedule a site visit!`);
     <div className="space-y-6 max-w-7xl mx-auto pb-12 text-zinc-900 px-4 md:px-0">
       
       {/* ── TOP HEADER AND MODE TOGGLE ── */}
-      <div className="flex items-center bg-white p-4 rounded-2xl border border-zinc-200 shadow-sm">
-        <div className="flex items-center bg-zinc-100 p-1 rounded-xl border border-zinc-200 shrink-0">
+      <div className="flex items-center bg-white p-3 rounded-2xl border border-zinc-200">
+        <div className="flex items-center bg-zinc-50 p-1 rounded-2xl border border-zinc-200 shrink-0">
           <button
             onClick={() => {
               setMatchMode('leads');
               setSearchQuery('');
               setFitFilter('all');
             }}
-            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
+            className={`px-4 py-2 text-xs font-semibold rounded-md transition-all cursor-pointer ${
               matchMode === 'leads'
-                ? 'bg-white text-zinc-900 shadow-xs'
-                : 'text-zinc-500 hover:text-zinc-800'
+                ? 'bg-white text-zinc-950 font-bold border border-zinc-200 shadow-2xs'
+                : 'text-zinc-500 hover:text-zinc-900'
             }`}
           >
             Match by Client Lead
@@ -655,10 +655,10 @@ Let us know if you would like to schedule a site visit!`);
               setSearchQuery('');
               setFitFilter('all');
             }}
-            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
+            className={`px-4 py-2 text-xs font-semibold rounded-md transition-all cursor-pointer ${
               matchMode === 'properties'
-                ? 'bg-white text-zinc-900 shadow-xs'
-                : 'text-zinc-500 hover:text-zinc-800'
+                ? 'bg-white text-zinc-950 font-bold border border-zinc-200 shadow-2xs'
+                : 'text-zinc-500 hover:text-zinc-900'
             }`}
           >
             Match by Property Listing
@@ -671,7 +671,7 @@ Let us know if you would like to schedule a site visit!`);
         
         {/* COLUMN 1: SIDEBAR SELECTOR (Col Span 3) */}
         <div className="lg:col-span-3 space-y-4">
-          <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-sm space-y-4">
+          <div className="bg-white p-4 rounded-2xl border border-zinc-200 space-y-4">
             
             {/* Search Input */}
             <div className="relative">
@@ -681,7 +681,7 @@ Let us know if you would like to schedule a site visit!`);
                 placeholder={matchMode === 'leads' ? 'Search clients...' : 'Search properties...'}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl pl-9 pr-3 py-2 text-xs text-zinc-900 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400/20 transition-all placeholder:text-zinc-400"
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-2xl pl-9 pr-3 py-2 text-xs text-zinc-900 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400/20 transition-all placeholder:text-zinc-400"
               />
               {searchQuery && (
                 <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600">
@@ -703,7 +703,7 @@ Let us know if you would like to schedule a site visit!`);
                 step="5"
                 value={minMatchScore}
                 onChange={(e) => setMinMatchScore(parseInt(e.target.value))}
-                className="w-full h-1 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-zinc-900"
+                className="w-full h-1 bg-zinc-200 rounded-2xl appearance-none cursor-pointer accent-zinc-900"
               />
             </div>
 
@@ -720,10 +720,10 @@ Let us know if you would like to schedule a site visit!`);
                         const matches = properties.map(p => ({ id: p.id, score: calculateDetailedMatch(lead, p).totalScore })).sort((a,b) => b.score - a.score);
                         if (matches.length > 0) setSelectedPropertyId(matches[0].id);
                       }}
-                      className={`p-3 rounded-xl border transition-all cursor-pointer text-left relative group ${
+                      className={`p-3 rounded-2xl border transition-all cursor-pointer text-left relative group ${
                         selectedLeadId === lead.id 
-                          ? 'bg-zinc-900 text-white border-zinc-900 shadow-xs' 
-                          : 'bg-white border-zinc-200 hover:border-zinc-300'
+                          ? 'bg-[#dbeaff] text-zinc-950 border-zinc-400 font-bold' 
+                          : 'bg-white border-zinc-200 hover:border-zinc-355'
                       }`}
                     >
                       <p className="text-xs font-bold truncate pr-6">{lead.client_name}</p>
@@ -735,7 +735,7 @@ Let us know if you would like to schedule a site visit!`);
                       {/* Dynamic Match Count Badge */}
                       {matchCounts[lead.id] > 0 && (
                         <span className={`absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
-                          selectedLeadId === lead.id ? 'bg-white/20 text-white' : 'bg-zinc-100 text-zinc-600 border border-zinc-200'
+                          selectedLeadId === lead.id ? 'bg-white text-zinc-900 border border-zinc-200' : 'bg-zinc-50 text-zinc-600 border border-zinc-200'
                         }`}>
                           {matchCounts[lead.id]}
                         </span>
@@ -756,10 +756,10 @@ Let us know if you would like to schedule a site visit!`);
                         const matches = leads.map(l => ({ id: l.id, score: calculateDetailedMatch(l, prop).totalScore })).sort((a,b) => b.score - a.score);
                         if (matches.length > 0) setSelectedLeadId(matches[0].id);
                       }}
-                      className={`p-3 rounded-xl border transition-all cursor-pointer text-left relative group ${
+                      className={`p-3 rounded-2xl border transition-all cursor-pointer text-left relative group ${
                         selectedPropertyId === prop.id 
-                          ? 'bg-zinc-900 text-white border-zinc-900 shadow-xs' 
-                          : 'bg-white border-zinc-200 hover:border-zinc-300'
+                          ? 'bg-[#dbeaff] text-zinc-950 border-zinc-400 font-bold' 
+                          : 'bg-white border-zinc-200 hover:border-zinc-355'
                       }`}
                     >
                       <p className="text-xs font-bold truncate pr-6">{prop.title}</p>
@@ -771,7 +771,7 @@ Let us know if you would like to schedule a site visit!`);
                       {/* Dynamic Match Count Badge */}
                       {matchCounts[prop.id] > 0 && (
                         <span className={`absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
-                          selectedPropertyId === prop.id ? 'bg-white/20 text-white' : 'bg-zinc-100 text-zinc-600 border border-zinc-200'
+                          selectedPropertyId === prop.id ? 'bg-white text-zinc-900 border border-zinc-200' : 'bg-zinc-50 text-zinc-600 border border-zinc-200'
                         }`}>
                           {matchCounts[prop.id]}
                         </span>
@@ -785,7 +785,7 @@ Let us know if you would like to schedule a site visit!`);
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-zinc-950 text-white space-y-2 shadow-sm text-left animate-pulse" style={{ animationDuration: '3s' }}>
+          <div className="p-4 rounded-2xl bg-zinc-900 text-white space-y-2 shadow-md text-left animate-pulse" style={{ animationDuration: '3s' }}>
             <h4 className="text-[10px] font-extrabold tracking-wider uppercase text-zinc-400 flex items-center gap-1.5">
               <Award className="h-3.5 w-3.5" />
               Dynamic Match Engine
@@ -809,26 +809,26 @@ Let us know if you would like to schedule a site visit!`);
                   <>Potential buyers for <span className="text-zinc-900 font-black">{currentProperty?.title || '...'}</span></>
                 )}
               </h3>
-              <span className="text-[9px] font-bold text-zinc-500 bg-zinc-150 px-2 py-0.5 rounded-full border border-zinc-200 shrink-0">
+              <span className="text-[9px] font-bold text-zinc-600 bg-zinc-50 px-2.5 py-0.5 rounded-full border border-zinc-200 shrink-0">
                 {matchMode === 'leads' ? filteredPropertyMatches.length : filteredLeadMatches.length} Matches Found
               </span>
             </div>
 
             <div className="flex items-center justify-between gap-4 flex-wrap">
               {/* Quick Match Strength Filter Tabs */}
-              <div className="flex items-center bg-zinc-100 p-1 rounded-xl border border-zinc-200 text-[10px] font-bold max-w-fit">
+              <div className="flex items-center bg-zinc-50 p-1 rounded-2xl border border-zinc-200 text-[10px] font-bold max-w-fit">
                 <button 
                   onClick={() => setFitFilter('all')}
-                  className={`px-3 py-1 rounded-lg transition-all ${
-                    fitFilter === 'all' ? 'bg-white text-zinc-950 shadow-2xs' : 'text-zinc-400 hover:text-zinc-800'
+                  className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+                    fitFilter === 'all' ? 'bg-white text-zinc-950 border border-zinc-200 shadow-2xs' : 'text-zinc-500 hover:text-zinc-900'
                   }`}
                 >
                   All
                 </button>
                 <button 
                   onClick={() => setFitFilter('strong')}
-                  className={`px-3 py-1 rounded-lg transition-all flex items-center gap-1 ${
-                    fitFilter === 'strong' ? 'bg-white text-zinc-950 shadow-2xs' : 'text-zinc-400 hover:text-zinc-800'
+                  className={`px-3 py-1 rounded-md transition-all flex items-center gap-1 cursor-pointer ${
+                    fitFilter === 'strong' ? 'bg-white text-zinc-950 border border-zinc-200 shadow-2xs' : 'text-zinc-500 hover:text-zinc-900'
                   }`}
                 >
                   <span>Strong</span>
@@ -840,12 +840,12 @@ Let us know if you would like to schedule a site visit!`);
                 </button>
                 <button 
                   onClick={() => setFitFilter('good')}
-                  className={`px-3 py-1 rounded-lg transition-all flex items-center gap-1 ${
-                    fitFilter === 'good' ? 'bg-white text-zinc-950 shadow-2xs' : 'text-zinc-400 hover:text-zinc-800'
+                  className={`px-3 py-1 rounded-md transition-all flex items-center gap-1 cursor-pointer ${
+                    fitFilter === 'good' ? 'bg-white text-zinc-950 border border-zinc-200 shadow-2xs' : 'text-zinc-500 hover:text-zinc-900'
                   }`}
                 >
                   <span>Good</span>
-                  <span className="text-[8px] bg-zinc-100 text-zinc-600 border border-zinc-200 px-1.5 py-0.2 rounded-full font-black">
+                  <span className="text-[8px] bg-zinc-50 text-zinc-650 border border-zinc-200 px-1.5 py-0.2 rounded-full font-black">
                     {matchMode === 'leads' 
                       ? propertyMatches.filter(m => m.score >= 60 && m.score < 80).length 
                       : leadMatches.filter(m => m.score >= 60 && m.score < 80).length}
@@ -856,10 +856,10 @@ Let us know if you would like to schedule a site visit!`);
               {/* Multi-select Toggle */}
               <button
                 onClick={() => setMultiSelectMode(!multiSelectMode)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[10px] font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-semibold transition-all rounded-2xl border cursor-pointer ${
                   multiSelectMode
-                    ? 'bg-zinc-900 text-white border-zinc-900 shadow-sm'
-                    : 'bg-white text-zinc-600 border-zinc-250 hover:bg-zinc-50'
+                    ? 'bg-zinc-900 text-white border-[zinc-900] shadow-2xs'
+                    : 'bg-white text-zinc-650 border-zinc-200 hover:bg-zinc-50'
                 }`}
               >
                 <Grid className="h-3.5 w-3.5" />
@@ -882,14 +882,14 @@ Let us know if you would like to schedule a site visit!`);
                         setSelectedPropertyId(match.id);
                       }
                     }}
-                    className={`p-4 bg-white border rounded-2xl shadow-xs transition-all duration-300 text-left cursor-pointer group flex items-center justify-between gap-4 ${
+                    className={`p-4 bg-white border rounded-2xl transition-all duration-300 text-left cursor-pointer group flex items-center justify-between gap-4 ${
                       multiSelectMode
                         ? selectedMatchIds.has(match.id)
-                          ? 'border-zinc-950 ring-1 ring-zinc-950 bg-zinc-50/30'
-                          : 'border-zinc-200 hover:border-zinc-300'
+                          ? 'border-zinc-400 bg-[#dbeaff]/20'
+                          : 'border-zinc-200 hover:border-zinc-350 hover:bg-zinc-50'
                         : selectedPropertyId === match.id 
-                          ? 'border-zinc-950 ring-1 ring-zinc-950' 
-                          : 'border-zinc-200 hover:border-zinc-300'
+                          ? 'border-zinc-400 bg-[#dbeaff]/10' 
+                          : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
                     }`}
                   >
                     <div className="flex gap-4 min-w-0 flex-1">
@@ -906,7 +906,7 @@ Let us know if you would like to schedule a site visit!`);
                       )}
                       
                       {/* Thumbnail */}
-                      <div className="w-16 h-16 bg-zinc-100 rounded-xl overflow-hidden shrink-0 relative">
+                      <div className="w-16 h-16 bg-zinc-100 rounded-2xl overflow-hidden shrink-0 relative">
                         <img 
                           src={getPropertyImage(match.property_type)} 
                           alt={match.title} 
@@ -958,14 +958,14 @@ Let us know if you would like to schedule a site visit!`);
                         setSelectedLeadId(match.id);
                       }
                     }}
-                    className={`p-4 bg-white border rounded-2xl shadow-xs transition-all duration-300 text-left cursor-pointer group flex items-center justify-between gap-4 ${
+                    className={`p-4 bg-white border rounded-2xl transition-all duration-300 text-left cursor-pointer group flex items-center justify-between gap-4 ${
                       multiSelectMode
                         ? selectedMatchIds.has(match.id)
-                          ? 'border-zinc-950 ring-1 ring-zinc-950 bg-zinc-50/30'
-                          : 'border-zinc-200 hover:border-zinc-300'
+                          ? 'border-zinc-400 bg-[#dbeaff]/20'
+                          : 'border-zinc-200 hover:border-zinc-350 hover:bg-zinc-50'
                         : selectedLeadId === match.id 
-                          ? 'border-zinc-950 ring-1 ring-zinc-950' 
-                          : 'border-zinc-200 hover:border-zinc-300'
+                          ? 'border-zinc-400 bg-[#dbeaff]/10' 
+                          : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
                     }`}
                   >
                     <div className="flex gap-4 min-w-0 flex-1">
@@ -1041,7 +1041,7 @@ Let us know if you would like to schedule a site visit!`);
                 </div>
                 <button 
                   onClick={() => setSelectedMatchIds(new Set())}
-                  className="text-[10px] font-bold text-zinc-500 hover:text-zinc-800 border border-zinc-200 px-2 py-1 rounded-lg transition-colors"
+                  className="text-[10px] font-bold text-zinc-500 hover:text-zinc-800 border border-zinc-200 px-2 py-1 rounded-2xl transition-colors"
                 >
                   Clear
                 </button>
@@ -1050,12 +1050,12 @@ Let us know if you would like to schedule a site visit!`);
               {/* Stacked comparison cards */}
               <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">
                 {selectedMatchesData.map(({ item, details }, idx) => (
-                  <div key={idx} className="p-3 bg-zinc-50 border border-zinc-150 rounded-xl space-y-2">
+                  <div key={idx} className="p-3 bg-zinc-50 border border-zinc-150 rounded-2xl space-y-2">
                     <div className="flex justify-between items-center gap-2">
                       <span className="font-extrabold text-zinc-900 text-xs truncate">
                         {matchMode === 'leads' ? (item as Property).title : (item as Lead).client_name}
                       </span>
-                      <span className="text-[10px] font-black text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-lg shrink-0">
+                      <span className="text-[10px] font-black text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-2xl shrink-0">
                         {details.totalScore}% Fit
                       </span>
                     </div>
@@ -1065,38 +1065,38 @@ Let us know if you would like to schedule a site visit!`);
                         <>
                           <div>
                             <span className="text-zinc-400 block text-[8px] uppercase tracking-wider">Price</span>
-                            <span className="font-bold text-zinc-850">{formatBudgetAbbreviated((item as Property).price)}</span>
+                            <span className="font-bold text-zinc-600">{formatBudgetAbbreviated((item as Property).price)}</span>
                           </div>
                           <div>
                             <span className="text-zinc-400 block text-[8px] uppercase tracking-wider">Location</span>
-                            <span className="font-bold text-zinc-850 truncate block">{(item as Property).location}</span>
+                            <span className="font-bold text-zinc-600 truncate block">{(item as Property).location}</span>
                           </div>
                           <div>
                             <span className="text-zinc-400 block text-[8px] uppercase tracking-wider">BHK / Type</span>
-                            <span className="font-bold text-zinc-850">{(item as Property).configuration} {(item as Property).property_type}</span>
+                            <span className="font-bold text-zinc-600">{(item as Property).configuration} {(item as Property).property_type}</span>
                           </div>
                           <div>
                             <span className="text-zinc-400 block text-[8px] uppercase tracking-wider">Area</span>
-                            <span className="font-bold text-zinc-850">{(item as Property).carpet_area} sq ft</span>
+                            <span className="font-bold text-zinc-600">{(item as Property).carpet_area} sq ft</span>
                           </div>
                         </>
                       ) : (
                         <>
                           <div>
                             <span className="text-zinc-400 block text-[8px] uppercase tracking-wider">Budget Max</span>
-                            <span className="font-bold text-zinc-850">{formatBudgetAbbreviated((item as Lead).budget_max)}</span>
+                            <span className="font-bold text-zinc-600">{formatBudgetAbbreviated((item as Lead).budget_max)}</span>
                           </div>
                           <div>
                             <span className="text-zinc-400 block text-[8px] uppercase tracking-wider">Preferred Location</span>
-                            <span className="font-bold text-zinc-850 truncate block">{(item as Lead).preferred_location || 'Flexible'}</span>
+                            <span className="font-bold text-zinc-600 truncate block">{(item as Lead).preferred_location || 'Flexible'}</span>
                           </div>
                           <div>
                             <span className="text-zinc-400 block text-[8px] uppercase tracking-wider">BHK / Type</span>
-                            <span className="font-bold text-zinc-850">{(item as Lead).configuration || 'Any'} / {(item as Lead).property_type || 'Any'}</span>
+                            <span className="font-bold text-zinc-600">{(item as Lead).configuration || 'Any'} / {(item as Lead).property_type || 'Any'}</span>
                           </div>
                           <div>
                             <span className="text-zinc-400 block text-[8px] uppercase tracking-wider">Status</span>
-                            <span className="font-bold text-zinc-850">{(item as Lead).status || 'Warm'}</span>
+                            <span className="font-bold text-zinc-600">{(item as Lead).status || 'Warm'}</span>
                           </div>
                         </>
                       )}
@@ -1125,7 +1125,7 @@ Let us know if you would like to schedule a site visit!`);
                       })()}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-all shadow-xs"
+                      className="w-full flex items-center justify-center gap-2 py-2 rounded-2xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-all cursor-pointer"
                     >
                       <MessageSquare className="h-4 w-4" />
                       WhatsApp Selected Properties
@@ -1134,14 +1134,14 @@ Let us know if you would like to schedule a site visit!`);
                     <div className="grid grid-cols-2 gap-2">
                       <button 
                         onClick={() => alert(`Brochures for ${selectedMatchIds.size} selected properties sent to ${currentLead?.client_name}!`)}
-                        className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-zinc-900 text-white text-[11px] font-bold hover:bg-zinc-800 transition-all border border-zinc-900 shadow-2xs"
+                        className="flex items-center justify-center gap-2 py-2 rounded-2xl bg-zinc-900 text-white text-[11px] font-semibold hover:bg-zinc-900 transition-all border border-[zinc-900] cursor-pointer shadow-2xs"
                       >
                         <Send className="h-3.5 w-3.5" />
                         Send Details
                       </button>
                       <button 
                         onClick={handleBookBulkTours}
-                        className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white border border-zinc-200 text-zinc-855 text-[11px] font-bold hover:bg-zinc-50 transition-all shadow-2xs"
+                        className="flex items-center justify-center gap-2 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-600 text-[11px] font-semibold hover:bg-zinc-50 transition-all cursor-pointer"
                       >
                         <Calendar className="h-3.5 w-3.5 text-zinc-500" />
                         Book Tours
@@ -1164,7 +1164,7 @@ Let us know if you would like to schedule a site visit!`);
                       })()}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-all shadow-xs"
+                      className="w-full flex items-center justify-center gap-2 py-2 rounded-2xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-all cursor-pointer"
                     >
                       <MessageSquare className="h-4 w-4" />
                       WhatsApp Selected Clients
@@ -1173,14 +1173,14 @@ Let us know if you would like to schedule a site visit!`);
                     <div className="grid grid-cols-2 gap-2">
                       <button 
                         onClick={() => alert(`Sent details of ${currentProperty?.title} to ${selectedMatchIds.size} client leads!`)}
-                        className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-zinc-900 text-white text-[11px] font-bold hover:bg-zinc-800 transition-all border border-zinc-900 shadow-2xs"
+                        className="flex items-center justify-center gap-2 py-2 rounded-2xl bg-zinc-900 text-white text-[11px] font-semibold hover:bg-zinc-900 transition-all border border-[zinc-900] cursor-pointer shadow-2xs"
                       >
                         <Send className="h-3.5 w-3.5" />
                         Send Details
                       </button>
                       <button 
                         onClick={handleBookBulkTours}
-                        className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white border border-zinc-200 text-zinc-855 text-[11px] font-bold hover:bg-zinc-50 transition-all shadow-2xs"
+                        className="flex items-center justify-center gap-2 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-600 text-[11px] font-semibold hover:bg-zinc-50 transition-all cursor-pointer"
                       >
                         <Calendar className="h-3.5 w-3.5 text-zinc-500" />
                         Book Tours
@@ -1192,13 +1192,13 @@ Let us know if you would like to schedule a site visit!`);
 
             </div>
           ) : activeMatchData ? (
-            <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm p-5 space-y-6 text-left">
+            <div className="bg-white border border-zinc-200 rounded-2xl shadow-md p-5 space-y-6 text-left">
               
               {/* Radar Chart Display */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-extrabold text-zinc-800 uppercase tracking-wide">Spec Fingerprint</p>
-                  <span className="text-xs font-black text-amber-500 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-xl shadow-2xs">
+                  <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full">
                     {activeMatchData.totalScore}% Fit
                   </span>
                 </div>
@@ -1221,7 +1221,7 @@ Let us know if you would like to schedule a site visit!`);
                       </RadarChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div className="h-full w-full bg-zinc-50 rounded-xl flex items-center justify-center text-[10px] text-zinc-400">
+                    <div className="h-full w-full bg-zinc-50 rounded-2xl flex items-center justify-center text-[10px] text-zinc-400">
                       Loading chart...
                     </div>
                   )}
@@ -1236,7 +1236,7 @@ Let us know if you would like to schedule a site visit!`);
                   {activeMatchData.breakdown.map((item, idx) => {
                     const IconComponent = item.icon;
                     return (
-                      <div key={idx} className="p-3 bg-zinc-50 border border-zinc-100 rounded-xl space-y-1.5 text-xs">
+                      <div key={idx} className="p-3 bg-zinc-50 border border-zinc-200 rounded-2xl space-y-1.5 text-xs">
                         <div className="flex justify-between items-center">
                           <span className="font-bold text-zinc-800 text-[11px] flex items-center gap-1.5">
                             <IconComponent className="h-3.5 w-3.5 text-zinc-500" />
@@ -1278,7 +1278,7 @@ Let us know if you would like to schedule a site visit!`);
                   href={`https://wa.me/?text=${sharePropertyToLeadText(currentLead, currentProperty)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-all shadow-xs"
+                  className="w-full flex items-center justify-center gap-2 py-2 rounded-2xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-all cursor-pointer"
                 >
                   <MessageSquare className="h-4 w-4" />
                   WhatsApp Match Details
@@ -1287,14 +1287,14 @@ Let us know if you would like to schedule a site visit!`);
                 <div className="grid grid-cols-2 gap-2">
                   <button 
                     onClick={() => alert(`Brochure for ${currentProperty.title} sent to ${currentLead.client_name}!`)}
-                    className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-zinc-900 text-white text-[11px] font-bold hover:bg-zinc-800 transition-all border border-zinc-900 shadow-2xs"
+                    className="flex items-center justify-center gap-2 py-2 rounded-2xl bg-zinc-900 text-white text-[11px] font-semibold hover:bg-zinc-900 transition-all border border-[zinc-900] cursor-pointer shadow-2xs"
                   >
                     <Send className="h-3.5 w-3.5" />
                     Send Details
                   </button>
                   <button 
                     onClick={handleBookSingleTour}
-                    className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white border border-zinc-200 text-zinc-855 text-[11px] font-bold hover:bg-zinc-50 transition-all shadow-2xs"
+                    className="flex items-center justify-center gap-2 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-600 text-[11px] font-semibold hover:bg-zinc-50 transition-all cursor-pointer"
                   >
                     <Calendar className="h-3.5 w-3.5 text-zinc-500" />
                     Book Tour
@@ -1304,7 +1304,7 @@ Let us know if you would like to schedule a site visit!`);
 
             </div>
           ) : (
-            <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm p-12 text-center text-zinc-400">
+            <div className="bg-white border border-zinc-200 rounded-2xl shadow-md p-12 text-center text-zinc-400">
               <Info className="h-8 w-8 mx-auto mb-2 text-zinc-300" />
               <p className="text-xs font-bold">Select a match from the results panel to view detailed visual analysis.</p>
             </div>

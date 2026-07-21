@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useProfile } from '@/lib/auth';
 import { fetchLeads, Lead } from '@/lib/queries';
+import { getPermissions } from '@/lib/permissions';
 import { supabase } from '@/lib/supabaseClient';
 import { 
   Users, 
@@ -91,10 +92,12 @@ function formatBudgetAbbreviated(value: number | undefined | null) {
 
 export default function LeadsPage() {
   const profile = useProfile();
+  const perms = getPermissions(profile?.role);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Interactive UI state
+  const [salesExecutives, setSalesExecutives] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortKey, setSortKey] = useState<'created_at' | 'client_name'>('created_at');
@@ -159,8 +162,17 @@ export default function LeadsPage() {
         .finally(() => setLoading(false));
     }, 500);
 
-    return () => clearTimeout(timer);
-  }, [profile]);
+      // Fetch Sales Executives
+      supabase
+        .from('profiles')
+        .select('id, full_name, role')
+        .eq('role', 'SalesPerson')
+        .then(({ data }) => {
+          setSalesExecutives(data || []);
+        });
+
+      return () => clearTimeout(timer);
+    }, [profile]);
 
   // Toast auto-dismissal
   useEffect(() => {
@@ -944,15 +956,16 @@ export default function LeadsPage() {
                     />
                   </button>
                 </Table.Head>
-                <Table.Head isRowHeader className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left">Name</Table.Head>
-                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left">Email</Table.Head>
-                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left">Phone</Table.Head>
-                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left">Source</Table.Head>
-                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left">Config</Table.Head>
-                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left">Location</Table.Head>
-                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left">Status</Table.Head>
-                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-center">Active</Table.Head>
-                <Table.Head className="w-24 text-xs font-semibold uppercase tracking-wide text-zinc-500 text-center">Actions</Table.Head>
+                <Table.Head isRowHeader className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left py-2 px-3">Name</Table.Head>
+                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left py-2 px-3">Email</Table.Head>
+                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left py-2 px-3">Phone</Table.Head>
+                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left py-2 px-3">Source</Table.Head>
+                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left py-2 px-3">Config</Table.Head>
+                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left py-2 px-3">Location</Table.Head>
+                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left py-2 px-3 min-w-[160px]">Assigned To</Table.Head>
+                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left py-2 px-3">Status</Table.Head>
+                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-center py-2 px-3">Active</Table.Head>
+                <Table.Head className="w-24 text-xs font-semibold uppercase tracking-wide text-zinc-500 text-center py-2 px-3">Actions</Table.Head>
               </Table.Header>
               <Table.Body>
                 {sortedLeads.map((lead) => (
@@ -978,7 +991,7 @@ export default function LeadsPage() {
                     </Table.Cell>
 
                     {/* Name */}
-                    <Table.Cell className="text-left">
+                    <Table.Cell className="text-left py-2 px-3">
                       <div className="flex items-center gap-2">
                         <div className="relative h-6 w-6 rounded-md overflow-hidden bg-zinc-100 flex items-center justify-center">
                           <img src="/lead-avatar.png" alt="" className="h-full w-full object-cover" />
@@ -994,34 +1007,65 @@ export default function LeadsPage() {
                     </Table.Cell>
 
                     {/* Email */}
-                    <Table.Cell className="text-left">
+                    <Table.Cell className="text-left py-2 px-3">
                       <span className="text-xs text-zinc-600 truncate max-w-[180px] block">{lead.email || '—'}</span>
                     </Table.Cell>
 
                     {/* Phone */}
-                    <Table.Cell className="text-left">
+                    <Table.Cell className="text-left py-2 px-3">
                       <span className="text-xs font-medium text-zinc-700">{lead.phone || '—'}</span>
                     </Table.Cell>
 
                     {/* Source */}
-                    <Table.Cell className="text-left">
+                    <Table.Cell className="text-left py-2 px-3">
                       <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold border ${getSourceStyle(lead.lead_source_id)}`}>
                         {lead.lead_source_id || '—'}
                       </span>
                     </Table.Cell>
 
                     {/* Config */}
-                    <Table.Cell className="text-left">
+                    <Table.Cell className="text-left py-2 px-3">
                       <span className="text-xs font-medium text-zinc-700">{lead.configuration || '—'}</span>
                     </Table.Cell>
 
                     {/* Location */}
-                    <Table.Cell className="text-left">
+                    <Table.Cell className="text-left py-2 px-3">
                       <span className="text-xs text-zinc-600 truncate max-w-[140px] block">{lead.preferred_location || '—'}</span>
                     </Table.Cell>
 
+                    {/* Assigned To */}
+                    <Table.Cell className="text-left py-2 px-3 min-w-[160px]" onClick={(e) => e.stopPropagation()}>
+                      {perms.canViewAllLeads ? (
+                        <select
+                          value={lead.assigned_to || ""}
+                          onChange={async (e) => {
+                            const newAssignee = e.target.value;
+                            setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, assigned_to: newAssignee || undefined } : l));
+                            try {
+                              await supabase
+                                .from('leads')
+                                .update({ assigned_to: newAssignee || null })
+                                .eq('id', lead.id);
+                            } catch (err) {
+                              console.error('Error updating assignee:', err);
+                            }
+                          }}
+                          className="w-32 bg-white border border-zinc-200 rounded-lg px-2 py-1 text-xs text-zinc-750 focus:outline-none focus:border-zinc-400"
+                        >
+                          <option value="">Unassigned</option>
+                          {salesExecutives.map(exec => (
+                            <option key={exec.id} value={exec.id}>{exec.full_name}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span className="px-2.5 py-1 rounded-full bg-zinc-50 border border-zinc-200 text-[10px] font-semibold text-zinc-650 inline-block w-32 truncate text-center">
+                          {salesExecutives.find(x => x.id === lead.assigned_to)?.full_name || 'Unassigned'}
+                        </span>
+                      )}
+                    </Table.Cell>
+
                     {/* Status */}
-                    <Table.Cell className="text-left" onClick={(e) => e.stopPropagation()}>
+                    <Table.Cell className="text-left py-2 px-3" onClick={(e) => e.stopPropagation()}>
                       <div className="relative w-28">
                         <select
                           value={lead.status || "Hot"}
@@ -1040,7 +1084,7 @@ export default function LeadsPage() {
                     </Table.Cell>
 
                     {/* Active Toggle */}
-                    <Table.Cell className="text-center" onClick={(e) => e.stopPropagation()}>
+                    <Table.Cell className="text-center py-2 px-3" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => handleToggleLeadActive(lead.id, lead.is_active !== false)}
                         className={cx(
@@ -1056,7 +1100,7 @@ export default function LeadsPage() {
                     </Table.Cell>
 
                     {/* Actions */}
-                    <Table.Cell className="text-center" onClick={(e) => e.stopPropagation()}>
+                    <Table.Cell className="text-center py-2 px-3" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-center gap-1">
                         <button
                           onClick={() => handleOpenLead(lead)}

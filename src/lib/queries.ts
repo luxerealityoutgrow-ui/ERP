@@ -26,12 +26,20 @@ export interface Lead {
   created_at?: string;
 }
 
+import { getPermissions } from './permissions';
+
 export async function fetchLeads(profile: Profile | null): Promise<Lead[]> {
-  // All users can see all leads (client requirement)
-  const { data, error } = await supabase
+  const perms = getPermissions(profile?.role);
+  let query = supabase
     .from('leads')
     .select('*')
     .order('created_at', { ascending: false });
+
+  if (!perms.canViewAllLeads && profile?.id) {
+    query = query.eq('assigned_to', profile.id);
+  }
+
+  const { data, error } = await query;
   if (error) throw error;
   return data as Lead[];
 }

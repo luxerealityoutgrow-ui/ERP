@@ -14,7 +14,8 @@ import {
   Settings,
   LogOut,
   Plus,
-  TrendingUp
+  TrendingUp,
+  UserCheck
 } from 'lucide-react';
 import { useProfile } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
@@ -30,6 +31,8 @@ export function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+
 
   // Notifications State
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -209,6 +212,8 @@ export function Header() {
 
     loadInitialData();
 
+
+
     // Subscribe to realtime audit logs
     const channel = supabase
       .channel('realtime-audit-logs')
@@ -308,19 +313,19 @@ export function Header() {
 
   return (
     <>
-      <header className="bg-white/80 backdrop-blur-md border-b border-zinc-200/80 px-6 py-3.5 flex items-center justify-between z-30 select-none">
+      <header className="bg-white/80 backdrop-blur-md border-b border-zinc-200 px-6 py-3.5 flex items-center justify-between z-30 select-none">
         
         {/* Search Trigger Input (Opens CMD+K Dialog) */}
         <div 
           onClick={() => setIsOpen(true)}
           className="relative w-80 cursor-pointer group"
         >
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400 group-hover:text-zinc-650 transition-colors" />
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400 group-hover:text-zinc-600 transition-colors" />
           <input 
             type="text" 
             readOnly
             placeholder="Search properties, leads, nav...   ⌘K" 
-            className="w-full bg-zinc-50 border border-zinc-250 rounded-xl pl-9 pr-4 py-2 text-xs text-zinc-850 placeholder-zinc-400/80 focus:outline-none cursor-pointer hover:border-zinc-350 transition-all duration-200"
+            className="w-full bg-zinc-50 border border-zinc-200 rounded-xl pl-9 pr-4 py-2 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none cursor-pointer hover:border-zinc-300 transition-all duration-200"
           />
         </div>
 
@@ -330,7 +335,7 @@ export function Header() {
           <div className="relative">
             <button 
               onClick={() => setIsCreateOpen(!isCreateOpen)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 text-white hover:bg-zinc-800 transition-all rounded-xl text-xs font-bold shadow-sm cursor-pointer shrink-0"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 text-white hover:bg-zinc-800 transition-all rounded-xl text-xs font-bold cursor-pointer shrink-0 shadow-2xs"
             >
               <Plus className="h-3.5 w-3.5" />
               <span>Create</span>
@@ -340,31 +345,31 @@ export function Header() {
             {isCreateOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setIsCreateOpen(false)} />
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-zinc-200 rounded-xl shadow-xl p-1 z-50 text-left">
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-zinc-200 rounded-xl shadow-lg p-1 z-50 text-left">
                   <button 
                     onClick={() => { setIsCreateOpen(false); router.push('/leads/create'); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors text-left"
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors text-left"
                   >
                     <Users className="h-3.5 w-3.5 text-zinc-450" />
                     New Lead
                   </button>
                   <button 
                     onClick={() => { setIsCreateOpen(false); router.push('/properties/create'); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors text-left"
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors text-left"
                   >
                     <Home className="h-3.5 w-3.5 text-zinc-450" />
                     New Listing
                   </button>
                   <button 
                     onClick={() => { setIsCreateOpen(false); router.push('/pipeline?action=new-deal'); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors text-left"
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors text-left"
                   >
                     <TrendingUp className="h-3.5 w-3.5 text-zinc-450" />
                     New Deal
                   </button>
                   <button 
                     onClick={() => { setIsCreateOpen(false); router.push('/site-visits/create'); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors text-left"
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors text-left"
                   >
                     <Calendar className="h-3.5 w-3.5 text-zinc-450" />
                     Schedule Visit
@@ -375,13 +380,13 @@ export function Header() {
           </div>
 
           {/* Connection status indicator */}
-          <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-full bg-zinc-50 border border-zinc-100">
-            <span className="h-1.5 w-1.5 rounded-full bg-zinc-500 animate-pulse" />
-            <span className="text-[10px] font-bold text-zinc-700 uppercase tracking-wider">Live CRM Database</span>
+          <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-full bg-zinc-50 border border-zinc-250">
+            <span className="h-1.5 w-1.5 rounded-full bg-zinc-400 animate-pulse" />
+            <span className="text-[10px] font-bold text-zinc-650 uppercase tracking-wider">Live CRM Database</span>
           </div>
 
           {/* Current Date */}
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-50 border border-zinc-100">
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-50 border border-zinc-250">
             <Calendar className="h-3.5 w-3.5 text-zinc-500" />
             <span className="text-[10px] font-bold text-zinc-700">
               {new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
@@ -392,7 +397,7 @@ export function Header() {
           <div className="relative">
             <button 
               onClick={handleToggleNotifications}
-              className="relative p-2 rounded-xl bg-zinc-50 border border-zinc-200 text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 transition-all cursor-pointer"
+              className="relative p-2 rounded-xl bg-white border border-zinc-200 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50 transition-all cursor-pointer shadow-3xs"
             >
               <Bell className="h-4 w-4" />
               {unreadCount > 0 && (
@@ -407,7 +412,7 @@ export function Header() {
                 <div className="fixed inset-0 z-40" onClick={() => setIsNotificationsOpen(false)} />
                 <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-zinc-200 rounded-2xl shadow-2xl z-50 overflow-hidden text-left">
                   {/* Header */}
-                  <div className="p-4 border-b border-zinc-100 bg-zinc-50/50 flex justify-between items-center">
+                  <div className="p-4 border-b border-zinc-150 bg-zinc-50/50 flex justify-between items-center">
                     <p className="text-[10px] font-extrabold text-zinc-800 uppercase tracking-wider">Recent Activity Logs</p>
                     {unreadCount > 0 && (
                       <button 
@@ -426,7 +431,7 @@ export function Header() {
                         const userName = profilesMap[log.user_id] || 'System User';
                         const isUnread = lastReadTime ? new Date(log.created_at) > new Date(lastReadTime) : true;
                         return (
-                          <div key={log.id} className={`p-3.5 hover:bg-zinc-50 transition-colors flex gap-2.5 items-start ${isUnread ? 'bg-amber-50/10' : ''}`}>
+                          <div key={log.id} className={`p-3.5 hover:bg-zinc-50/50 transition-colors flex gap-2.5 items-start ${isUnread ? 'bg-amber-50/10' : ''}`}>
                             {/* Unread marker */}
                             {isUnread && (
                               <span className="h-1.5 w-1.5 rounded-full bg-amber-600 mt-1.5 shrink-0 animate-pulse" />
@@ -443,7 +448,7 @@ export function Header() {
                         );
                       })
                     ) : (
-                      <div className="p-8 text-center text-zinc-400 text-xs font-semibold">
+                      <div className="p-8 text-center text-zinc-450 text-xs font-semibold">
                         No recent activity logs.
                       </div>
                     )}
@@ -453,8 +458,7 @@ export function Header() {
             )}
           </div>
 
-          {/* Vertical Separator */}
-          <div className="h-5 w-[1px] bg-zinc-200" />
+
 
           {/* Profile Dropdown */}
           <div className="relative">

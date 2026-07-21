@@ -16,11 +16,18 @@ export interface SiteVisit {
   created_at?: string;
 }
 
+import { getPermissions } from './permissions';
+
 export async function fetchSiteVisits(profile: Profile | null): Promise<SiteVisit[]> {
   // Sales execs can view their assigned visits; managers see all
-  const { data, error } = await supabase
-    .from('site_visits')
-    .select('*');
+  const perms = getPermissions(profile?.role);
+  let query = supabase.from('site_visits').select('*');
+
+  if (!perms.canViewAllCalendar && profile?.id) {
+    query = query.eq('assigned_to', profile.id);
+  }
+
+  const { data, error } = await query;
   if (error) throw error;
   return data as SiteVisit[];
 }

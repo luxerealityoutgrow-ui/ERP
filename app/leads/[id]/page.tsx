@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { Lead } from '@/lib/queries';
 import { useProfile } from '@/lib/auth';
+import { getPermissions } from '@/lib/permissions';
 import {
   ChevronLeft,
   Loader2,
@@ -54,12 +55,8 @@ export default function LeadDetailPage() {
   const [isQrOpen, setIsQrOpen] = useState(false);
 
   useEffect(() => {
-    if (!id) {
-      setError("No lead ID provided");
-      setLoading(false);
-      return;
-    }
-
+    if (!id || !profile) return;
+ 
     const fetchLeadData = async () => {
       try {
         const { data, error } = await supabase
@@ -67,12 +64,17 @@ export default function LeadDetailPage() {
           .select('*')
           .eq('id', id)
           .single();
-
+ 
         if (error) {
           setError(error.message);
         } else {
-          setLead(data);
-          setNoteText(data.notes || '');
+          const perms = getPermissions(profile.role);
+          if (!perms.canViewAllLeads && data.assigned_to !== profile.id) {
+            setError("You do not have permission to view this lead");
+          } else {
+            setLead(data);
+            setNoteText(data.notes || '');
+          }
         }
       } catch (err) {
         console.error(err);
@@ -81,9 +83,9 @@ export default function LeadDetailPage() {
         setLoading(false);
       }
     };
-
+ 
     fetchLeadData();
-  }, [id]);
+  }, [id, profile]);
 
   // Toast auto-dismissal
   useEffect(() => {

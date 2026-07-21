@@ -77,7 +77,7 @@ const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
   SalesPerson: {
     canViewDashboard: false,
     canViewLeads: true,
-    canViewAllLeads: true, // Client says all leads visible to everyone
+    canViewAllLeads: false, // Sales execs only see their assigned leads
     canCreateLeads: true,
     canEditLeads: true,
     canDeleteLeads: false, // Only admin can delete leads
@@ -86,10 +86,10 @@ const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canEditProperties: true,
     canDeleteProperties: true, // Client says properties can be deleted by all
     canViewPipeline: true,
-    canViewAllPipeline: true,
+    canViewAllPipeline: false, // Sales execs only see their own pipeline deals
     canViewMatchmaking: true,
     canViewCalendar: true,
-    canViewAllCalendar: true,
+    canViewAllCalendar: false, // Sales execs only see their assigned site visits
     canViewReporting: false,
     canViewSettings: false,
     canManageUsers: false,

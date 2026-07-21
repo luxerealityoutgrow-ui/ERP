@@ -6,8 +6,11 @@ import { ChevronLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Lead } from '@/lib/queries';
+import { useProfile } from '@/lib/auth';
+import { getPermissions } from '@/lib/permissions';
 
 function EditLeadContent() {
+  const profile = useProfile();
   const searchParams = useSearchParams();
   const id = searchParams.get('id');
   const [lead, setLead] = useState<Lead | null>(null);
@@ -15,11 +18,7 @@ function EditLeadContent() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!id) {
-      setError("No lead ID provided");
-      setLoading(false);
-      return;
-    }
+    if (!id || !profile) return;
 
     const fetchLeadData = async () => {
       try {
@@ -32,7 +31,12 @@ function EditLeadContent() {
         if (error) {
           setError(error.message);
         } else {
-          setLead(data);
+          const perms = getPermissions(profile.role);
+          if (!perms.canViewAllLeads && data.assigned_to !== profile.id) {
+            setError("You do not have permission to edit this lead");
+          } else {
+            setLead(data);
+          }
         }
       } catch (err) {
         console.error(err);
@@ -43,7 +47,7 @@ function EditLeadContent() {
     };
 
     fetchLeadData();
-  }, [id]);
+  }, [id, profile]);
 
   if (loading) {
     return (

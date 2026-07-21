@@ -37,24 +37,42 @@ export function useProfile(): Profile | null {
           .eq('id', user.id)
           .single();
 
+        let profileData: Profile;
         if (error || !data) {
           // User in auth but no profile — fallback
-          const fallbackProfile: Profile = {
+          profileData = {
             id: user.id,
             role: 'SalesPerson',
             full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
             email: user.email || '',
           };
-          setProfile(fallbackProfile);
         } else {
-          const profileData = data as Profile;
-          // Apply role override if set (demo mode)
-          const roleOverride = localStorage.getItem('luxe-role-override');
-          if (roleOverride && ['SuperAdmin', 'Admin', 'SalesPerson'].includes(roleOverride)) {
-            profileData.role = roleOverride;
-          }
-          setProfile(profileData);
+          profileData = { ...data } as Profile;
         }
+
+        // Apply role override if set (demo mode)
+        const roleOverride = localStorage.getItem('luxe-role-override');
+        if (roleOverride && ['SuperAdmin', 'Admin', 'SalesPerson'].includes(roleOverride)) {
+          profileData.role = roleOverride;
+        }
+
+        // Apply user ID override if set
+        const userIdOverride = localStorage.getItem('luxe-user-override');
+        if (userIdOverride) {
+          profileData.id = userIdOverride;
+        }
+
+        const userNameOverride = localStorage.getItem('luxe-user-name-override');
+        if (userNameOverride) {
+          profileData.full_name = userNameOverride;
+        }
+
+        const userEmailOverride = localStorage.getItem('luxe-user-email-override');
+        if (userEmailOverride) {
+          profileData.email = userEmailOverride;
+        }
+
+        setProfile(profileData);
       } catch (err) {
         console.error('Error in fetchProfile:', err);
         setProfile(null);
