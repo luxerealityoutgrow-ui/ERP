@@ -2,10 +2,11 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useProfile } from '@/lib/auth';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { fetchLeads, fetchProperties, Lead, Property } from '@/lib/queries';
 import { fetchSiteVisits, SiteVisit } from '@/lib/siteVisits';
 import { supabase } from '@/lib/supabaseClient';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { 
   Users, 
@@ -68,6 +69,14 @@ export default function DashboardPage() {
       window.removeEventListener('dashboard-range-change', handleRangeEvent);
     };
   }, []);
+
+  const handleRangeChange = (range: string) => {
+    setDateRange(range as any);
+    if (typeof window !== 'undefined') {
+      (window as any).__dashboardRange = range;
+      window.dispatchEvent(new CustomEvent('dashboard-range-change', { detail: range }));
+    }
+  };
 
   // Redirect SalesPerson away from dashboard
   useEffect(() => {
@@ -318,15 +327,61 @@ export default function DashboardPage() {
     <div className="w-full space-y-6 pb-20 text-zinc-900 text-left">
       
       {/* Dashboard Top Action Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-[17px] font-extrabold text-zinc-900 tracking-tight" style={{ letterSpacing: '-0.3px' }}>Dashboard Overview</h1>
-          <p className="text-[10px] text-zinc-400 font-medium">Luxe Realty Pune CRM metrics</p>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="flex items-center justify-between w-full md:w-auto">
+          <div>
+            <h1 className="text-[17px] font-extrabold text-zinc-900 tracking-tight" style={{ letterSpacing: '-0.3px' }}>Dashboard Overview</h1>
+            <p className="text-[10px] text-zinc-400 font-medium">Luxe Realty Pune CRM metrics</p>
+          </div>
+          <button 
+            type="button" 
+            onClick={handleExportReport}
+            className="md:hidden dc-btn gold font-extrabold text-[11px] px-3 py-1.5 rounded-xl flex items-center justify-center gap-1 shadow-xs cursor-pointer"
+          >
+            <Download className="h-3.5 w-3.5" />
+            <span>Export</span>
+          </button>
         </div>
+
+        {/* Mobile-only Segmented Control (Hidden on desktop) */}
+        <div className="block lg:hidden self-start w-full sm:w-auto">
+          <div className="flex items-center gap-0.5 p-0.5 bg-white border border-[#e8e7e4] rounded-lg relative overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden w-full sm:w-auto justify-between sm:justify-start">
+            {[
+              { key: 'today', label: 'Today' },
+              { key: '7d', label: '7D' },
+              { key: '30d', label: '30D' },
+              { key: '90d', label: '90D' },
+              { key: 'ytd', label: 'YTD' },
+              { key: 'all', label: 'All' },
+            ].map((opt) => {
+              const isSelected = dateRange === opt.key;
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => handleRangeChange(opt.key)}
+                  className={`relative flex-1 sm:flex-initial px-3.5 py-1.5 rounded-md text-[9px] md:text-[10px] font-black transition-colors cursor-pointer select-none z-10 text-center ${
+                    isSelected ? 'text-zinc-950 font-extrabold' : 'text-zinc-400 hover:text-zinc-600'
+                  }`}
+                >
+                  {isSelected && (
+                    <motion.div
+                      layoutId="dashboard-mobile-active-pill"
+                      className="absolute inset-0 bg-[#d4ad4d] rounded-md -z-10 shadow-sm"
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <button 
           type="button" 
           onClick={handleExportReport}
-          className="dc-btn gold font-extrabold text-[11px] px-3.5 py-1.5 rounded-xl flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
+          className="hidden md:flex dc-btn gold font-extrabold text-[11px] px-3.5 py-1.5 rounded-xl items-center justify-center gap-1.5 shadow-xs cursor-pointer"
         >
           <Download className="h-4 w-4" />
           Export Report (PDF)

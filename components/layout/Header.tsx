@@ -282,9 +282,9 @@ export function Header({ onToggleMenu }: { onToggleMenu?: () => void }) {
         </button>
       </div>
 
-      {/* Center: Dashboard Range Selector (Conditionally shown only on /dashboard) */}
+      {/* Center: Dashboard Range Selector (Conditionally shown only on /dashboard on desktop) */}
       {pathname === '/dashboard' && (
-        <div className="flex items-center gap-1.5 mx-auto shrink-0 z-10">
+        <div className="hidden lg:flex items-center gap-1.5 mx-auto shrink-0 z-10">
           <div className="flex items-center gap-0.5 p-0.5 bg-zinc-900 border border-zinc-800 rounded-lg relative">
             {[
               { key: 'today', label: 'Today' },
