@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useProfile } from '@/lib/auth';
 import { getPermissions } from '@/lib/permissions';
+import { supabase } from '@/lib/supabaseClient';
 
 interface SiteVisit {
   id: string;
