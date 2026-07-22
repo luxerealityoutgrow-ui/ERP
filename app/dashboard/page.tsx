@@ -48,9 +48,22 @@ export default function DashboardPage() {
 
   // Date range filter: today | 7d | 30d | 90d | ytd | all
   const [dateRange, setDateRange] = useState<'today' | '7d' | '30d' | '90d' | 'ytd' | 'all'>('30d');
-
-  // Deep-dive detail modal state
   const [detailModal, setDetailModal] = useState<{ type: string; title: string; items: any[] } | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (window as any).__dashboardRange) {
+      setDateRange((window as any).__dashboardRange);
+    }
+
+    const handleRangeEvent = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      setDateRange(customEvent.detail);
+    };
+    window.addEventListener('dashboard-range-change', handleRangeEvent);
+    return () => {
+      window.removeEventListener('dashboard-range-change', handleRangeEvent);
+    };
+  }, []);
 
   // Redirect SalesPerson away from dashboard
   useEffect(() => {
@@ -300,48 +313,25 @@ export default function DashboardPage() {
   return (
     <div className="w-full space-y-6 pb-20 text-zinc-900 text-left">
       
+      {/* Dashboard Top Action Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-[17px] font-extrabold text-zinc-900 tracking-tight" style={{ letterSpacing: '-0.3px' }}>Dashboard Overview</h1>
+          <p className="text-[10px] text-zinc-400 font-medium">Luxe Realty Pune CRM metrics</p>
+        </div>
+        <button 
+          type="button" 
+          onClick={handleExportReport}
+          className="dc-btn gold font-extrabold text-[11px] px-3.5 py-1.5 rounded-xl flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
+        >
+          <Download className="h-4 w-4" />
+          Export Report (PDF)
+        </button>
+      </div>
+      
       {/* ── UNIFIED PORCELAIN CARD FRAME (Editorial Command Cabinet) ── */}
       <div className="bg-white border border-[#e8e7e4] rounded-[20px] shadow-xs overflow-hidden">
         
-        {/* Header Bar with Live Duration Selector */}
-        <div className="p-4 md:px-6 border-b border-[#ebebeb] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-1.5 p-1 bg-[#fafaf8] border border-[#e8e7e4] rounded-xl w-full sm:w-auto">
-            <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest px-2.5">
-              Period:
-            </span>
-            {[
-              { key: 'today', label: 'Today' },
-              { key: '7d', label: '7D' },
-              { key: '30d', label: '30D' },
-              { key: '90d', label: '90D' },
-              { key: 'ytd', label: 'YTD' },
-              { key: 'all', label: 'All' },
-            ].map((opt) => (
-              <button
-                key={opt.key}
-                type="button"
-                onClick={() => setDateRange(opt.key as any)}
-                className={`px-3 py-1 rounded-lg text-[10.5px] font-extrabold transition-all cursor-pointer ${
-                  dateRange === opt.key 
-                    ? 'bg-white text-zinc-900 shadow-2xs border border-[#e8e7e4]' 
-                    : 'text-zinc-400 hover:text-zinc-700'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-
-          <button 
-            type="button" 
-            onClick={handleExportReport}
-            className="dc-btn gold font-extrabold text-[11px] px-3.5 py-1.5 rounded-xl flex items-center justify-center gap-1.5 shadow-xs cursor-pointer w-full sm:w-auto"
-          >
-            <Download className="h-4 w-4" />
-            Export Report (PDF)
-          </button>
-        </div>
-
         {/* ── TOP 5 FINANCIAL & VOLUME METRIC RIBBON (Connected to Granular Details!) ── */}
         <div className="grid grid-cols-2 lg:grid-cols-5 border-b border-[#ebebeb] bg-[#ebebeb] gap-px">
           

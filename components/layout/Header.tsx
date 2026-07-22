@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { useProfile } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 
 interface NotificationItem {
@@ -43,6 +43,32 @@ interface NotificationItem {
 export function Header({ onToggleMenu }: { onToggleMenu?: () => void }) {
   const profile = useProfile();
   const router = useRouter();
+  const pathname = usePathname();
+  const [activeRange, setActiveRange] = useState('30d');
+
+  useEffect(() => {
+    // Sync initial state if window variable exists
+    if (typeof window !== 'undefined' && (window as any).__dashboardRange) {
+      setActiveRange((window as any).__dashboardRange);
+    }
+
+    const handleRangeEvent = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      setActiveRange(customEvent.detail);
+    };
+    window.addEventListener('dashboard-range-change', handleRangeEvent);
+    return () => {
+      window.removeEventListener('dashboard-range-change', handleRangeEvent);
+    };
+  }, []);
+
+  const handleRangeChange = (range: string) => {
+    setActiveRange(range);
+    if (typeof window !== 'undefined') {
+      (window as any).__dashboardRange = range;
+      window.dispatchEvent(new CustomEvent('dashboard-range-change', { detail: range }));
+    }
+  };
   
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -250,6 +276,56 @@ export function Header({ onToggleMenu }: { onToggleMenu?: () => void }) {
           <Search className="h-4 w-4" />
         </button>
       </div>
+
+      {/* Center: Dashboard Range Selector (Conditionally shown only on /dashboard) */}
+      {pathname === '/dashboard' && (
+        <div className="flex items-center gap-1.5 mx-auto shrink-0 z-10">
+          {/* Desktop segmented controls */}
+          <div className="hidden md:flex items-center gap-1 p-0.5 bg-zinc-900 border border-zinc-800 rounded-lg">
+            {[
+              { key: 'today', label: 'Today' },
+              { key: '7d', label: '7D' },
+              { key: '30d', label: '30D' },
+              { key: '90d', label: '90D' },
+              { key: 'ytd', label: 'YTD' },
+              { key: 'all', label: 'All' },
+            ].map((opt) => {
+              const isSelected = activeRange === opt.key;
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => handleRangeChange(opt.key)}
+                  className={`px-2.5 py-1 rounded-md text-[10px] font-black transition-all cursor-pointer ${
+                    isSelected 
+                      ? 'bg-zinc-800 text-white border border-zinc-700/50 shadow-xs' 
+                      : 'text-zinc-500 hover:text-zinc-300'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+          
+          {/* Mobile compact dropdown */}
+          <div className="block md:hidden relative">
+            <select
+              value={activeRange}
+              onChange={(e) => handleRangeChange(e.target.value)}
+              className="h-8 pl-2 pr-6 bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] font-extrabold text-white outline-none cursor-pointer appearance-none"
+            >
+              <option value="today">Today</option>
+              <option value="7d">7D</option>
+              <option value="30d">30D</option>
+              <option value="90d">90D</option>
+              <option value="ytd">YTD</option>
+              <option value="all">All</option>
+            </select>
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-zinc-400 pointer-events-none" />
+          </div>
+        </div>
+      )}
 
       {/* Right: Status Pills & Action Controls */}
       <div className="flex items-center gap-3">
