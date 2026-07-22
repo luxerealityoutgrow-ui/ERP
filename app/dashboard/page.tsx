@@ -266,9 +266,9 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 mt-4 flex-wrap">
-                    <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wide bg-rose-50 text-rose-600 border border-rose-100">{hotLeads} Hot</span>
-                    <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wide bg-amber-50 text-amber-600 border border-amber-100">{warmLeads} Warm</span>
-                    <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wide bg-emerald-50 text-emerald-600 border border-emerald-100">{closedLeads} Closed</span>
+                    <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide bg-rose-50 text-rose-600 border border-rose-100">{hotLeads} Hot</span>
+                    <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide bg-amber-50 text-amber-600 border border-amber-100">{warmLeads} Warm</span>
+                    <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-600 border border-emerald-100">{closedLeads} Closed</span>
                   </div>
                 </div>
 
@@ -284,9 +284,9 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 mt-4 flex-wrap">
-                    <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wide bg-emerald-50 text-emerald-600 border border-emerald-100">{availableProperties} Active</span>
-                    <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wide bg-amber-50 text-amber-600 border border-amber-100">{underOffer} Pending</span>
-                    <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wide bg-zinc-100 text-zinc-650 border border-zinc-200">{soldProperties} Sold</span>
+                    <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-600 border border-emerald-100">{availableProperties} Active</span>
+                    <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide bg-amber-50 text-amber-600 border border-amber-100">{underOffer} Pending</span>
+                    <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide bg-zinc-100 text-zinc-650 border border-zinc-200">{soldProperties} Sold</span>
                   </div>
                 </div>
 
@@ -302,8 +302,8 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 mt-4 flex-wrap">
-                    <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wide bg-blue-50 text-blue-600 border border-blue-100">{scheduledVisits} Active</span>
-                    <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wide bg-emerald-50 text-emerald-600 border border-emerald-100">{completedVisits} Done</span>
+                    <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide bg-blue-50 text-blue-600 border border-blue-100">{scheduledVisits} Active</span>
+                    <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-600 border border-emerald-100">{completedVisits} Done</span>
                   </div>
                 </div>
 
@@ -319,7 +319,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 mt-4 flex-wrap">
-                    <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wide bg-zinc-50 text-zinc-650 border border-zinc-200">{soldProperties} deals closed</span>
+                    <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide bg-zinc-50 text-zinc-650 border border-zinc-200">{soldProperties} deals closed</span>
                   </div>
                 </div>
               </div>
@@ -475,7 +475,7 @@ export default function DashboardPage() {
                                 <p className="text-[10px] text-zinc-400 font-bold truncate max-w-[150px] uppercase tracking-wide mt-0.5">{lead.preferred_location || 'Flexible'} • {lead.property_type || 'Any'}</p>
                               </div>
                             </div>
-                            <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold border uppercase tracking-wider ${
+                            <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold border uppercase tracking-wider ${
                               lead.status === 'Hot' ? 'bg-rose-50 text-rose-600 border-rose-200' :
                               lead.status === 'Warm' ? 'bg-amber-50 text-amber-600 border-amber-200' :
                               lead.status === 'Closed' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :

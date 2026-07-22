@@ -295,7 +295,7 @@ export default function SiteVisitsPage() {
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-sm font-bold text-zinc-900">{visit.visit_time}</span>
-                        <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-widest ${
+                        <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-widest ${
                           visit.status === 'Confirmed' ? 'bg-zinc-50 text-zinc-600 border border-zinc-100' :
                           visit.status === 'Pending' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
                           'bg-rose-50 text-rose-600 border border-rose-100'

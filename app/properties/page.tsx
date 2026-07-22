@@ -327,7 +327,7 @@ ${prop.description ? `\n${prop.description}` : ''}`;
             <SlidersHorizontal className="h-3.5 w-3.5" />
             Drill Down
             {(filterLocations.length > 0 || filterPropertyType || filterConfiguration || filterListingType || filterPriceMin || filterPriceMax || filterAreaMin || filterAreaMax) && (
-              <span className="ml-1 h-4 w-4 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
+              <span className="ml-1 h-4 w-4 rounded-full bg-zinc-700 text-white text-[9px] font-bold flex items-center justify-center">
                 {[filterLocations.length > 0, filterPropertyType, filterConfiguration, filterListingType, filterPriceMin || filterPriceMax, filterAreaMin || filterAreaMax].filter(Boolean).length}
               </span>
             )}
@@ -374,7 +374,7 @@ ${prop.description ? `\n${prop.description}` : ''}`;
 
       {/* Drill Down Advanced Filters Panel */}
       {showAdvancedFilters && (
-        <div className="bg-white border border-zinc-200 rounded-2xl p-5">
+        <div className="bg-white border border-zinc-200 rounded-2xl p-4">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xs font-bold text-zinc-700 uppercase tracking-wider flex items-center gap-1.5">
               <SlidersHorizontal className="h-3.5 w-3.5 text-zinc-500" />
@@ -561,7 +561,7 @@ ${prop.description ? `\n${prop.description}` : ''}`;
                   <th className="px-4 py-3 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Type</th>
                   <th className="px-4 py-3 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Config</th>
                   <th className="px-4 py-3 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Area</th>
-                  <th className="px-4 py-3 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Price</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-zinc-500 uppercase tracking-wider text-right">Price</th>
                   <th className="px-4 py-3 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Listing</th>
                   <th className="px-4 py-3 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Status</th>
                   <th className="px-4 py-3 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Owner</th>
@@ -604,18 +604,18 @@ ${prop.description ? `\n${prop.description}` : ''}`;
                         <span className="text-xs font-medium text-zinc-700">{prop.property_type}</span>
                       </td>
                       <td className="px-4 py-3" onClick={() => handleOpenProperty(prop)}>
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border border-zinc-200 bg-zinc-50 text-zinc-600">
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide border border-zinc-200 bg-zinc-50 text-zinc-600">
                           {prop.configuration || '—'}
                         </span>
                       </td>
                       <td className="px-4 py-3" onClick={() => handleOpenProperty(prop)}>
                         <span className="text-xs font-medium text-zinc-700">{prop.carpet_area ? `${prop.carpet_area} sqft` : '—'}</span>
                       </td>
-                      <td className="px-4 py-3" onClick={() => handleOpenProperty(prop)}>
-                        <span className="text-xs font-bold text-zinc-900">{formatPriceShort(prop.price)}</span>
+                      <td className="px-4 py-3 text-right" onClick={() => handleOpenProperty(prop)}>
+                        <span className="text-xs font-bold text-zinc-900 tabular-nums">{formatPriceShort(prop.price)}</span>
                       </td>
                       <td className="px-4 py-3" onClick={() => handleOpenProperty(prop)}>
-                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold border ${
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold border ${
                           prop.listing_type === 'Sale' 
                             ? 'border-blue-100 bg-blue-50 text-blue-700' 
                             : 'border-purple-100 bg-purple-50 text-purple-700'
@@ -804,7 +804,7 @@ ${prop.description ? `\n${prop.description}` : ''}`;
             </div>
 
             {/* Drawer Footer Actions */}
-            <div className="p-5 border-t border-zinc-100 bg-zinc-50/50 flex items-center gap-2">
+            <div className="p-4 border-t border-zinc-100 bg-zinc-50/50 flex items-center gap-2">
               <button 
                 onClick={() => handleShareWhatsApp([selectedProperty])}
                 className="flex-1 py-2.5 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 text-xs font-bold hover:bg-emerald-100 transition-all flex items-center justify-center gap-2"

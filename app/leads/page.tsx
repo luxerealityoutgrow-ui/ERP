@@ -733,7 +733,7 @@ export default function LeadsPage() {
                   <SlidersHorizontal className="h-3.5 w-3.5" />
                   Drill Down
                   {(filterLocations.length > 0 || filterPropertyType || filterConfiguration || filterSource || filterTransactionType || filterBudgetMin || filterBudgetMax || filterStage) && (
-                    <span className="ml-1 h-4 w-4 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
+                    <span className="ml-1 h-4 w-4 rounded-full bg-zinc-700 text-white text-[9px] font-bold flex items-center justify-center">
                       {[filterLocations.length > 0, filterPropertyType, filterConfiguration, filterSource, filterTransactionType, filterBudgetMin || filterBudgetMax, filterStage].filter(Boolean).length}
                     </span>
                   )}
@@ -768,7 +768,7 @@ export default function LeadsPage() {
 
           {/* Drill Down Advanced Filters Panel */}
           {showAdvancedFilters && (
-            <div className="border-b border-zinc-200 bg-zinc-50/70 px-5 py-4">
+            <div className="border-b border-zinc-200 bg-zinc-50/70 px-4 py-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xs font-bold text-zinc-700 uppercase tracking-wider flex items-center gap-1.5">
                   <SlidersHorizontal className="h-3.5 w-3.5 text-zinc-500" />
@@ -1018,7 +1018,7 @@ export default function LeadsPage() {
 
                     {/* Source */}
                     <Table.Cell className="text-left py-2 px-3">
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold border ${getSourceStyle(lead.lead_source_id)}`}>
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-semibold border ${getSourceStyle(lead.lead_source_id)}`}>
                         {lead.lead_source_id || '—'}
                       </span>
                     </Table.Cell>
@@ -1159,13 +1159,13 @@ export default function LeadsPage() {
                 <div>
                   <h2 className="text-xl font-bold text-zinc-900">{selectedLead.client_name}</h2>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-widest border transition-all ${getStatusStyle(selectedLead.status || 'Hot')}`}>
+                    <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-widest border transition-all ${getStatusStyle(selectedLead.status || 'Hot')}`}>
                       {selectedLead.status || 'Hot'}
                     </span>
                     <button
                       onClick={() => handleToggleLeadActive(selectedLead.id, selectedLead.is_active !== false)}
                       className={cx(
-                        "px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-widest border transition-all cursor-pointer",
+                        "px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-widest border transition-all cursor-pointer",
                         selectedLead.is_active !== false
                           ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100/70"
                           : "bg-zinc-50 text-zinc-500 border-zinc-200 hover:bg-zinc-100"

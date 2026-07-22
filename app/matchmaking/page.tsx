@@ -1242,7 +1242,7 @@ Let us know if you would like to schedule a site visit!`);
                             <IconComponent className="h-3.5 w-3.5 text-zinc-500" />
                             {item.category}
                           </span>
-                          <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase border tracking-wider flex items-center gap-1 ${
+                          <span className={`px-2 py-0.5 rounded-md text-[8px] font-bold uppercase border tracking-wider flex items-center gap-1 ${
                             item.status === 'exact' 
                               ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
                               : item.status === 'partial' 

@@ -233,7 +233,7 @@ export default function LeadDetailPage() {
               <div className="space-y-1">
                 <h1 className="text-2xl font-extrabold text-zinc-900 tracking-tight">{lead.client_name}</h1>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-widest border transition-all ${getStatusStyle(lead.status)}`}>
+                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest border transition-all ${getStatusStyle(lead.status)}`}>
                     {lead.status || 'Hot'}
                   </span>
                   <span className="text-[10px] text-zinc-400 font-semibold">Added {new Date(lead.created_at || '').toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}</span>

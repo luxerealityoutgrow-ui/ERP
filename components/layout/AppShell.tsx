@@ -149,7 +149,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="relative z-10 max-w-sm space-y-8 flex flex-col items-center">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-sm font-extrabold uppercase tracking-[0.25em] text-white">Luxe Realty</span>
-              <span className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 text-[8px] font-extrabold tracking-widest uppercase">ERP</span>
+              <span className="px-1.5 py-0.5 rounded-md bg-zinc-800 text-zinc-400 text-[8px] font-extrabold tracking-widest uppercase">ERP</span>
             </div>
 
             <div className="relative flex items-center justify-center h-28 w-28 rounded-3xl bg-zinc-900 border border-zinc-800/80 shadow-2xl shadow-zinc-950">

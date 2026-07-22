@@ -131,7 +131,7 @@ export function SidebarNav() {
                     : 'justify-between px-3 py-2.5 mx-1'
                 } ${
                   isActive 
-                    ? 'bg-zinc-900 text-gold-500 font-semibold border-l-2 border-gold-500 shadow-xs' 
+                    ? 'bg-zinc-900 text-gold-500 font-bold border-l-2 border-gold-500 shadow-xs' 
                     : 'text-zinc-400 hover:bg-zinc-900 hover:text-gold-500 hover:translate-x-0.5'
                 }`}
               >
