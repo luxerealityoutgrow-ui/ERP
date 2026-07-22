@@ -16,7 +16,7 @@ import {
 import { useProfile } from '@/lib/auth';
 import { canAccessRoute } from '@/lib/permissions';
 
-export function SidebarNav({ onClose }: { onClose?: () => void }) {
+export function SidebarNav({ onClose, className = '' }: { onClose?: () => void; className?: string }) {
   const pathname = usePathname();
   const profile = useProfile();
 
@@ -35,7 +35,7 @@ export function SidebarNav({ onClose }: { onClose?: () => void }) {
   );
 
   return (
-    <aside className="w-64 shrink-0 bg-zinc-950 border border-zinc-850 rounded-[14px] p-5 flex flex-col justify-between hidden lg:flex shadow-md text-left">
+    <div className={`flex flex-col justify-between h-full w-full text-left ${className}`}>
       <div className="space-y-6">
         
         {/* Large Prominent Brand Logo (No text next to it) */}
@@ -97,6 +97,6 @@ export function SidebarNav({ onClose }: { onClose?: () => void }) {
           </a>
         </div>
       </div>
-    </aside>
+    </div>
   );
 }

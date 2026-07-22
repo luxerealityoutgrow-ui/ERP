@@ -343,12 +343,12 @@ export default function DashboardPage() {
         </div>
 
         {/* ── TOP 5 FINANCIAL & VOLUME METRIC RIBBON (Connected to Granular Details!) ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 border-b border-[#ebebeb] bg-[#fafaf8]/40 divide-y sm:divide-y-0 sm:divide-x divide-[#ebebeb]">
+        <div className="grid grid-cols-2 lg:grid-cols-5 border-b border-[#ebebeb] bg-[#ebebeb] gap-px">
           
           {/* Total Inbound Leads */}
           <div 
             onClick={() => setDetailModal({ type: 'leads', title: `Total Inbound Leads (${totalLeadsCount})`, items: filteredLeads })}
-            className="p-5 hover:bg-white transition-all cursor-pointer group"
+            className="p-5 bg-white hover:bg-[#fafaf8] transition-all cursor-pointer group"
           >
             <div className="flex items-center justify-between">
               <span className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-widest">Total Inbound Leads</span>
@@ -364,7 +364,7 @@ export default function DashboardPage() {
           {/* Active Pipeline Value */}
           <div 
             onClick={() => setDetailModal({ type: 'leads', title: `Hot Pipeline Leads (${hotLeads.length})`, items: hotLeads })}
-            className="p-5 hover:bg-white transition-all cursor-pointer group"
+            className="p-5 bg-white hover:bg-[#fafaf8] transition-all cursor-pointer group"
           >
             <div className="flex items-center justify-between">
               <span className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-widest">Active Pipeline Value</span>
@@ -380,7 +380,7 @@ export default function DashboardPage() {
           {/* Site Tours Scheduled */}
           <div 
             onClick={() => setDetailModal({ type: 'visits', title: `Scheduled Site Tours (${totalVisitsCount})`, items: filteredVisits })}
-            className="p-5 hover:bg-white transition-all cursor-pointer group"
+            className="p-5 bg-white hover:bg-[#fafaf8] transition-all cursor-pointer group"
           >
             <div className="flex items-center justify-between">
               <span className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-widest">Site Tours Scheduled</span>
@@ -396,7 +396,7 @@ export default function DashboardPage() {
           {/* Portfolio Inventory */}
           <div 
             onClick={() => setDetailModal({ type: 'properties', title: `Property Portfolio Inventory (${totalPropertiesCount})`, items: properties })}
-            className="p-5 hover:bg-white transition-all cursor-pointer group"
+            className="p-5 bg-white hover:bg-[#fafaf8] transition-all cursor-pointer group"
           >
             <div className="flex items-center justify-between">
               <span className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-widest">Portfolio Inventory</span>
@@ -412,7 +412,7 @@ export default function DashboardPage() {
           {/* Closed Revenue & Fees */}
           <div 
             onClick={() => setDetailModal({ type: 'leads', title: `Closed Deals (${closedDeals.length})`, items: closedDeals })}
-            className="p-5 hover:bg-white transition-all cursor-pointer group"
+            className="p-5 bg-white hover:bg-[#fafaf8] transition-all cursor-pointer group col-span-2 lg:col-span-1"
           >
             <div className="flex items-center justify-between">
               <span className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-widest">Closed Revenue & Fee</span>

@@ -83,7 +83,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="flex-1 flex w-full px-4 py-4 md:px-6 md:py-6 gap-4 md:gap-6 overflow-hidden relative">
             
             {/* Desktop Sidebar Navigation (Hidden on Mobile) */}
-            <SidebarNav />
+            <aside className="w-64 shrink-0 bg-zinc-950 border border-zinc-850 rounded-[14px] p-5 hidden lg:flex flex-col justify-between shadow-md text-left">
+              <SidebarNav />
+            </aside>
 
             {/* Mobile Slide-Out Drawer Navigation */}
             {isMobileOpen && (
@@ -99,7 +101,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   {/* Close button */}
                   <button 
                     onClick={() => setIsMobileOpen(false)} 
-                    className="absolute right-4 top-4 p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-all cursor-pointer"
+                    className="absolute right-4 top-4 p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-all cursor-pointer z-10"
                   >
                     <X className="h-4 w-4" />
                   </button>
