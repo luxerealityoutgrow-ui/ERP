@@ -437,35 +437,50 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
         <div className="block lg:hidden px-6 py-8 text-left space-y-6 bg-white border border-[#e8e7e4] rounded-[24px] shadow-sm my-6 mx-4">
           
           <div className="space-y-4">
-            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider">Basic Information</h3>
+            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider flex items-baseline gap-2">
+              <span className="font-serif italic font-bold text-[#d4ad4d] text-base">01.</span>
+              <span>Basic Information</span>
+            </h3>
             {renderBasicInfo()}
           </div>
 
           <div className="h-px bg-zinc-200/50 my-6" />
 
           <div className="space-y-4">
-            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider">Location Details</h3>
+            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider flex items-baseline gap-2">
+              <span className="font-serif italic font-bold text-[#d4ad4d] text-base">02.</span>
+              <span>Location Details</span>
+            </h3>
             {renderLocation()}
           </div>
 
           <div className="h-px bg-zinc-200/50 my-6" />
 
           <div className="space-y-4">
-            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider">Pricing & Carpet Area</h3>
+            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider flex items-baseline gap-2">
+              <span className="font-serif italic font-bold text-[#d4ad4d] text-base">03.</span>
+              <span>Pricing & Carpet Area</span>
+            </h3>
             {renderPricing()}
           </div>
 
           <div className="h-px bg-zinc-200/50 my-6" />
 
           <div className="space-y-4">
-            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider">Ownership & Private Terms</h3>
+            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider flex items-baseline gap-2">
+              <span className="font-serif italic font-bold text-[#d4ad4d] text-base">04.</span>
+              <span>Ownership & Private Terms</span>
+            </h3>
             {renderOwnership()}
           </div>
 
           <div className="h-px bg-zinc-200/50 my-6" />
 
           <div className="space-y-4">
-            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider">Media Uploads</h3>
+            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider flex items-baseline gap-2">
+              <span className="font-serif italic font-bold text-[#d4ad4d] text-base">05.</span>
+              <span>Media Uploads</span>
+            </h3>
             {renderMedia()}
           </div>
 

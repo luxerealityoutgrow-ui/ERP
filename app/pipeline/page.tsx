@@ -784,7 +784,7 @@ export default function PipelinePage() {
                           if (matched.budget_max) setBudget(matched.budget_max.toString());
                         }
                       }}
-                      className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-medium text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all"
+                      className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-semibold text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all"
                     />
                     <datalist id="leads-datalist">
                       {rawLeadsList.map(l => (
@@ -820,7 +820,7 @@ export default function PipelinePage() {
                           if (matched.price) setBudget(matched.price.toString());
                         }
                       }}
-                      className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-medium text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all"
+                      className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-semibold text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all"
                     />
                     <datalist id="properties-datalist">
                       {propertiesList.map(p => (
@@ -841,7 +841,7 @@ export default function PipelinePage() {
                     placeholder="e.g. 25000000"
                     value={budget}
                     onChange={(e) => setBudget(e.target.value)}
-                    className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-medium text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all"
+                    className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-semibold text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all"
                   />
                 </div>
 
@@ -853,7 +853,7 @@ export default function PipelinePage() {
                       <select 
                         value={stage}
                         onChange={(e) => setStage(e.target.value)}
-                        className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-medium text-zinc-800 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all appearance-none cursor-pointer"
+                        className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-semibold text-zinc-800 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all appearance-none cursor-pointer"
                       >
                         {STAGES.map(s => (
                           <option key={s} value={s}>{s}</option>
@@ -869,7 +869,7 @@ export default function PipelinePage() {
                       <select 
                         value={source}
                         onChange={(e) => setSource(e.target.value)}
-                        className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-medium text-zinc-800 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all appearance-none cursor-pointer"
+                        className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-semibold text-zinc-800 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all appearance-none cursor-pointer"
                       >
                         {LEAD_SOURCES.map(s => (
                           <option key={s} value={s}>{s}</option>
@@ -887,7 +887,7 @@ export default function PipelinePage() {
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Enter special requirements or terms..."
-                    className="w-full h-20 px-3.5 py-2.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-medium text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all resize-none"
+                    className="w-full h-20 px-3.5 py-2.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-semibold text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all resize-none"
                   />
                 </div>
 
@@ -953,7 +953,7 @@ export default function PipelinePage() {
                     required
                     value={clientName}
                     onChange={(e) => setClientName(e.target.value)}
-                    className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-medium text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all"
+                    className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-semibold text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all"
                   />
                 </div>
 
@@ -965,7 +965,7 @@ export default function PipelinePage() {
                     required
                     value={budget}
                     onChange={(e) => setBudget(e.target.value)}
-                    className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-medium text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all"
+                    className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-semibold text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all"
                   />
                 </div>
 
@@ -977,7 +977,7 @@ export default function PipelinePage() {
                       <select 
                         value={propertyPref}
                         onChange={(e) => setPropertyPref(e.target.value)}
-                        className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-medium text-zinc-800 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all appearance-none cursor-pointer"
+                        className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-semibold text-zinc-800 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all appearance-none cursor-pointer"
                       >
                         {PROPERTY_PREFERENCES.map(p => (
                           <option key={p} value={p}>{p}</option>
@@ -992,7 +992,7 @@ export default function PipelinePage() {
                       <select 
                         value={stage}
                         onChange={(e) => setStage(e.target.value)}
-                        className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-medium text-zinc-800 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all appearance-none cursor-pointer"
+                        className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-semibold text-zinc-800 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all appearance-none cursor-pointer"
                       >
                         {STAGES.map(s => (
                           <option key={s} value={s}>{s}</option>
@@ -1010,7 +1010,7 @@ export default function PipelinePage() {
                     <select 
                       value={source}
                       onChange={(e) => setSource(e.target.value)}
-                      className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-medium text-zinc-800 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all appearance-none cursor-pointer"
+                      className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-semibold text-zinc-800 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all appearance-none cursor-pointer"
                     >
                       {LEAD_SOURCES.map(s => (
                         <option key={s} value={s}>{s}</option>
@@ -1026,7 +1026,7 @@ export default function PipelinePage() {
                   <textarea 
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    className="w-full h-20 px-3.5 py-2.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-medium text-[#2d2d2d] placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all resize-none"
+                    className="w-full h-20 px-3.5 py-2.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-semibold text-[#2d2d2d] placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all resize-none"
                   />
                 </div>
               </div>

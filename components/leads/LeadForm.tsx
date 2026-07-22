@@ -40,9 +40,9 @@ const CONFIG_OPTIONS = [
   'Plot'
 ];
 
-const inputCls = "w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base lg:text-[12px] font-medium text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all";
-const selectCls = "w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base lg:text-[12px] font-medium text-zinc-800 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all appearance-none cursor-pointer";
-const textareaCls = "w-full px-3.5 py-2.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base lg:text-[12px] font-medium text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all resize-none";
+const inputCls = "w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base lg:text-[12px] font-semibold text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all";
+const selectCls = "w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base lg:text-[12px] font-semibold text-zinc-800 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all appearance-none cursor-pointer";
+const textareaCls = "w-full px-3.5 py-2.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base lg:text-[12px] font-semibold text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all resize-none";
 const labelCls = "text-[10px] font-bold text-zinc-400 uppercase tracking-widest";
 
 export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> }) {
@@ -482,28 +482,40 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
         <div className="block lg:hidden px-6 py-8 text-left space-y-6 bg-white border border-[#e8e7e4] rounded-[24px] shadow-sm my-6 mx-4">
           
           <div className="space-y-4">
-            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider">Contact Details</h3>
+            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider flex items-baseline gap-2">
+              <span className="font-serif italic font-bold text-[#d4ad4d] text-base">01.</span>
+              <span>Contact Details</span>
+            </h3>
             {renderContactFields()}
           </div>
 
           <div className="h-px bg-zinc-200/50 my-6" />
 
           <div className="space-y-4">
-            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider">Classification & Assignment</h3>
+            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider flex items-baseline gap-2">
+              <span className="font-serif italic font-bold text-[#d4ad4d] text-base">02.</span>
+              <span>Classification & Assignment</span>
+            </h3>
             {renderClassifyFields()}
           </div>
 
           <div className="h-px bg-zinc-200/50 my-6" />
 
           <div className="space-y-4">
-            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider">Requirements</h3>
+            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider flex items-baseline gap-2">
+              <span className="font-serif italic font-bold text-[#d4ad4d] text-base">03.</span>
+              <span>Requirements</span>
+            </h3>
             {renderRequirementsFields()}
           </div>
 
           <div className="h-px bg-zinc-200/50 my-6" />
 
           <div className="space-y-4">
-            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider">Internal Notes</h3>
+            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider flex items-baseline gap-2">
+              <span className="font-serif italic font-bold text-[#d4ad4d] text-base">04.</span>
+              <span>Internal Notes</span>
+            </h3>
             {renderNotesFields()}
           </div>
 
