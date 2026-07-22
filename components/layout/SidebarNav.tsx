@@ -16,7 +16,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  ShieldCheck
+  ShieldCheck,
+  Search
 } from 'lucide-react';
 import { useProfile } from '@/lib/auth';
 import { canAccessRoute } from '@/lib/permissions';

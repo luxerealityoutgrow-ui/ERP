@@ -19,13 +19,14 @@ import {
 } from 'lucide-react';
 import { useProfile } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { fetchLeads, fetchProperties, Lead, Property } from '@/lib/queries';
 
 export function Header() {
   const profile = useProfile();
   const router = useRouter();
+  const pathname = usePathname();
 
   // Search Palette State
   const [isOpen, setIsOpen] = useState(false);
