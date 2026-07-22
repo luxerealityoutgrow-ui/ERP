@@ -102,119 +102,112 @@ export function SidebarNav() {
     canAccessRoute(profile?.role, item.href)
   );
 
+  // Mock active dialogue / leads list matching reference image
+  const activeDialogs = [
+    { name: 'Adem Barnes', msg: "Hi! I'm moving out 1...", online: true },
+    { name: 'Azaan Figueroa', msg: 'Thank you!', online: false },
+    { name: 'Sumaya O\'neill', msg: 'Looking forward for...', online: false },
+    { name: 'Lukas Mcgowan', msg: 'That suits me well, t...', online: false }
+  ];
+
   return (
-    <aside className={`bg-zinc-950 border-r border-zinc-900 h-full flex flex-col justify-between shrink-0 transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
+    <aside className={`bg-white/90 backdrop-blur-xl border border-white/80 h-full flex flex-col justify-between shrink-0 transition-all duration-300 rounded-3xl p-4 shadow-sm ${isCollapsed ? 'w-20' : 'w-64'}`}>
       {/* Top Branding & Navigation Container */}
-      <div className="flex flex-col flex-1 overflow-y-auto scrollbar-hide">
-        {/* Branding header centered */}
-        <div className={`p-4 flex items-center justify-center border-b border-zinc-900 bg-zinc-950 transition-all duration-300 ${isCollapsed ? 'py-5' : ''}`}>
-          <img 
-            src="/luxe-logo.png" 
-            alt="Luxe Realty" 
-            className={`w-auto object-contain transition-all duration-300 shrink-0 ${isCollapsed ? 'h-6' : 'h-16'}`} 
-          />
+      <div className="flex flex-col flex-1 overflow-y-auto scrollbar-hide space-y-4">
+        
+        {/* Brand Header */}
+        <div className="flex items-center justify-between px-2 pt-1 pb-2 border-b border-zinc-100">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-2xl bg-purple-600 text-white flex items-center justify-center font-black text-sm shadow-md shadow-purple-500/20">
+              ⚡
+            </div>
+            {!isCollapsed && (
+              <div>
+                <h1 className="font-extrabold text-sm text-zinc-900 tracking-tight">Home Desk</h1>
+                <p className="text-[9px] font-bold text-purple-600 uppercase tracking-widest">Luxe Realty ERP</p>
+              </div>
+            )}
+          </div>
+          {!isCollapsed && (
+            <button onClick={toggleCollapse} className="p-1 text-zinc-400 hover:text-zinc-700 transition-colors">
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
-        {/* Navigation items list */}
-        <nav className={`px-4 py-3 space-y-1.5 mt-4 transition-all ${isCollapsed ? 'px-2' : 'px-4'}`}>
+        {/* Main Navigation Items */}
+        <nav className="space-y-1">
           {filteredNavItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = pathname === item.href || (pathname !== '/' && item.href !== '/' && pathname.startsWith(item.href));
             const Icon = item.icon;
             return (
-              <Link 
-                key={item.title} 
+              <Link
+                key={item.title}
                 href={item.href}
                 title={isCollapsed ? item.title : undefined}
-                className={`flex items-center rounded-lg text-xs tracking-wide transition-all duration-200 group ${
-                  isCollapsed 
-                    ? 'justify-center p-2.5 mx-1' 
-                    : 'justify-between px-3 py-2.5 mx-1'
+                className={`flex items-center rounded-2xl text-xs font-bold transition-all ${
+                  isCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-2.5 gap-3'
                 } ${
                   isActive 
-                    ? 'bg-zinc-900 text-gold-500 font-bold border-l-2 border-gold-500 shadow-xs' 
-                    : 'text-zinc-400 hover:bg-zinc-900 hover:text-gold-500 hover:translate-x-0.5'
+                    ? 'untitledui-pill-active' 
+                    : 'text-zinc-600 hover:bg-zinc-100/80 hover:text-zinc-900'
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <Icon className={`h-4.5 w-4.5 transition-colors duration-200 shrink-0 ${
-                    isActive ? 'text-gold-500' : 'text-zinc-500 group-hover:text-gold-500'
-                  }`} />
-                  {!isCollapsed && <span>{item.title}</span>}
-                </div>
+                <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-white' : 'text-zinc-500'}`} />
+                {!isCollapsed && <span>{item.title}</span>}
               </Link>
             );
           })}
         </nav>
 
-        {/* Date & Time Widget */}
-        <div className={`mx-4 mt-auto mb-2 ${isCollapsed ? 'mx-2' : 'mx-4'}`}>
-          <div className={`rounded-xl bg-zinc-900 border border-zinc-800 p-3 ${isCollapsed ? 'p-2' : 'p-3'}`}>
-            {isCollapsed ? (
-              <div className="flex flex-col items-center gap-1">
-                <Clock className="h-3.5 w-3.5 text-zinc-500" />
-                <span className="text-[10px] font-bold text-zinc-300">
-                  {currentTime ? currentTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
-                </span>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-3.5 w-3.5 text-zinc-500" />
-                  <span className="text-xs font-bold text-zinc-200">
-                    {currentTime ? currentTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '--:--:--'}
-                  </span>
-                </div>
-                <p className="text-[10px] text-zinc-500 font-medium pl-5.5">
-                  {currentTime ? currentTime.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '--'}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Footer User Info & Collapse Toggle Section */}
-      <div className="p-4 border-t border-zinc-900 bg-zinc-950 flex flex-col gap-3">
-        {/* User profile details & Logout row */}
-        <div className={`flex items-center justify-between p-2 rounded-xl bg-zinc-900 border border-zinc-800 shadow-xs transition-all ${isCollapsed ? 'flex-col gap-3 py-3' : ''}`}>
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="h-9 w-9 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-sm text-zinc-300 shrink-0">
-              {profile?.full_name?.charAt(0)?.toUpperCase() || 'P'}
+        {/* Search & Active Dialogues Section (Reference Design) */}
+        {!isCollapsed && (
+          <div className="pt-3 border-t border-zinc-100/80 space-y-3">
+            {/* Search dialogs */}
+            <div className="relative px-1">
+              <input
+                type="text"
+                placeholder="Search dialogs"
+                className="w-full bg-zinc-50 border border-zinc-200/80 rounded-2xl pl-8 pr-3 py-2 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-purple-500 focus:bg-white transition-all"
+              />
+              <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-400" />
             </div>
-            {!isCollapsed && (
-              <div className="overflow-hidden">
-                <p className="text-xs font-semibold text-zinc-200 truncate">{profile?.full_name || 'Rahul Sharma'}</p>
-                <p className="text-[10px] text-zinc-500 truncate">{profile?.email || 'rahul@luxerealty.in'}</p>
-              </div>
-            )}
-          </div>
-          <button 
-            onClick={handleLogout}
-            title="Log Out"
-            className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-zinc-800 transition-colors"
-          >
-            <LogOut className="h-4.5 w-4.5" />
-          </button>
-        </div>
 
-        {/* Collapse toggle row at the bottom of User ID card */}
-        <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-start'} px-2`}>
-          <button 
-            onClick={toggleCollapse}
-            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-            className="flex items-center gap-2.5 p-1.5 rounded-lg text-zinc-500 hover:text-gold-500 hover:bg-zinc-900 transition-all text-[10px] font-bold uppercase tracking-wider cursor-pointer"
-          >
-            {isCollapsed ? (
-              <ChevronRight className="h-4.5 w-4.5" />
-            ) : (
-              <>
-                <ChevronLeft className="h-4.5 w-4.5" />
-                <span>Collapse</span>
-              </>
-            )}
-          </button>
-        </div>
+            {/* Dialogs List */}
+            <div className="space-y-1 px-1">
+              {activeDialogs.map((dialog, idx) => (
+                <div key={idx} className="flex items-center gap-2.5 p-2 rounded-2xl hover:bg-zinc-50 transition-colors cursor-pointer group">
+                  <div className="relative shrink-0">
+                    <div className="h-7 w-7 rounded-full bg-purple-100 border border-purple-200 flex items-center justify-center text-[10px] font-bold text-purple-700">
+                      {dialog.name.charAt(0)}
+                    </div>
+                    {dialog.online && (
+                      <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-bold text-zinc-900 truncate group-hover:text-purple-700 transition-colors">{dialog.name}</p>
+                    <p className="text-[9px] text-zinc-400 truncate">{dialog.msg}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
       </div>
+
+      {/* Footer Quick Action Pill */}
+      {!isCollapsed && (
+        <div className="pt-3 border-t border-zinc-100">
+          <Link
+            href="/leads?action=new-lead"
+            className="w-full py-2.5 rounded-full bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800 transition-all flex items-center justify-center gap-2 shadow-md cursor-pointer"
+          >
+            <span>💬 Broadcast</span>
+          </Link>
+        </div>
+      )}
     </aside>
   );
 }
