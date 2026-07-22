@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luxe Realty — Settings & Merged Team Administration Options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: #f0f0ee; padding: 32px; color: #1a1a1a; }
+
+  /* ── Carousel Nav ── */
+  .carousel { position: relative; }
+  .slide { display: none; }
+  .slide.active { display: block; }
+  .nav { display: flex; gap: 12px; justify-content: center; margin-top: 28px; }
+  .dot { width: 28px; height: 4px; border-radius: 99px; background: #d1cfc8; cursor: pointer; transition: all .25s; border: none; }
+  .dot.active { background: #d4ad4d; width: 52px; }
+  .arrows { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .arrow-btn { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 8px 16px; font-size: 12px; font-weight: 700; color: #666; cursor: pointer; transition: all .15s; }
+  .arrow-btn:hover { background: #f6f6f4; color: #1a1a1a; }
+  .direction-title { font-size: 18px; font-weight: 800; color: #1a1a1a; text-align: center; }
+  .direction-sub { font-size: 12px; color: #888; text-align: center; margin-top: 4px; }
+
+  /* Description card */
+  .desc-card { margin-top: 16px; padding: 14px 18px; background: white; border-radius: 12px; border: 1px solid #e8e8e6; font-size: 11px; color: #666; line-height: 1.8; text-align: left; }
+
+  /* Shared UI Elements */
+  .dc-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 14px; height: 32px; border-radius: 8px;
+    font-size: 11px; font-weight: 700; color: #444;
+    background: white; border: 1px solid #e5e5e3;
+    transition: all 0.15s; cursor: pointer;
+  }
+  .dc-btn:hover { background: #fafaf8; border-color: #d1cfc8; }
+  .dc-btn.gold { background: #d4ad4d; border-color: #d4ad4d; color: white; }
+  .dc-btn.gold:hover { background: #b8922e; }
+
+  .ds-tag { font-size: 8.5px; font-weight: 850; text-transform: uppercase; padding: 3px 8px; border-radius: 5px; border: 1px solid #ebebeb; }
+  .ds-tag.admin { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+  .ds-tag.agent { background: #f0fdf4; border-color: #bbf3d0; color: #166534; }
+  .ds-tag.manager { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
+
+  /* Toggle Switcher */
+  .switch { position: relative; display: inline-block; width: 34px; height: 18px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #e4e4e0; transition: .2s; border-radius: 99px; }
+  .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px; background-color: white; transition: .2s; border-radius: 50%; }
+  input:checked + .slider { background-color: #d4ad4d; }
+  input:checked + .slider:before { transform: translateX(16px); }
+
+  /* ════════════════════════════════════
+     DIRECTION A — Split Dock & Inspector (Apple Style)
+  ════════════════════════════════════ */
+  .da-frame {
+    background: #fcfcfb;
+    border: 1px solid #e8e7e4;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.015);
+    display: grid; grid-template-columns: 240px 1fr;
+    min-height: 560px; text-align: left;
+  }
+  .da-dock { background: #fafaf8; border-right: 1px solid #ebebeb; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+  .da-dock-title { font-size: 12px; font-weight: 850; color: #111; tracking-tight: -0.2px; }
+  .da-search-input { width: 100%; height: 32px; border: 1px solid #e8e7e4; border-radius: 8px; padding: 0 10px; font-size: 11px; background: white; }
+  .da-dock-group { display: flex; flex-direction: column; gap: 4px; }
+  .da-dock-lbl { font-size: 9px; font-weight: 850; color: #bbb; text-transform: uppercase; letter-spacing: 0.1em; padding-left: 6px; }
+  .da-dock-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 10px; border-radius: 10px; font-size: 11px; font-weight: 700; color: #555; cursor: pointer; transition: all 0.15s;
+  }
+  .da-dock-item:hover { background: #f0f0ee; color: #111; }
+  .da-dock-item.active { background: #111; color: white; }
+
+  .da-main { padding: 28px 32px; display: flex; flex-direction: column; gap: 20px; background: white; }
+  .da-header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f5f5f3; pb: 16px; }
+
+  .da-user-grid { display: grid; grid-template-columns: 3.5fr 8.5fr; gap: 20px; }
+  .da-roster-card { border: 1px solid #e8e7e4; border-radius: 14px; padding: 14px; background: #fafaf8; display: flex; flex-direction: column; gap: 8px; }
+  .da-roster-item {
+    background: white; border: 1px solid #e5e5e3; border-radius: 10px; padding: 10px 12px;
+    display: flex; items-center; justify-content: space-between; cursor: pointer;
+  }
+  .da-roster-item.active { border-color: #d4ad4d; box-shadow: 0 2px 6px rgba(212,173,77,0.1); }
+
+  .da-perm-panel { border: 1px solid #e8e7e4; border-radius: 16px; padding: 20px; background: white; display: flex; flex-direction: column; gap: 16px; }
+  .da-perm-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f5f5f3; }
+
+  /* ════════════════════════════════════
+     DIRECTION B — Segmented Master Hub (Stripe Style)
+  ════════════════════════════════════ */
+  .db-frame {
+    background: white;
+    border: 1px solid #e8e7e4;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.015);
+    display: flex; flex-direction: column; text-align: left;
+    min-height: 560px;
+  }
+  .db-top-nav { background: #fafaf8; border-bottom: 1px solid #ebebeb; padding: 0 28px; display: flex; gap: 24px; align-items: center; height: 54px; }
+  .db-tab-item { font-size: 11.5px; font-weight: 700; color: #777; padding: 16px 0; border-bottom: 2px solid transparent; cursor: pointer; }
+  .db-tab-item.active { color: #d4ad4d; border-bottom-color: #d4ad4d; font-weight: 850; }
+  
+  .db-body { padding: 28px; display: grid; grid-template-columns: 3fr 4.5fr 4.5fr; gap: 20px; }
+  .db-card-sec { border: 1px solid #e8e7e4; border-radius: 16px; padding: 18px; background: white; display: flex; flex-direction: column; gap: 14px; }
+
+  /* ════════════════════════════════════
+     DIRECTION C — Editorial Porcelain Settings Cabinet (Luxe Cabinet)
+  ════════════════════════════════════ */
+  .dc-frame {
+    background: white;
+    border: 1px solid #e8e7e4;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.015);
+    display: flex; flex-direction: column; text-align: left;
+    min-height: 560px;
+  }
+  .dc-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 24px 28px 20px;
+    border-bottom: 1px solid #ebebeb;
+  }
+  .dc-title-area h1 { font-size: 19px; font-weight: 900; tracking-tight: -0.4px; color: #111; }
+  .dc-title-area p { font-size: 10.5px; color: #aaa; font-weight: 500; margin-top: 2px; }
+
+  .dc-workspace { display: grid; grid-template-columns: 220px 1fr; min-height: 500px; }
+  .dc-sidebar { border-right: 1px solid #ebebeb; padding: 20px 0; background: white; }
+  .dc-sec-btn {
+    width: 100%; display: flex; align-items: center; gap: 10px; padding: 12px 24px;
+    font-size: 11.5px; font-weight: 700; color: #666; border: none; background: transparent;
+    border-right: 2px solid transparent; cursor: pointer; transition: all 0.15s; text-align: left;
+  }
+  .dc-sec-btn:hover { background: #fafaf8; color: #111; }
+  .dc-sec-btn.active { background: #fafaf8; color: #111; border-right-color: #d4ad4d; font-weight: 850; }
+  .dc-sec-dot { width: 6px; height: 6px; border-radius: 50%; background: #e0e0de; }
+  .dc-sec-btn.active .dc-sec-dot { background: #d4ad4d; box-shadow: 0 0 0 3px rgba(212,173,77,0.2); }
+
+  .dc-panel-body { padding: 24px 28px; background: #fafaf8/40; display: flex; flex-direction: column; gap: 20px; }
+  .dc-user-split { display: grid; grid-template-columns: 3.6fr 8.4fr; gap: 20px; }
+  
+  .dc-user-list { display: flex; flex-direction: column; gap: 8px; }
+  .dc-user-card {
+    background: white; border: 1px solid #e8e7e4; border-radius: 12px; padding: 12px 14px;
+    display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.15s;
+  }
+  .dc-user-card:hover { border-color: #ccc; }
+  .dc-user-card.active { border-color: #d4ad4d; background: #fffdf5; box-shadow: 0 2px 8px rgba(212,173,77,0.08); }
+
+  .dc-perm-card { background: white; border: 1px solid #e8e7e4; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+  .dc-perm-hdr { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f5f5f3; padding-bottom: 12px; }
+  
+  .dc-perm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .dc-perm-item {
+    border: 1px solid #ebebeb; border-radius: 10px; padding: 12px;
+    display: flex; justify-content: space-between; align-items: center; background: white;
+  }
+  .dc-perm-lbl { font-size: 11px; font-weight: 800; color: #222; }
+  .dc-perm-desc { font-size: 9px; color: #aaa; margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<div class="carousel">
+  <div class="arrows">
+    <button class="arrow-btn" onclick="prevSlide()">← Previous</button>
+    <div>
+      <div class="direction-title" id="slide-title">Direction A — Split Dock & Inspector</div>
+      <div class="direction-sub" id="slide-sub">Apple-inspired dock navigation with inspector user roster and permission controls</div>
+    </div>
+    <button class="arrow-btn" onclick="nextSlide()">Next →</button>
+  </div>
+
+  <!-- ═══════ DIRECTION A ═══════ -->
+  <div class="slide" id="slide-0">
+    <div class="da-frame">
+      <div class="da-dock">
+        <div class="da-dock-title">System Settings</div>
+        <input class="da-search-input" placeholder="Search settings...">
+        
+        <div class="da-dock-group">
+          <div class="da-dock-lbl">General</div>
+          <div class="da-dock-item">Personal Profile</div>
+          <div class="da-dock-item active">Team Administration</div>
+        </div>
+
+        <div class="da-dock-group">
+          <div class="da-dock-lbl">Preferences</div>
+          <div class="da-dock-item">Notifications</div>
+          <div class="da-dock-item">Webhooks & Integration</div>
+          <div class="da-dock-item">Security & Password</div>
+        </div>
+      </div>
+
+      <div class="da-main">
+        <div class="da-header-bar">
+          <div>
+            <h2 style="font-size:15px; font-weight:850; color:#111;">Team Administration & Module Access</h2>
+            <p style="font-size:10px; color:#888; margin-top:2px;">Manage team members and override role permissions per module</p>
+          </div>
+          <button class="dc-btn gold font-bold">+ Add Team Member</button>
+        </div>
+
+        <div class="da-user-grid">
+          <!-- Roster -->
+          <div class="da-roster-card">
+            <div style="font-size:9.5px; font-weight:850; color:#aaa; uppercase tracking-wider;">Team Members</div>
+            <div class="da-roster-item active">
+              <div>
+                <div style="font-size:11px; font-weight:800; color:#111;">Rahul Sharma</div>
+                <div style="font-size:9px; color:#888;">rahul@luxerealty.in</div>
+              </div>
+              <span class="ds-tag admin">SuperAdmin</span>
+            </div>
+            <div class="da-roster-item">
+              <div>
+                <div style="font-size:11px; font-weight:800; color:#111;">Priya Mehta</div>
+                <div style="font-size:9px; color:#888;">priya@luxerealty.in</div>
+              </div>
+              <span class="ds-tag manager">Manager</span>
+            </div>
+            <div class="da-roster-item">
+              <div>
+                <div style="font-size:11px; font-weight:800; color:#111;">Amit Deshmukh</div>
+                <div style="font-size:9px; color:#888;">amit@luxerealty.in</div>
+              </div>
+              <span class="ds-tag agent">SalesPerson</span>
+            </div>
+          </div>
+
+          <!-- Permission Inspector -->
+          <div class="da-perm-panel">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f5f5f3; padding-bottom:10px;">
+              <div>
+                <div style="font-size:12px; font-weight:850; color:#111;">Granular Permissions · Rahul Sharma</div>
+                <div style="font-size:9.5px; color:#999;">Configure individual module access</div>
+              </div>
+              <button class="dc-btn gold" style="height:26px; font-size:10px;">Save</button>
+            </div>
+
+            <div class="da-perm-row">
+              <div>
+                <div style="font-size:11px; font-weight:800;">Leads Database Access</div>
+                <div style="font-size:9px; color:#aaa;">View and manage all active client leads</div>
+              </div>
+              <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+            </div>
+
+            <div class="da-perm-row">
+              <div>
+                <div style="font-size:11px; font-weight:800;">Delete Leads Privilege</div>
+                <div style="font-size:9px; color:#aaa;">Permanently purge lead records from Supabase</div>
+              </div>
+              <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+            </div>
+
+            <div class="da-perm-row">
+              <div>
+                <div style="font-size:11px; font-weight:800;">Property Inventory</div>
+                <div style="font-size:9px; color:#aaa;">Create and edit property listings</div>
+              </div>
+              <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+            </div>
+
+            <div class="da-perm-row">
+              <div>
+                <div style="font-size:11px; font-weight:800;">Export CSV Reports</div>
+                <div style="font-size:9px; color:#aaa;">Download sales and lead reports</div>
+              </div>
+              <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ DIRECTION B ═══════ -->
+  <div class="slide" id="slide-1">
+    <div class="db-frame">
+      <div class="db-top-nav">
+        <div style="font-size:14px; font-weight:900; color:#111; margin-right:16px;">Luxe Settings</div>
+        <div class="db-tab-item">Personal Profile</div>
+        <div class="db-tab-item active">Team & Access Control</div>
+        <div class="db-tab-item">Notifications</div>
+        <div class="db-tab-item">Integrations</div>
+        <div class="db-tab-item">Security</div>
+      </div>
+
+      <div class="db-body">
+        <!-- Col 1: Roster -->
+        <div class="db-card-sec">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:11px; font-weight:850; color:#111;">Team Members (4)</span>
+            <button class="dc-btn gold" style="height:24px; font-size:9.5px;">+ Add</button>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="border:1px solid #d4ad4d; border-radius:10px; padding:10px; background:#fffdf5;">
+              <div style="font-size:11px; font-weight:800;">Rahul Sharma</div>
+              <div style="font-size:9px; color:#888; margin-top:2px;">rahul@luxerealty.in</div>
+              <span class="ds-tag admin" style="margin-top:6px; display:inline-block;">SuperAdmin</span>
+            </div>
+
+            <div style="border:1px solid #ebebeb; border-radius:10px; padding:10px; background:white;">
+              <div style="font-size:11px; font-weight:800;">Priya Mehta</div>
+              <div style="font-size:9px; color:#888; margin-top:2px;">priya@luxerealty.in</div>
+              <span class="ds-tag manager" style="margin-top:6px; display:inline-block;">Manager</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Col 2: Active User Details -->
+        <div class="db-card-sec">
+          <span style="font-size:11px; font-weight:850; color:#111;">Member Details</span>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div>
+              <span style="font-size:9px; font-weight:800; color:#bbb; text-transform:uppercase;">Full Name</span>
+              <input style="width:100%; height:32px; border:1px solid #e8e7e4; border-radius:8px; padding:0 10px; font-size:11px; font-weight:700; margin-top:4px;" value="Rahul Sharma">
+            </div>
+            <div>
+              <span style="font-size:9px; font-weight:800; color:#bbb; text-transform:uppercase;">Email</span>
+              <input style="width:100%; height:32px; border:1px solid #e8e7e4; border-radius:8px; padding:0 10px; font-size:11px; font-weight:700; margin-top:4px;" value="rahul@luxerealty.in">
+            </div>
+            <div>
+              <span style="font-size:9px; font-weight:800; color:#bbb; text-transform:uppercase;">System Role</span>
+              <select style="width:100%; height:32px; border:1px solid #e8e7e4; border-radius:8px; padding:0 10px; font-size:11px; font-weight:700; margin-top:4px;">
+                <option>SuperAdmin</option>
+                <option>Admin</option>
+                <option>Manager</option>
+                <option>SalesPerson</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Col 3: Permission Matrix Cards -->
+        <div class="db-card-sec">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:11px; font-weight:850; color:#111;">Module Permissions</span>
+            <button class="dc-btn gold" style="height:24px; font-size:9.5px;">Save</button>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="border:1px solid #ebebeb; border-radius:8px; padding:8px 10px; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:10.5px; font-weight:800;">Leads Module</span>
+              <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+            </div>
+            <div style="border:1px solid #ebebeb; border-radius:8px; padding:8px 10px; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:10.5px; font-weight:800;">Property Inventory</span>
+              <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+            </div>
+            <div style="border:1px solid #ebebeb; border-radius:8px; padding:8px 10px; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:10.5px; font-weight:800;">Sales Pipeline</span>
+              <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+            </div>
+            <div style="border:1px solid #ebebeb; border-radius:8px; padding:8px 10px; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:10.5px; font-weight:800;">Export CSV Data</span>
+              <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ DIRECTION C ═══════ -->
+  <div class="slide active" id="slide-2">
+    <div class="dc-wrap">
+      <div class="dc-frame">
+        <!-- Header -->
+        <div class="dc-header">
+          <div class="dc-title-area">
+            <h1>System Settings & Administration</h1>
+            <p>Manage personal identity, team roles, module permissions & platform security · Luxe Realty Pune</p>
+          </div>
+          <button class="dc-btn gold font-bold">+ Add Team Member</button>
+        </div>
+
+        <!-- Inner Split Workspace -->
+        <div class="dc-workspace">
+          
+          <!-- Left Navigation -->
+          <div class="dc-sidebar">
+            <button class="dc-sec-btn">
+              <div class="dc-sec-dot"></div>
+              Personal Profile
+            </button>
+            <button class="dc-sec-btn active">
+              <div class="dc-sec-dot"></div>
+              Team & Permissions
+            </button>
+            <button class="dc-sec-btn">
+              <div class="dc-sec-dot"></div>
+              Notifications & Alerts
+            </button>
+            <button class="dc-sec-btn">
+              <div class="dc-sec-dot"></div>
+              Integrations (Apps Script)
+            </button>
+            <button class="dc-sec-btn">
+              <div class="dc-sec-dot"></div>
+              Security & Passwords
+            </button>
+          </div>
+
+          <!-- Right Content Area: Merged User & Permission Management -->
+          <div class="dc-panel-body">
+            <div class="dc-user-split">
+              
+              <!-- Left Sub-column: Team Member Roster -->
+              <div style="display:flex; flex-direction:column; gap:12px;">
+                <div style="font-size:9.5px; font-weight:850; color:#bbb; text-transform:uppercase; letter-spacing:0.12em;">Team Roster (4)</div>
+                
+                <div class="dc-user-list">
+                  <div class="dc-user-card active">
+                    <div>
+                      <div style="font-size:11.5px; font-weight:800; color:#111;">Rahul Sharma</div>
+                      <div style="font-size:9.5px; color:#888; margin-top:1px;">rahul@luxerealty.in</div>
+                    </div>
+                    <span class="ds-tag admin">SuperAdmin</span>
+                  </div>
+
+                  <div class="dc-user-card">
+                    <div>
+                      <div style="font-size:11.5px; font-weight:800; color:#111;">Priya Mehta</div>
+                      <div style="font-size:9.5px; color:#888; margin-top:1px;">priya@luxerealty.in</div>
+                    </div>
+                    <span class="ds-tag manager">Manager</span>
+                  </div>
+
+                  <div class="dc-user-card">
+                    <div>
+                      <div style="font-size:11.5px; font-weight:800; color:#111;">Amit Deshmukh</div>
+                      <div style="font-size:9.5px; color:#888; margin-top:1px;">amit@luxerealty.in</div>
+                    </div>
+                    <span class="ds-tag agent">SalesPerson</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Sub-column: Granular Permission Matrix for Selected User -->
+              <div class="dc-perm-card">
+                <div class="dc-perm-hdr">
+                  <div>
+                    <h3 style="font-size:13px; font-weight:850; color:#111;">Access Permissions · Rahul Sharma</h3>
+                    <p style="font-size:9.5px; color:#aaa; margin-top:2px;">Override default role permissions per module</p>
+                  </div>
+                  <button class="dc-btn gold" style="height:26px; font-size:10px;">Save Access Matrix</button>
+                </div>
+
+                <div class="dc-perm-grid">
+                  <div class="dc-perm-item">
+                    <div>
+                      <div class="dc-perm-lbl">Leads Management</div>
+                      <div class="dc-perm-desc">View and manage lead contacts</div>
+                    </div>
+                    <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                  </div>
+
+                  <div class="dc-perm-item">
+                    <div>
+                      <div class="dc-perm-lbl">Delete Lead Contacts</div>
+                      <div class="dc-perm-desc">Permanently remove leads</div>
+                    </div>
+                    <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                  </div>
+
+                  <div class="dc-perm-item">
+                    <div>
+                      <div class="dc-perm-lbl">Property Inventory</div>
+                      <div class="dc-perm-desc">View and edit listing database</div>
+                    </div>
+                    <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                  </div>
+
+                  <div class="dc-perm-item">
+                    <div>
+                      <div class="dc-perm-lbl">Export Data (CSV)</div>
+                      <div class="dc-perm-desc">Download ERP reports</div>
+                    </div>
+                    <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                  </div>
+
+                  <div class="dc-perm-item">
+                    <div>
+                      <div class="dc-perm-lbl">Sales Pipeline</div>
+                      <div class="dc-perm-desc">Kanban deal board access</div>
+                    </div>
+                    <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                  </div>
+
+                  <div class="dc-perm-item">
+                    <div>
+                      <div class="dc-perm-lbl">Matchmaker AI</div>
+                      <div class="dc-perm-desc">Lead-property match score engine</div>
+                    </div>
+                    <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="desc-card">
+        <strong style="color:#111;">Direction C: Editorial Porcelain Settings Cabinet (Bespoke ERP Cabinet)</strong><br>
+        ✓ Housed inside a single porcelain card frame (`.dc-frame`) with a left vertical progressive navigation bar.<br>
+        ✓ Merges User Management & Granular Module Permission Matrix into Settings under "Team & Permissions".<br>
+        ✓ Roster side list with role tags (*SuperAdmin*, *Manager*, *SalesPerson*) and instant gold switch toggles.<br>
+        ✓ Clean single-location administration without navigating back and forth between separate pages.
+      </div>
+    </div>
+  </div>
+
+  <!-- Dots -->
+  <div class="nav">
+    <button class="dot" onclick="goTo(0)"></button>
+    <button class="dot" onclick="goTo(1)"></button>
+    <button class="dot active" onclick="goTo(2)"></button>
+  </div>
+</div>
+
+<script>
+  const titles = [
+    'Direction A — Split Dock & Inspector',
+    'Direction B — Segmented Master Hub',
+    'Direction C — Editorial Porcelain Settings Cabinet'
+  ];
+  const subs = [
+    'Apple-inspired dock navigation with inspector user roster and permission controls',
+    'Stripe-inspired horizontal navigation tabs with 3-column team & permission matrix dashboard',
+    'Unified porcelain cabinet featuring merged Team Roster and Granular Per-User Module Permission Matrix'
+  ];
+  let current = 2;
+  const slides = document.querySelectorAll('.slide');
+  const dots = document.querySelectorAll('.dot');
+  function goTo(n) {
+    slides[current].classList.remove('active');
+    dots[current].classList.remove('active');
+    current = n;
+    slides[current].classList.add('active');
+    dots[current].classList.add('active');
+    document.getElementById('slide-title').textContent = titles[current];
+    document.getElementById('slide-sub').textContent = subs[current];
+  }
+  function nextSlide() { goTo((current + 1) % 3); }
+  function prevSlide() { goTo((current + 2) % 3); }
+</script>
+</body>
+</html>

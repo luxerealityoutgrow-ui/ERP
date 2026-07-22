@@ -52,6 +52,8 @@ export async function createPropertyAction(prevState: any, formData: FormData) {
     listing_type: formData.get('listing_type'),
     owner_name: formData.get('owner_name'),
     owner_contact: formData.get('owner_contact'),
+    unit_no: formData.get('unit_no'),
+    brokerage: formData.get('brokerage'),
     description: formData.get('description'),
     internal_notes: formData.get('internal_notes'),
     is_active: true,
@@ -103,6 +105,8 @@ export async function updatePropertyAction(prevState: any, formData: FormData) {
     listing_type: formData.get('listing_type'),
     owner_name: formData.get('owner_name'),
     owner_contact: formData.get('owner_contact'),
+    unit_no: formData.get('unit_no'),
+    brokerage: formData.get('brokerage'),
     description: formData.get('description'),
     internal_notes: formData.get('internal_notes')
   };

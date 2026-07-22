@@ -14,6 +14,8 @@ export interface SiteVisit {
   client_feedback?: string;
   next_action?: string;
   created_at?: string;
+  leads?: { client_name: string } | null;
+  properties?: { title: string } | null;
 }
 
 import { getPermissions } from './permissions';
@@ -21,7 +23,7 @@ import { getPermissions } from './permissions';
 export async function fetchSiteVisits(profile: Profile | null): Promise<SiteVisit[]> {
   // Sales execs can view their assigned visits; managers see all
   const perms = getPermissions(profile?.role);
-  let query = supabase.from('site_visits').select('*');
+  let query = supabase.from('site_visits').select('*, leads(client_name), properties(title)');
 
   if (!perms.canViewAllCalendar && profile?.id) {
     query = query.eq('assigned_to', profile.id);

@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luxe Realty — Leads Page Design Directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: #f0f0ee; padding: 32px; color: #1a1a1a; }
+
+  /* ── Carousel Nav ── */
+  .carousel { position: relative; }
+  .slide { display: none; }
+  .slide.active { display: block; }
+  .nav { display: flex; gap: 12px; justify-content: center; margin-top: 28px; }
+  .dot { width: 28px; height: 4px; border-radius: 99px; background: #d1cfc8; cursor: pointer; transition: all .25s; border: none; }
+  .dot.active { background: #d4ad4d; width: 52px; }
+  .direction-label { 
+    text-align: center; 
+    font-size: 11px; 
+    font-weight: 700; 
+    color: #888; 
+    letter-spacing: 0.12em; 
+    text-transform: uppercase; 
+    margin-bottom: 16px; 
+  }
+  .arrows { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .arrow-btn {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #666;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .arrow-btn:hover { background: #f6f6f4; color: #1a1a1a; }
+  .direction-title { font-size: 18px; font-weight: 800; color: #1a1a1a; text-align: center; }
+  .direction-sub { font-size: 12px; color: #888; text-align: center; margin-top: 4px; }
+
+  /* ── DIRECTION A: Notion Compact ── */
+  .da-frame {
+    background: #ffffff;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #e8e8e6;
+    box-shadow: 0 4px 24px rgba(0,0,0,.07);
+    margin-top: 24px;
+  }
+  .da-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-bottom: 1px solid #f0f0ee;
+    background: #fafaf9;
+    flex-wrap: wrap;
+  }
+  .da-page-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #1a1a1a;
+    padding: 20px 20px 0;
+    letter-spacing: -0.5px;
+  }
+  .da-page-sub { font-size: 11px; color: #aaa; font-weight: 500; padding: 4px 20px 0; margin-bottom: 0; }
+
+  .da-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 11px;
+    border-radius: 7px;
+    font-size: 11px;
+    font-weight: 700;
+    border: 1px solid #e5e5e3;
+    background: white;
+    color: #555;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .da-chip.gold { background: #fdf6e3; border-color: #f0d882; color: #8a6a00; }
+  .da-chip.active-pill { background: #111; color: white; border-color: #111; }
+  .da-chip.muted { background: #f5f5f3; color: #777; border-color: #eee; }
+
+  .da-search {
+    flex: 1; min-width: 180px; max-width: 260px;
+    padding: 6px 10px 6px 32px;
+    border: 1px solid #e5e5e3;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #333;
+    background: white;
+    position: relative;
+  }
+
+  .da-divider { width: 1px; height: 20px; background: #e5e5e3; flex-shrink: 0; }
+
+  /* table */
+  .da-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .da-table thead tr { background: #fafaf9; border-bottom: 1px solid #f0f0ee; }
+  .da-table th {
+    padding: 9px 14px;
+    text-align: left;
+    font-size: 9.5px;
+    font-weight: 700;
+    color: #aaa;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-right: 1px solid #f0f0ee;
+    white-space: nowrap;
+  }
+  .da-table th:last-child { border-right: none; }
+  .da-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #f5f5f3;
+    border-right: 1px solid #f5f5f3;
+    color: #333;
+    font-weight: 500;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+  .da-table td:last-child { border-right: none; }
+  .da-table tbody tr:hover td { background: #fafaf9; }
+  .da-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .badge-hot { background: #fff0f0; color: #d43f3f; border: 1px solid #fcd5d5; }
+  .badge-warm { background: #fffaeb; color: #b07a00; border: 1px solid #f5e198; }
+  .badge-ref { background: #f0f4ff; color: #4763c9; border: 1px solid #cdd8f6; }
+  .badge-insta { background: #fdf0f6; color: #c2347d; border: 1px solid #f5c5e0; }
+  .badge-active { background: #edfcf2; color: #1a7a40; border: 1px solid #b7e9c9; }
+  .da-avatar { width: 24px; height: 24px; border-radius: 6px; background: #e8e8e6; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; color: #666; margin-right: 6px; vertical-align: middle; }
+
+  /* ── DIRECTION B: Linear Dense ── */
+  .db-frame {
+    background: #0e0e0e;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #222;
+    box-shadow: 0 8px 40px rgba(0,0,0,.45);
+    margin-top: 24px;
+  }
+  .db-topbar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border-bottom: 1px solid #1e1e1e;
+    padding: 0 20px;
+  }
+  .db-tab {
+    padding: 12px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #555;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all .15s;
+  }
+  .db-tab.active { color: #d4ad4d; border-bottom-color: #d4ad4d; }
+  .db-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-bottom: 1px solid #1a1a1a;
+    flex-wrap: wrap;
+  }
+  .db-search {
+    flex: 1; min-width: 180px;
+    padding: 7px 10px 7px 30px;
+    background: #161616;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    font-size: 11px;
+    color: #ccc;
+  }
+  .db-btn {
+    padding: 6px 12px;
+    border-radius: 7px;
+    font-size: 10.5px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    border: 1px solid #2a2a2a;
+    background: #161616;
+    color: #999;
+  }
+  .db-btn.gold { background: #1c1608; border-color: #4a3800; color: #d4ad4d; }
+  .db-btn.primary { background: #d4ad4d; border-color: #d4ad4d; color: #000; font-weight: 700; }
+  .db-divider { width: 1px; height: 18px; background: #222; flex-shrink: 0; }
+
+  .db-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .db-table thead tr { background: #0a0a0a; border-bottom: 1px solid #1e1e1e; }
+  .db-table th {
+    padding: 8px 14px;
+    text-align: left;
+    font-size: 9px;
+    font-weight: 700;
+    color: #444;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-right: 1px solid #161616;
+    white-space: nowrap;
+  }
+  .db-table th:last-child { border-right: none; }
+  .db-table td {
+    padding: 9px 14px;
+    border-bottom: 1px solid #161616;
+    border-right: 1px solid #161616;
+    color: #ccc;
+    font-weight: 500;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+  .db-table td:last-child { border-right: none; }
+  .db-table tbody tr:hover td { background: #111; }
+  .db-name { color: #eee; font-weight: 600; }
+  .db-muted { color: #555; font-size: 10px; }
+  .db-badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .db-hot { background: rgba(180,40,40,.2); color: #f08080; border: 1px solid rgba(180,40,40,.25); }
+  .db-warm { background: rgba(180,130,0,.15); color: #d4ad4d; border: 1px solid rgba(180,130,0,.2); }
+  .db-ref { background: rgba(80,100,200,.15); color: #8ba0f0; border: 1px solid rgba(80,100,200,.2); }
+  .db-active { background: rgba(30,180,80,.12); color: #50d080; border: 1px solid rgba(30,180,80,.18); }
+
+  /* ── DIRECTION C: Editorial Porcelain ── */
+  .dc-frame {
+    background: #fafaf8;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #e8e7e4;
+    box-shadow: 0 2px 16px rgba(0,0,0,.05);
+    margin-top: 24px;
+  }
+  .dc-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid #ebebeb;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .dc-title-row { display: flex; align-items: center; gap: 10px; }
+  .dc-title { font-size: 20px; font-weight: 800; color: #111; letter-spacing: -0.4px; }
+  .dc-count {
+    padding: 2px 10px;
+    background: #111;
+    border-radius: 99px;
+    font-size: 10px;
+    font-weight: 800;
+    color: white;
+  }
+  .dc-stats-inline {
+    display: flex;
+    gap: 20px;
+    padding: 0 24px 14px;
+    border-bottom: 1px solid #ebebeb;
+  }
+  .dc-stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #888;
+  }
+  .dc-stat-num { font-size: 14px; font-weight: 800; color: #111; }
+  .dc-stat-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+  .dc-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 24px;
+    border-bottom: 1px solid #ebebeb;
+    background: #fafaf8;
+    flex-wrap: wrap;
+  }
+  .dc-search {
+    flex: 1; min-width: 200px; max-width: 280px;
+    padding: 7px 10px 7px 32px;
+    background: white;
+    border: 1px solid #e0e0de;
+    border-radius: 8px;
+    font-size: 11px;
+    color: #333;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+  }
+  .dc-btn {
+    padding: 7px 12px;
+    border-radius: 8px;
+    font-size: 10.5px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    background: white;
+    border: 1px solid #e0e0de;
+    color: #555;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+  }
+  .dc-btn.gold {
+    background: #d4ad4d;
+    border-color: #d4ad4d;
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(212,173,77,.35);
+  }
+  .dc-divider { width: 1px; height: 20px; background: #e5e5e3; flex-shrink: 0; }
+  .dc-seg { display: flex; background: #eeeeec; border-radius: 8px; padding: 2px; gap: 2px; }
+  .dc-seg-btn {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    color: #777;
+  }
+  .dc-seg-btn.on { background: white; color: #111; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+
+  .dc-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .dc-table thead tr { background: #f5f5f3; border-bottom: 1px solid #ebebeb; }
+  .dc-table th {
+    padding: 9px 16px;
+    text-align: left;
+    font-size: 9.5px;
+    font-weight: 700;
+    color: #bbb;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    border-right: 1px solid #ebebeb;
+    white-space: nowrap;
+  }
+  .dc-table th:last-child { border-right: none; }
+  .dc-table td {
+    padding: 11px 16px;
+    border-bottom: 1px solid #f0f0ee;
+    border-right: 1px solid #f0f0ee;
+    color: #444;
+    font-weight: 500;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+  .dc-table td:last-child { border-right: none; }
+  .dc-table tbody tr:hover td { background: #f7f7f5; }
+  .dc-name-cell { display: flex; align-items: center; gap: 8px; }
+  .dc-avatar {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .dc-badge { display: inline-block; padding: 3px 8px; border-radius: 5px; font-size: 9.5px; font-weight: 700; }
+  .dc-hot { background: #fff0f0; color: #c0392b; border: 1px solid #fde0dc; }
+  .dc-warm { background: #fffaeb; color: #9a6b00; border: 1px solid #fae8a4; }
+  .dc-ref { background: #eef2ff; color: #3d52a0; border: 1px solid #c7d2fe; }
+  .dc-insta { background: #fdf0f8; color: #a0319d; border: 1px solid #f3c4e9; }
+  .dc-active { background: #effbf4; color: #15803d; border: 1px solid #bbf3d0; }
+
+  /* Shared */
+  .mock-search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px; height: 12px;
+    color: #bbb;
+  }
+</style>
+</head>
+<body>
+
+<div class="carousel">
+  <div class="arrows">
+    <button class="arrow-btn" onclick="prevSlide()">← Previous</button>
+    <div>
+      <div class="direction-title" id="slide-title">Direction A — Notion Compact</div>
+      <div class="direction-sub" id="slide-sub">Clean white tool, inline stats bar replaces KPI cards</div>
+    </div>
+    <button class="arrow-btn" onclick="nextSlide()">Next →</button>
+  </div>
+
+  <!-- ═══════════════════ DIRECTION A ═══════════════════ -->
+  <div class="slide active" id="slide-0">
+    <div class="da-frame">
+      <!-- Page title -->
+      <div class="da-page-title">Leads</div>
+      <div class="da-page-sub">Manage all client enquiries and pipeline deals</div>
+
+      <!-- Toolbar (single row, everything in it) -->
+      <div class="da-toolbar" style="margin-top: 16px;">
+        <!-- Search -->
+        <div style="position:relative; flex:1; min-width:180px; max-width:240px;">
+          <svg class="mock-search-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input class="da-search" style="width:100%;" placeholder="Search leads…" readonly>
+        </div>
+        <!-- Status dropdown -->
+        <select class="da-chip" style="appearance:none; cursor:pointer; padding-right: 22px; background-image: url('data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 16 16\'><path fill=\'%23999\' d=\'M4 6l4 4 4-4\'/></svg>'); background-repeat: no-repeat; background-position: right 6px center; background-size: 12px;">
+          <option>All statuses</option>
+          <option>Hot</option>
+          <option>Warm</option>
+        </select>
+        <!-- Drill Down -->
+        <button class="da-chip">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="12" y1="18" x2="20" y2="18"/></svg>
+          Drill Down
+        </button>
+        <div class="da-divider"></div>
+        <!-- Active/Inactive -->
+        <div style="display:flex; gap:2px; background:#f0f0ee; border-radius:8px; padding:2px;">
+          <button class="da-chip active-pill" style="border:none; border-radius:6px; padding:4px 10px; font-size:10px;">Active</button>
+          <button class="da-chip muted" style="border:none; border-radius:6px; padding:4px 10px; font-size:10px;">Inactive</button>
+          <button class="da-chip muted" style="border:none; border-radius:6px; padding:4px 10px; font-size:10px;">All</button>
+        </div>
+        <div class="da-divider"></div>
+        <!-- Stats inline (replaces KPI cards) -->
+        <span style="font-size:10px; color:#aaa; font-weight:600;">15 total · <span style="color:#c0392b; font-weight:800;">14 Hot</span> · 13 active · 0 closed</span>
+        <div class="da-divider"></div>
+        <!-- Export -->
+        <button class="da-chip gold">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export
+        </button>
+        <!-- Add Lead -->
+        <button class="da-chip" style="background:#111; color:white; border-color:#111;">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New Lead
+        </button>
+      </div>
+
+      <!-- Table -->
+      <div style="overflow-x:hidden;">
+        <table class="da-table">
+          <thead>
+            <tr>
+              <th style="width:32px;"><input type="checkbox" style="width:12px;height:12px;"></th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Source</th>
+              <th>Config</th>
+              <th>Location</th>
+              <th>Assigned To</th>
+              <th>Status</th>
+              <th>Active</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input type="checkbox" style="width:12px;height:12px;"></td>
+              <td><span class="da-avatar">VP</span>Vilas Pawar</td>
+              <td style="color:#aaa;">hhh@gmail.com</td>
+              <td>+974 51675555</td>
+              <td><span class="da-badge badge-ref">Referral</span></td>
+              <td>3 BHK</td>
+              <td>Koregaon Park</td>
+              <td>Benazir Bhayani</td>
+              <td><span class="da-badge badge-warm">WARM</span></td>
+              <td><span class="da-badge badge-active">ACTIVE</span></td>
+              <td style="color:#d4ad4d; font-weight:700; cursor:pointer;">View →</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" style="width:12px;height:12px;"></td>
+              <td><span class="da-avatar">VS</span>Vinay Shukla</td>
+              <td style="color:#aaa;">—</td>
+              <td>9130491303</td>
+              <td><span class="da-badge badge-ref">Referral</span></td>
+              <td>Bungalow Plot</td>
+              <td>Koregaon Park</td>
+              <td>Shriram Boyane</td>
+              <td><span class="da-badge badge-hot">HOT</span></td>
+              <td><span class="da-badge badge-active">ACTIVE</span></td>
+              <td style="color:#d4ad4d; font-weight:700; cursor:pointer;">View →</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" style="width:12px;height:12px;"></td>
+              <td><span class="da-avatar">SS</span>Siddharth Shetty</td>
+              <td style="color:#aaa;">—</td>
+              <td>3822492236</td>
+              <td><span class="da-badge badge-ref">Referral</span></td>
+              <td>4.5 BHK</td>
+              <td>Koregaon Park, Kalyani…</td>
+              <td>Unassigned</td>
+              <td><span class="da-badge badge-hot">HOT</span></td>
+              <td><span class="da-badge badge-active">ACTIVE</span></td>
+              <td style="color:#d4ad4d; font-weight:700; cursor:pointer;">View →</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" style="width:12px;height:12px;"></td>
+              <td><span class="da-avatar">SP</span>Swati Patil</td>
+              <td style="color:#aaa;">—</td>
+              <td>8963160797</td>
+              <td><span class="da-badge badge-insta">Instagram</span></td>
+              <td>3, 3.5 BHK</td>
+              <td>Kalyani Nagar</td>
+              <td>Shriram Boyane</td>
+              <td><span class="da-badge badge-hot">HOT</span></td>
+              <td><span class="da-badge badge-active">ACTIVE</span></td>
+              <td style="color:#d4ad4d; font-weight:700; cursor:pointer;">View →</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" style="width:12px;height:12px;"></td>
+              <td><span class="da-avatar">PO</span>Pooja</td>
+              <td style="color:#aaa;">—</td>
+              <td>7507214183</td>
+              <td><span class="da-badge badge-insta">Instagram</span></td>
+              <td>3 BHK</td>
+              <td>Power Heights</td>
+              <td>Unassigned</td>
+              <td><span class="da-badge badge-hot">HOT</span></td>
+              <td><span class="da-badge badge-active">ACTIVE</span></td>
+              <td style="color:#d4ad4d; font-weight:700; cursor:pointer;">View →</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div style="margin-top:12px; padding: 12px 16px; background: white; border-radius: 12px; border: 1px solid #e8e8e6; font-size:11px; color:#666; line-height:1.8;">
+      <strong style="color:#111;">Direction A: Notion Compact</strong><br>
+      ✓ KPI cards <strong>eliminated</strong> — stats folded inline into toolbar as text<br>
+      ✓ Single unified toolbar row — search, filters, segment, export, add all in one line<br>
+      ✓ No horizontal scroll — table columns sized to fit<br>
+      ✓ White background, clean porcelain aesthetic
+    </div>
+  </div>
+
+  <!-- ═══════════════════ DIRECTION B ═══════════════════ -->
+  <div class="slide" id="slide-1">
+    <div class="db-frame">
+      <!-- Top tabs for quick status filter -->
+      <div class="db-topbar">
+        <div class="db-tab active">All Leads <span style="background:#1e1e1e; padding: 1px 7px; border-radius:4px; font-size:9px; margin-left:4px;">15</span></div>
+        <div class="db-tab">Hot <span style="background:#1e1e1e; padding: 1px 7px; border-radius:4px; font-size:9px; margin-left:4px;">14</span></div>
+        <div class="db-tab">Warm <span style="background:#1e1e1e; padding: 1px 7px; border-radius:4px; font-size:9px; margin-left:4px;">1</span></div>
+        <div class="db-tab">No Answer</div>
+        <div class="db-tab">Closed</div>
+        <div style="flex:1;"></div>
+        <!-- Active/Inactive inline in top tabs area -->
+        <div style="display:flex; gap:2px; align-items:center; padding: 8px 0;">
+          <button class="db-btn" style="padding:4px 10px; font-size:10px; background:#1a2a1a; color:#50d080; border-color:#1e3a1e;">Active</button>
+          <button class="db-btn" style="padding:4px 10px; font-size:10px;">Inactive</button>
+          <button class="db-btn" style="padding:4px 10px; font-size:10px;">All</button>
+        </div>
+      </div>
+      <!-- Toolbar -->
+      <div class="db-toolbar">
+        <div style="position:relative; flex:1; min-width:180px; max-width:280px;">
+          <svg style="position:absolute; left:10px; top:50%; transform:translateY(-50%); width:12px;height:12px; color:#444;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input class="db-search" style="width:100%; padding-left:30px;" placeholder="Search leads…" readonly>
+        </div>
+        <button class="db-btn">
+          <span style="display:flex; align-items:center; gap:4px;">
+            <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="12" y1="18" x2="20" y2="18"/></svg>
+            Drill Down
+          </span>
+        </button>
+        <button class="db-btn gold">
+          <span style="display:flex; align-items:center; gap:4px;">
+            <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export CSV
+          </span>
+        </button>
+        <div class="db-divider"></div>
+        <span style="font-size:9.5px; color:#3a3a3a; font-weight:600; white-space:nowrap;">
+          <span style="color:#d4ad4d; font-weight:800;">15</span> leads · <span style="color:#f08080;">14 Hot</span> · <span style="color:#50d080;">0 Closed</span>
+        </span>
+        <div style="flex:1;"></div>
+        <button class="db-btn primary">+ New Lead</button>
+      </div>
+
+      <!-- Table -->
+      <table class="db-table">
+        <thead>
+          <tr>
+            <th style="width:32px;"><input type="checkbox" style="width:11px;height:11px;opacity:.4;"></th>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Source</th>
+            <th>Config</th>
+            <th>Location</th>
+            <th>Assigned</th>
+            <th>Status</th>
+            <th>Active</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input type="checkbox" style="width:11px;height:11px;opacity:.4;"></td>
+            <td><span class="db-name">Vilas Pawar</span><br><span class="db-muted">hhh@gmail.com</span></td>
+            <td>+974 51675555</td>
+            <td><span class="db-badge db-ref">Referral</span></td>
+            <td>3 BHK</td>
+            <td>Koregaon Park</td>
+            <td>Benazir B.</td>
+            <td><span class="db-badge db-warm">WARM</span></td>
+            <td><span class="db-badge db-active">ACTIVE</span></td>
+            <td style="color:#d4ad4d; font-size:10px; font-weight:700; cursor:pointer;">View →</td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" style="width:11px;height:11px;opacity:.4;"></td>
+            <td><span class="db-name">Vinay Shukla</span><br><span class="db-muted">—</span></td>
+            <td>9130491303</td>
+            <td><span class="db-badge db-ref">Referral</span></td>
+            <td>Bungalow</td>
+            <td>Koregaon Park</td>
+            <td>Shriram B.</td>
+            <td><span class="db-badge db-hot">HOT</span></td>
+            <td><span class="db-badge db-active">ACTIVE</span></td>
+            <td style="color:#d4ad4d; font-size:10px; font-weight:700; cursor:pointer;">View →</td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" style="width:11px;height:11px;opacity:.4;"></td>
+            <td><span class="db-name">Siddharth Shetty</span><br><span class="db-muted">—</span></td>
+            <td>3822492236</td>
+            <td><span class="db-badge db-ref">Referral</span></td>
+            <td>4.5 BHK</td>
+            <td>Koregaon Park</td>
+            <td>Unassigned</td>
+            <td><span class="db-badge db-hot">HOT</span></td>
+            <td><span class="db-badge db-active">ACTIVE</span></td>
+            <td style="color:#d4ad4d; font-size:10px; font-weight:700; cursor:pointer;">View →</td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" style="width:11px;height:11px;opacity:.4;"></td>
+            <td><span class="db-name">Swati Patil</span><br><span class="db-muted">—</span></td>
+            <td>8963160797</td>
+            <td><span class="db-badge" style="background:rgba(180,60,120,.15); color:#e080c0; border:1px solid rgba(180,60,120,.2);">Instagram</span></td>
+            <td>3, 3.5 BHK</td>
+            <td>Kalyani Nagar</td>
+            <td>Shriram B.</td>
+            <td><span class="db-badge db-hot">HOT</span></td>
+            <td><span class="db-badge db-active">ACTIVE</span></td>
+            <td style="color:#d4ad4d; font-size:10px; font-weight:700; cursor:pointer;">View →</td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" style="width:11px;height:11px;opacity:.4;"></td>
+            <td><span class="db-name">Pooja</span><br><span class="db-muted">—</span></td>
+            <td>7507214183</td>
+            <td><span class="db-badge" style="background:rgba(180,60,120,.15); color:#e080c0; border:1px solid rgba(180,60,120,.2);">Instagram</span></td>
+            <td>3 BHK</td>
+            <td>Power Heights</td>
+            <td>Unassigned</td>
+            <td><span class="db-badge db-hot">HOT</span></td>
+            <td><span class="db-badge db-active">ACTIVE</span></td>
+            <td style="color:#d4ad4d; font-size:10px; font-weight:700; cursor:pointer;">View →</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:12px; padding: 12px 16px; background: white; border-radius: 12px; border: 1px solid #e8e8e6; font-size:11px; color:#666; line-height:1.8;">
+      <strong style="color:#111;">Direction B: Dark Command Center</strong><br>
+      ✓ Status tabs become a top nav row for instant filtering — no KPI cards<br>
+      ✓ Active/Inactive toggle lives in the tab bar, not separate section<br>
+      ✓ Dark theme with gold accents — premium, focused feel<br>
+      ✓ Name + Email stacked in one cell to save column width
+    </div>
+  </div>
+
+  <!-- ═══════════════════ DIRECTION C ═══════════════════ -->
+  <div class="slide" id="slide-2">
+    <div class="dc-frame">
+      <!-- Header with title + actions -->
+      <div class="dc-header">
+        <div>
+          <div class="dc-title-row">
+            <span class="dc-title">Leads Database</span>
+            <span class="dc-count">15</span>
+          </div>
+          <p style="font-size:11px; color:#bbb; margin-top:3px; font-weight:500;">All client enquiries · Luxe Realty Pune</p>
+        </div>
+        <!-- Right side: new lead + export -->
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button class="dc-btn">
+            <span style="display:flex;align-items:center;gap:4px;">
+              <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export
+            </span>
+          </button>
+          <button class="dc-btn gold">+ New Lead</button>
+        </div>
+      </div>
+
+      <!-- Inline stats bar (replaces KPI cards) -->
+      <div class="dc-stats-inline">
+        <div class="dc-stat">
+          <div class="dc-stat-dot" style="background:#c0392b;"></div>
+          <span class="dc-stat-num">14</span>
+          <span>Hot Prospects</span>
+        </div>
+        <div class="dc-stat">
+          <div class="dc-stat-dot" style="background:#d4ad4d;"></div>
+          <span class="dc-stat-num">1</span>
+          <span>Warm Leads</span>
+        </div>
+        <div class="dc-stat">
+          <div class="dc-stat-dot" style="background:#15803d;"></div>
+          <span class="dc-stat-num">13</span>
+          <span>Active</span>
+        </div>
+        <div class="dc-stat">
+          <div class="dc-stat-dot" style="background:#888;"></div>
+          <span class="dc-stat-num">0</span>
+          <span>Closed</span>
+        </div>
+        <div class="dc-stat">
+          <div class="dc-stat-dot" style="background:#3d52a0;"></div>
+          <span class="dc-stat-num">7</span>
+          <span>Referrals</span>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="dc-toolbar">
+        <div style="position:relative; flex:1; min-width:200px; max-width:280px;">
+          <svg style="position:absolute; left:10px; top:50%; transform:translateY(-50%); width:12px;height:12px; color:#bbb;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input class="dc-search" style="width:100%;" placeholder="Search leads…" readonly>
+        </div>
+        <!-- Status filter -->
+        <select class="dc-btn" style="appearance:none; cursor:pointer;">
+          <option>All statuses</option>
+        </select>
+        <!-- Drill Down -->
+        <button class="dc-btn" style="display:flex;align-items:center;gap:4px;">
+          <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="12" y1="18" x2="20" y2="18"/></svg>
+          Drill Down
+        </button>
+        <div class="dc-divider"></div>
+        <!-- Active/Inactive segmented -->
+        <div class="dc-seg">
+          <button class="dc-seg-btn on">Active</button>
+          <button class="dc-seg-btn">Inactive</button>
+          <button class="dc-seg-btn">All</button>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <table class="dc-table">
+        <thead>
+          <tr>
+            <th style="width:32px;"><input type="checkbox" style="width:12px;height:12px;opacity:.4;"></th>
+            <th>Name & Contact</th>
+            <th>Source</th>
+            <th>Config</th>
+            <th>Location</th>
+            <th>Assigned To</th>
+            <th>Status</th>
+            <th>Stage</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input type="checkbox" style="width:12px;height:12px;opacity:.4;"></td>
+            <td>
+              <div class="dc-name-cell">
+                <div class="dc-avatar" style="background:#fde8e8; color:#c0392b;">VP</div>
+                <div>
+                  <div style="font-weight:700; color:#111; font-size:11px;">Vilas Pawar</div>
+                  <div style="font-size:9.5px; color:#bbb;">+974 51675555</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="dc-badge dc-ref">Referral</span></td>
+            <td>3 BHK</td>
+            <td>Koregaon Park</td>
+            <td>Benazir Bhayani</td>
+            <td><span class="dc-badge dc-warm">WARM</span></td>
+            <td><span style="font-size:9.5px; color:#888; font-weight:600;">Site Visit</span></td>
+            <td style="color:#d4ad4d; font-weight:700; font-size:10.5px; cursor:pointer;">View →</td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" style="width:12px;height:12px;opacity:.4;"></td>
+            <td>
+              <div class="dc-name-cell">
+                <div class="dc-avatar" style="background:#fdf0ff; color:#7c3aed;">VS</div>
+                <div>
+                  <div style="font-weight:700; color:#111; font-size:11px;">Vinay Shukla</div>
+                  <div style="font-size:9.5px; color:#bbb;">9130491303</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="dc-badge dc-ref">Referral</span></td>
+            <td>Bungalow Plot</td>
+            <td>Koregaon Park</td>
+            <td>Shriram Boyane</td>
+            <td><span class="dc-badge dc-hot">HOT</span></td>
+            <td><span style="font-size:9.5px; color:#888; font-weight:600;">New Inquiry</span></td>
+            <td style="color:#d4ad4d; font-weight:700; font-size:10.5px; cursor:pointer;">View →</td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" style="width:12px;height:12px;opacity:.4;"></td>
+            <td>
+              <div class="dc-name-cell">
+                <div class="dc-avatar" style="background:#eff8ff; color:#2563eb;">SS</div>
+                <div>
+                  <div style="font-weight:700; color:#111; font-size:11px;">Siddharth Shetty</div>
+                  <div style="font-size:9.5px; color:#bbb;">3822492236</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="dc-badge dc-ref">Referral</span></td>
+            <td>4.5 BHK</td>
+            <td>Koregaon Park, Kalyani</td>
+            <td>Unassigned</td>
+            <td><span class="dc-badge dc-hot">HOT</span></td>
+            <td><span style="font-size:9.5px; color:#888; font-weight:600;">Follow Up</span></td>
+            <td style="color:#d4ad4d; font-weight:700; font-size:10.5px; cursor:pointer;">View →</td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" style="width:12px;height:12px;opacity:.4;"></td>
+            <td>
+              <div class="dc-name-cell">
+                <div class="dc-avatar" style="background:#fdf0f8; color:#a0319d;">SP</div>
+                <div>
+                  <div style="font-weight:700; color:#111; font-size:11px;">Swati Patil</div>
+                  <div style="font-size:9.5px; color:#bbb;">8963160797</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="dc-badge dc-insta">Instagram</span></td>
+            <td>3, 3.5 BHK</td>
+            <td>Kalyani Nagar</td>
+            <td>Shriram Boyane</td>
+            <td><span class="dc-badge dc-hot">HOT</span></td>
+            <td><span style="font-size:9.5px; color:#888; font-weight:600;">Closure</span></td>
+            <td style="color:#d4ad4d; font-weight:700; font-size:10.5px; cursor:pointer;">View →</td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" style="width:12px;height:12px;opacity:.4;"></td>
+            <td>
+              <div class="dc-name-cell">
+                <div class="dc-avatar" style="background:#f0fdf4; color:#15803d;">PO</div>
+                <div>
+                  <div style="font-weight:700; color:#111; font-size:11px;">Pooja</div>
+                  <div style="font-size:9.5px; color:#bbb;">7507214183</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="dc-badge dc-insta">Instagram</span></td>
+            <td>3 BHK</td>
+            <td>Power Heights</td>
+            <td>Unassigned</td>
+            <td><span class="dc-badge dc-hot">HOT</span></td>
+            <td><span style="font-size:9.5px; color:#888; font-weight:600;">New Inquiry</span></td>
+            <td style="color:#d4ad4d; font-weight:700; font-size:10.5px; cursor:pointer;">View →</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:12px; padding: 12px 16px; background: white; border-radius: 12px; border: 1px solid #e8e8e6; font-size:11px; color:#666; line-height:1.8;">
+      <strong style="color:#111;">Direction C: Editorial Porcelain</strong><br>
+      ✓ Stats moved to a compact <strong>single-line inline bar</strong> below title — keeps context without bloat<br>
+      ✓ Name + Phone combined in one column with color-coded avatar<br>
+      ✓ Stage column added — replaces status-only view<br>
+      ✓ Warm porcelain background, premium and quiet
+    </div>
+  </div>
+
+  <!-- Dots -->
+  <div class="nav">
+    <button class="dot active" onclick="goTo(0)"></button>
+    <button class="dot" onclick="goTo(1)"></button>
+    <button class="dot" onclick="goTo(2)"></button>
+  </div>
+
+</div><!-- /carousel -->
+
+<script>
+  const titles = [
+    'Direction A — Notion Compact',
+    'Direction B — Dark Command Center', 
+    'Direction C — Editorial Porcelain'
+  ];
+  const subs = [
+    'Stats as inline text · Single toolbar row · White',
+    'Status tabs + dark theme with gold · Name+email stacked',
+    'Slim stats bar · Name+phone avatar · Stage column · Porcelain'
+  ];
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const dots = document.querySelectorAll('.dot');
+
+  function goTo(n) {
+    slides[current].classList.remove('active');
+    dots[current].classList.remove('active');
+    current = n;
+    slides[current].classList.add('active');
+    dots[current].classList.add('active');
+    document.getElementById('slide-title').textContent = titles[current];
+    document.getElementById('slide-sub').textContent = subs[current];
+  }
+  function nextSlide() { goTo((current + 1) % 3); }
+  function prevSlide() { goTo((current + 2) % 3); }
+</script>
+</body>
+</html>

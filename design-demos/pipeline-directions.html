@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luxe Realty — Sales Pipeline Design Directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: #f0f0ee; padding: 32px; color: #1a1a1a; }
+
+  /* ── Navigation carousel ── */
+  .carousel { position: relative; }
+  .slide { display: none; }
+  .slide.active { display: block; }
+  .nav { display: flex; gap: 12px; justify-content: center; margin-top: 28px; }
+  .dot { width: 28px; height: 4px; border-radius: 99px; background: #d1cfc8; cursor: pointer; transition: all .25s; border: none; }
+  .dot.active { background: #d4ad4d; width: 52px; }
+  .arrows { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .arrow-btn { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 8px 16px; font-size: 12px; font-weight: 700; color: #666; cursor: pointer; transition: all .15s; }
+  .arrow-btn:hover { background: #f6f6f4; color: #1a1a1a; }
+  .direction-title { font-size: 18px; font-weight: 800; color: #1a1a1a; text-align: center; }
+  .direction-sub { font-size: 12px; color: #888; text-align: center; margin-top: 4px; }
+
+  /* Description Card */
+  .desc-card { margin-top: 16px; padding: 14px 18px; background: white; border-radius: 12px; border: 1px solid #e8e8e6; font-size: 11px; color: #666; line-height: 1.8; }
+
+  /* Unified Button Classes */
+  .dc-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; height: 32px; border-radius: 8px;
+    font-size: 11px; font-weight: 700; color: #444;
+    background: white; border: 1px solid #e5e5e3;
+    transition: all 0.15s; cursor: pointer;
+  }
+  .dc-btn:hover { background: #fafaf8; border-color: #d1cfc8; }
+  .dc-btn.gold { background: #d4ad4d; border-color: #d4ad4d; color: white; }
+  .dc-btn.gold:hover { background: #b8922e; border-color: #b8922e; }
+
+  /* ════════════════════════════════════
+     DIRECTION A — Classical Clean Board
+     Inspiration: Classical Trello / Linear Hybrid
+     Focus: Clean floating cards with high shadows, distinct header tags.
+  ════════════════════════════════════ */
+  .da-wrap { display: flex; flex-direction: column; gap: 20px; }
+  .da-kpis { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .da-kpi { background: white; border: 1px solid #e8e7e4; border-radius: 16px; padding: 16px; text-align: left; }
+  .da-kpi-lbl { font-size: 9px; font-weight: 800; color: #999; text-transform: uppercase; letter-spacing: 0.08em; }
+  .da-kpi-val { font-size: 16px; font-weight: 900; color: #111; margin-top: 4px; }
+  .da-kpi-sub { font-size: 9px; color: #bbb; margin-top: 2px; }
+
+  .da-board-outer { background: white; border: 1px solid #e8e7e4; border-radius: 16px; padding: 20px; }
+  .da-board-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .da-board-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .da-col { display: flex; flex-direction: column; gap: 12px; }
+  .da-col-head { display: flex; justify-content: space-between; align-items: center; padding: 4px 8px; border-bottom: 2px solid #111; }
+  .da-col-title { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: #111; }
+  .da-col-count { font-size: 9.5px; font-weight: 800; background: #f0f0ee; color: #666; padding: 2px 6px; border-radius: 99px; }
+  .da-col-value { font-size: 10px; font-weight: 800; color: #999; }
+
+  .da-col-cards { background: #fafaf8; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 10px; min-height: 380px; border: 1px solid #ebebeb; }
+  .da-card { background: white; border: 1px solid #e5e5e3; border-radius: 10px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); cursor: grab; transition: all 0.15s; }
+  .da-card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-color: #d4ad4d; }
+  .da-card-name { font-size: 11.5px; font-weight: 800; color: #111; }
+  .da-card-pref { font-size: 9.5px; color: #777; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+  .da-card-budget { font-size: 11px; font-weight: 800; color: #d4ad4d; margin-top: 8px; }
+  .da-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 8px; border-t: 1px solid #f0f0ee; font-size: 9px; color: #bbb; }
+  .da-card-source { background: #f0f0ee; color: #666; padding: 1px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; font-size: 8px; }
+
+  /* ════════════════════════════════════
+     DIRECTION B — Split-Dashboard Pipeline
+     Inspiration: ClickUp / Notion Duality
+     Focus: A top thin metrics bar and ultra-dense cards with hover view transitions.
+  ════════════════════════════════════ */
+  .db-wrap { display: flex; flex-direction: column; gap: 16px; }
+  .db-stats-bar { background: white; border: 1px solid #e8e7e4; border-radius: 16px; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; }
+  .db-stat-item { display: flex; align-items: center; gap: 8px; }
+  .db-stat-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .db-stat-lbl { font-size: 10px; font-weight: 700; color: #aaa; text-transform: uppercase; }
+  .db-stat-val { font-size: 12px; font-weight: 800; color: #222; }
+
+  .db-board-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .db-col { background: white; border: 1px solid #e8e7e4; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .db-col-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-b: 1px solid #f0f0ee; }
+  .db-col-indicator { width: 3px; height: 12px; border-radius: 99px; }
+  .db-col-title { font-size: 10.5px; font-weight: 800; text-transform: uppercase; color: #333; tracking-wider: 0.05em; display: flex; align-items: center; gap: 6px; }
+  .db-col-value { font-size: 10.5px; font-weight: 800; color: #d4ad4d; }
+
+  .db-cards-container { display: flex; flex-direction: column; gap: 8px; min-height: 400px; }
+  .db-card { background: #fafaf8; border: 1px solid #eeeeec; border-radius: 8px; padding: 10px; transition: all 0.12s; cursor: grab; }
+  .db-card:hover { background: #fff; border-color: #d4ad4d; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+  .db-card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .db-card-name { font-size: 11px; font-weight: 700; color: #222; }
+  .db-card-budget { font-size: 10px; font-weight: 800; color: #111; }
+  .db-card-pref { font-size: 9px; color: #999; margin-top: 4px; }
+  .db-card-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 8.5px; color: #ccc; }
+  .db-card-source { color: #888; font-weight: 700; }
+
+  /* ════════════════════════════════════
+     DIRECTION C — Editorial Porcelain Frame Board
+     Inspiration: Porcelain brand system, high-end editorial layouts.
+     Focus: Glued metrics bar under a clean frame header, columns separated
+            by vertical borders inside a single card frame.
+  ════════════════════════════════════ */
+  .dc-wrap { display: flex; flex-direction: column; }
+  .dc-frame {
+    background: white;
+    border: 1px solid #e8e7e4;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.015);
+  }
+  .dc-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 24px 28px 20px;
+    border-b: 1px solid #ebebeb;
+  }
+  .dc-title-area h1 { font-size: 19px; font-weight: 900; tracking-tight: -0.4px; color: #111; }
+  .dc-title-area p { font-size: 10.5px; color: #aaa; font-weight: 500; margin-top: 2px; }
+
+  /* Stats Bar glued inside the card under header border */
+  .dc-stats-inline {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    background: #fafaf8;
+    border-top: 1px solid #ebebeb;
+    border-bottom: 1px solid #ebebeb;
+  }
+  .dc-stat-col {
+    padding: 14px 24px;
+    border-right: 1px solid #ebebeb;
+    text-align: left;
+  }
+  .dc-stat-col:last-child { border-right: none; }
+  .dc-stat-lbl { font-size: 9px; font-weight: 800; color: #aaa; text-transform: uppercase; letter-spacing: 0.1em; }
+  .dc-stat-val { font-size: 14px; font-weight: 900; color: #111; margin-top: 2px; }
+  .dc-stat-sub { font-size: 9px; color: #bbb; margin-top: 1px; }
+
+  /* Toolbar */
+  .dc-toolbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 24px;
+    border-bottom: 1px solid #ebebeb;
+    background: white;
+  }
+  .dc-toolbar-left { display: flex; gap: 8px; align-items: center; }
+  .dc-seg { display: flex; background: #f0f0ee; border-radius: 8px; padding: 2px; }
+  .dc-seg-btn {
+    padding: 4px 10px; font-size: 10px; font-weight: 700; color: #666;
+    border: none; background: transparent; cursor: pointer; border-radius: 6px;
+  }
+  .dc-seg-btn.on { background: white; color: #111; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+
+  /* Board inside the frame */
+  .dc-board-row { display: grid; grid-template-columns: repeat(4, 1fr); background: white; }
+  .dc-board-col {
+    border-right: 1px solid #ebebeb;
+    min-height: 480px;
+    display: flex; flex-direction: column;
+  }
+  .dc-board-col:last-child { border-right: none; }
+  
+  .dc-col-title-bar {
+    padding: 16px 20px 12px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid #f5f5f3;
+  }
+  .dc-col-dot { width: 5px; height: 5px; border-radius: 50%; }
+  .dc-col-name { font-size: 10px; font-weight: 850; text-transform: uppercase; letter-spacing: 0.08em; color: #333; }
+  .dc-col-badge { font-size: 9px; font-weight: 800; color: #bbb; }
+  .dc-col-total { font-size: 10px; font-weight: 800; color: #888; text-align: right; }
+
+  /* Card space */
+  .dc-cards-area { padding: 16px; flex-grow: 1; display: flex; flex-direction: column; gap: 10px; background: #fafaf8/30; }
+  .dc-card {
+    background: white;
+    border: 1px solid #e8e7e4;
+    border-radius: 12px;
+    padding: 14px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.01);
+    cursor: grab;
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .dc-card:hover {
+    border-color: rgba(212,173,77,0.5);
+    box-shadow: 0 4px 16px rgba(212,173,77,0.08);
+    transform: translateY(-1px);
+  }
+  .dc-card-hdr { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .dc-card-name { font-size: 11.5px; font-weight: 800; color: #111; letter-spacing: -0.2px; }
+  .dc-card-val { font-size: 11px; font-weight: 800; color: #d4ad4d; }
+  .dc-card-pref { font-size: 9.5px; color: #777; margin-top: 4px; font-weight: 500; }
+  .dc-card-ftr {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 12px; padding-top: 10px; border-top: 1px solid #f5f5f3;
+    font-size: 9px; font-weight: 600; color: #bbb;
+  }
+  .dc-card-src { background: #f5f5f3; color: #666; font-weight: 700; padding: 1.5px 6px; border-radius: 4px; font-size: 8px; text-transform: uppercase; }
+
+  /* Drag over drop state indicators */
+  .dc-drag-empty {
+    border: 1px dashed #e8e7e4;
+    border-radius: 12px;
+    height: 60px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700; color: #ccc;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+
+<div class="carousel">
+  <div class="arrows">
+    <button class="arrow-btn" onclick="prevSlide()">← Previous</button>
+    <div>
+      <div class="direction-title" id="slide-title">Direction A — Classical Kanban Board</div>
+      <div class="direction-sub" id="slide-sub">Classic Trello style with floating metrics board</div>
+    </div>
+    <button class="arrow-btn" onclick="nextSlide()">Next →</button>
+  </div>
+
+  <!-- ═══════ DIRECTION A ═══════ -->
+  <div class="slide active" id="slide-0">
+    <div class="da-wrap">
+      <!-- Outer KPI metrics -->
+      <div class="da-kpis">
+        <div class="da-kpi">
+          <div class="da-kpi-lbl">Gross Pipeline</div>
+          <div class="da-kpi-val">₹25.80 Cr</div>
+          <div class="da-kpi-sub">34 Active Deals</div>
+        </div>
+        <div class="da-kpi">
+          <div class="da-kpi-lbl">Weighted Forecast</div>
+          <div class="da-kpi-val">₹12.45 Cr</div>
+          <div class="da-kpi-sub">Based on stage probability</div>
+        </div>
+        <div class="da-kpi">
+          <div class="da-kpi-lbl">Closure Target Progress</div>
+          <div class="da-kpi-val">₹6.40 Cr <span style="font-size:11px;color:#bbb;">/ ₹20.00 Cr</span></div>
+          <div class="da-kpi-sub">32% achieved</div>
+        </div>
+      </div>
+
+      <!-- Classic Board Box -->
+      <div class="da-board-outer">
+        <div class="da-board-header">
+          <div style="font-size:14px; font-weight:800; color:#111;">Deals Board</div>
+          <div style="display:flex; gap:8px;">
+            <button class="dc-btn">List View</button>
+            <button class="dc-btn gold">+ Add Deal</button>
+          </div>
+        </div>
+
+        <div class="da-board-grid">
+          <!-- Column 1 -->
+          <div class="da-col">
+            <div class="da-col-head" style="border-color:#a78bfa;">
+              <div class="da-col-title" style="color:#7c3aed;">New Inquiry</div>
+              <span class="da-col-count">12</span>
+            </div>
+            <div class="da-col-value">₹3.50 Cr</div>
+            <div class="da-col-cards">
+              <div class="da-card">
+                <div class="da-card-name">Amit Kulkarni</div>
+                <div class="da-card-pref">3 BHK · Kalyani Nagar</div>
+                <div class="da-card-budget">₹1.8 Cr</div>
+                <div class="da-card-footer">
+                  <span class="da-card-source">99 acres</span>
+                  <span>12 Jul</span>
+                </div>
+              </div>
+              <div class="da-card">
+                <div class="da-card-name">Preeti Saxena</div>
+                <div class="da-card-pref">Penthouse · Koregaon Park</div>
+                <div class="da-card-budget">₹4.2 Cr</div>
+                <div class="da-card-footer">
+                  <span class="da-card-source">Instagram</span>
+                  <span>10 Jul</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column 2 -->
+          <div class="da-col">
+            <div class="da-col-head" style="border-color:#3b82f6;">
+              <div class="da-col-title" style="color:#2563eb;">Site Visit</div>
+              <span class="da-col-count">8</span>
+            </div>
+            <div class="da-col-value">₹8.40 Cr</div>
+            <div class="da-col-cards">
+              <div class="da-card">
+                <div class="da-card-name">Shalabh Deshpande</div>
+                <div class="da-card-pref">4 BHK · Baner</div>
+                <div class="da-card-budget">₹3.2 Cr</div>
+                <div class="da-card-footer">
+                  <span class="da-card-source">Website</span>
+                  <span>08 Jul</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column 3 -->
+          <div class="da-col">
+            <div class="da-col-head" style="border-color:#f59e0b;">
+              <div class="da-col-title" style="color:#d97706;">Follow Up</div>
+              <span class="da-col-count">9</span>
+            </div>
+            <div class="da-col-value">₹9.20 Cr</div>
+            <div class="da-col-cards">
+              <div class="da-card">
+                <div class="da-card-name">Vilas Pawar</div>
+                <div class="da-card-pref">3 BHK · Viman Nagar</div>
+                <div class="da-card-budget">₹2.5 Cr</div>
+                <div class="da-card-footer">
+                  <span class="da-card-source">Referral</span>
+                  <span>07 Jul</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column 4 -->
+          <div class="da-col">
+            <div class="da-col-head" style="border-color:#10b981;">
+              <div class="da-col-title" style="color:#059669;">Closure</div>
+              <span class="da-col-count">5</span>
+            </div>
+            <div class="da-col-value">₹4.70 Cr</div>
+            <div class="da-col-cards">
+              <div class="da-card">
+                <div class="da-card-name">Jaspal Singh</div>
+                <div class="da-card-pref">Villa · Hinjewadi</div>
+                <div class="da-card-budget">₹5.5 Cr</div>
+                <div class="da-card-footer">
+                  <span class="da-card-source">Manual</span>
+                  <span>03 Jul</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="desc-card">
+      <strong style="color:#111;">Direction A: Classical Kanban Board</strong><br>
+      ✓ High clarity visual separation between columns with color-accented headers.<br>
+      ✓ Card layout highlights name and budget directly with clean borders and subtle bottom footer.<br>
+      ✓ Classic dashboard layout with independent metric cards above the board.
+    </div>
+  </div>
+
+  <!-- ═══════ DIRECTION B ═══════ -->
+  <div class="slide" id="slide-1">
+    <div class="db-wrap">
+      <!-- Thin compact top stats bar -->
+      <div class="db-stats-bar">
+        <div class="db-stat-item">
+          <div class="db-stat-dot" style="background:#7c3aed;"></div>
+          <span class="db-stat-lbl">New:</span> <span class="db-stat-val">₹3.50 Cr</span>
+        </div>
+        <div class="db-stat-item">
+          <div class="db-stat-dot" style="background:#2563eb;"></div>
+          <span class="db-stat-lbl">Visit:</span> <span class="db-stat-val">₹8.40 Cr</span>
+        </div>
+        <div class="db-stat-item">
+          <div class="db-stat-dot" style="background:#d97706;"></div>
+          <span class="db-stat-lbl">Follow:</span> <span class="db-stat-val">₹9.20 Cr</span>
+        </div>
+        <div class="db-stat-item">
+          <div class="db-stat-dot" style="background:#059669;"></div>
+          <span class="db-stat-lbl">Close:</span> <span class="db-stat-val">₹4.70 Cr</span>
+        </div>
+        <div style="font-size:11px; font-weight:800; color:#555;">Gross Forecast: ₹12.45 Cr</div>
+      </div>
+
+      <!-- Ultra dense columns inside white cards -->
+      <div class="db-board-grid">
+        <div class="db-col">
+          <div class="db-col-header">
+            <div class="db-col-title">
+              <div class="db-col-indicator" style="background:#7c3aed;"></div>
+              New Inquiry
+            </div>
+            <div class="db-col-value">₹3.50 Cr</div>
+          </div>
+          <div class="db-cards-container">
+            <div class="db-card">
+              <div class="db-card-top">
+                <span class="db-card-name">Amit Kulkarni</span>
+                <span class="db-card-budget">₹1.8 Cr</span>
+              </div>
+              <div class="db-card-pref">3 BHK · Kalyani Nagar</div>
+              <div class="db-card-bottom">
+                <span class="db-card-source">99 acres</span>
+                <span>12 Jul</span>
+              </div>
+            </div>
+            <div class="db-card">
+              <div class="db-card-top">
+                <span class="db-card-name">Preeti Saxena</span>
+                <span class="db-card-budget">₹4.2 Cr</span>
+              </div>
+              <div class="db-card-pref">Penthouse · Koregaon Park</div>
+              <div class="db-card-bottom">
+                <span class="db-card-source">Instagram</span>
+                <span>10 Jul</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="db-col">
+          <div class="db-col-header">
+            <div class="db-col-title">
+              <div class="db-col-indicator" style="background:#2563eb;"></div>
+              Site Visit
+            </div>
+            <div class="db-col-value">₹8.40 Cr</div>
+          </div>
+          <div class="db-cards-container">
+            <div class="db-card">
+              <div class="db-card-top">
+                <span class="db-card-name">Shalabh Deshpande</span>
+                <span class="db-card-budget">₹3.2 Cr</span>
+              </div>
+              <div class="db-card-pref">4 BHK · Baner</div>
+              <div class="db-card-bottom">
+                <span class="db-card-source">Website</span>
+                <span>08 Jul</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="db-col">
+          <div class="db-col-header">
+            <div class="db-col-title">
+              <div class="db-col-indicator" style="background:#d97706;"></div>
+              Follow Up
+            </div>
+            <div class="db-col-value">₹9.20 Cr</div>
+          </div>
+          <div class="db-cards-container">
+            <div class="db-card">
+              <div class="db-card-top">
+                <span class="db-card-name">Vilas Pawar</span>
+                <span class="db-card-budget">₹2.5 Cr</span>
+              </div>
+              <div class="db-card-pref">3 BHK · Viman Nagar</div>
+              <div class="db-card-bottom">
+                <span class="db-card-source">Referral</span>
+                <span>07 Jul</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="db-col">
+          <div class="db-col-header">
+            <div class="db-col-title">
+              <div class="db-col-indicator" style="background:#059669;"></div>
+              Closure
+            </div>
+            <div class="db-col-value">₹4.70 Cr</div>
+          </div>
+          <div class="db-cards-container">
+            <div class="db-card">
+              <div class="db-card-top">
+                <span class="db-card-name">Jaspal Singh</span>
+                <span class="db-card-budget">₹5.5 Cr</span>
+              </div>
+              <div class="db-card-pref">Villa · Hinjewadi</div>
+              <div class="db-card-bottom">
+                <span class="db-card-source">Manual</span>
+                <span>03 Jul</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="desc-card">
+      <strong style="color:#111;">Direction B: Split-Dashboard Pipeline (Compact Denser)</strong><br>
+      ✓ Super compact top stats bar with colored indicator dots to clean up the workspace.<br>
+      ✓ Column containers are white cards themselves, keeping a minimal look.<br>
+      ✓ Dense text-only cards optimize for visibility — fits more deals on screen.
+    </div>
+  </div>
+
+  <!-- ═══════ DIRECTION C ═══════ -->
+  <div class="slide" id="slide-2">
+    <div class="dc-wrap">
+      <!-- Unified Card Frame containing everything -->
+      <div class="dc-frame">
+        <!-- Header -->
+        <div class="dc-header">
+          <div class="dc-title-area">
+            <h1>Sales Deal Pipeline</h1>
+            <p>Track active deals, forecasts and target progress · Luxe Realty Pune</p>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <div class="dc-seg">
+              <button class="dc-seg-btn on">Board</button>
+              <button class="dc-seg-btn">List</button>
+            </div>
+            <button class="dc-btn gold font-bold">+ Add Deal</button>
+          </div>
+        </div>
+
+        <!-- Glued KPI metrics bar inside card -->
+        <div class="dc-stats-inline">
+          <div class="dc-stat-col">
+            <div class="dc-stat-lbl">Gross Pipeline</div>
+            <div class="dc-stat-val">₹25.80 Cr</div>
+            <div class="dc-stat-sub">34 Active Deals</div>
+          </div>
+          <div class="dc-stat-col">
+            <div class="dc-stat-lbl">Weighted Forecast</div>
+            <div class="dc-stat-val">₹12.45 Cr</div>
+            <div class="dc-stat-sub">15%-100% Probability</div>
+          </div>
+          <div class="dc-stat-col">
+            <div class="dc-stat-lbl">Closed Target</div>
+            <div class="dc-stat-val">₹6.40 Cr <span style="font-size:10px; color:#aaa; font-weight:700;">/ ₹20 Cr Target</span></div>
+            <div class="dc-stat-sub">32% achieved</div>
+          </div>
+          <div class="dc-stat-col" style="display:flex; flex-direction:column; justify-content:center; padding-right:24px;">
+            <div style="display:flex; justify-content:between; font-size:9.5px; font-weight:800; color:#333; margin-bottom:4px;">
+              <span>Target progress bar</span>
+              <span style="margin-left:auto; color:#15803d;">32%</span>
+            </div>
+            <div style="background:#e8e7e4; height:6px; border-radius:99px; overflow:hidden; width:100%;">
+              <div style="background:#10b981; width:32%; height:100%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Kanban Board inside card with vertical split lines -->
+        <div class="dc-board-row">
+          <!-- Column 1 -->
+          <div class="dc-board-col">
+            <div class="dc-col-title-bar">
+              <div style="display:flex; items-center; gap:6px;">
+                <span class="dc-col-dot" style="background:#7c3aed;"></span>
+                <span class="dc-col-name">New Inquiry</span>
+                <span class="dc-col-badge">12</span>
+              </div>
+              <span class="dc-col-total">₹3.50 Cr</span>
+            </div>
+            <div class="dc-cards-area" style="background:#fafaf8/40;">
+              <div class="dc-card">
+                <div class="dc-card-hdr">
+                  <span class="dc-card-name">Amit Kulkarni</span>
+                  <span class="dc-card-val">₹1.8 Cr</span>
+                </div>
+                <div class="dc-card-pref">3 BHK · Kalyani Nagar</div>
+                <div class="dc-card-ftr">
+                  <span class="dc-card-src">99 acres</span>
+                  <span>12 Jul</span>
+                </div>
+              </div>
+              <div class="dc-card">
+                <div class="dc-card-hdr">
+                  <span class="dc-card-name">Preeti Saxena</span>
+                  <span class="dc-card-val">₹4.2 Cr</span>
+                </div>
+                <div class="dc-card-pref">Penthouse · Koregaon Park</div>
+                <div class="dc-card-ftr">
+                  <span class="dc-card-src">Instagram</span>
+                  <span>10 Jul</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column 2 -->
+          <div class="dc-board-col">
+            <div class="dc-col-title-bar">
+              <div style="display:flex; items-center; gap:6px;">
+                <span class="dc-col-dot" style="background:#3b82f6;"></span>
+                <span class="dc-col-name">Site Visit</span>
+                <span class="dc-col-badge">8</span>
+              </div>
+              <span class="dc-col-total">₹8.40 Cr</span>
+            </div>
+            <div class="dc-cards-area">
+              <div class="dc-card">
+                <div class="dc-card-hdr">
+                  <span class="dc-card-name">Shalabh Deshpande</span>
+                  <span class="dc-card-val">₹3.2 Cr</span>
+                </div>
+                <div class="dc-card-pref">4 BHK · Baner</div>
+                <div class="dc-card-ftr">
+                  <span class="dc-card-src">Website</span>
+                  <span>08 Jul</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column 3 -->
+          <div class="dc-board-col">
+            <div class="dc-col-title-bar">
+              <div style="display:flex; items-center; gap:6px;">
+                <span class="dc-col-dot" style="background:#f59e0b;"></span>
+                <span class="dc-col-name">Follow Up</span>
+                <span class="dc-col-badge">9</span>
+              </div>
+              <span class="dc-col-total">₹9.20 Cr</span>
+            </div>
+            <div class="dc-cards-area">
+              <div class="dc-card">
+                <div class="dc-card-hdr">
+                  <span class="dc-card-name">Vilas Pawar</span>
+                  <span class="dc-card-val">₹2.5 Cr</span>
+                </div>
+                <div class="dc-card-pref">3 BHK · Viman Nagar</div>
+                <div class="dc-card-ftr">
+                  <span class="dc-card-src">Referral</span>
+                  <span>07 Jul</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column 4 -->
+          <div class="dc-board-col">
+            <div class="dc-col-title-bar">
+              <div style="display:flex; items-center; gap:6px;">
+                <span class="dc-col-dot" style="background:#10b981;"></span>
+                <span class="dc-col-name">Closure</span>
+                <span class="dc-col-badge">5</span>
+              </div>
+              <span class="dc-col-total">₹4.70 Cr</span>
+            </div>
+            <div class="dc-cards-area">
+              <div class="dc-card">
+                <div class="dc-card-hdr">
+                  <span class="dc-card-name">Jaspal Singh</span>
+                  <span class="dc-card-val">₹5.5 Cr</span>
+                </div>
+                <div class="dc-card-pref">Villa · Hinjewadi</div>
+                <div class="dc-card-ftr">
+                  <span class="dc-card-src">Manual</span>
+                  <span>03 Jul</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="desc-card">
+      <strong style="color:#111;">Direction C: Editorial Porcelain Frame Board</strong><br>
+      ✓ Unified porcelain card frame encapsulates the header, the stats, the toolbar, and the pipeline board.<br>
+      ✓ Inline stats bar glued immediately below the header, mirroring the Leads and Properties page layout.<br>
+      ✓ Columns are separated by thin vertical border lines (rather than space-separated cards), presenting a highly integrated layout.<br>
+      ✓ Cards utilize the same rounded corners, font rules, and spacing as the rest of the Direction C system.
+    </div>
+  </div>
+
+  <!-- Dots -->
+  <div class="nav">
+    <button class="dot active" onclick="goTo(0)"></button>
+    <button class="dot" onclick="goTo(1)"></button>
+    <button class="dot" onclick="goTo(2)"></button>
+  </div>
+</div>
+
+<script>
+  const titles = [
+    'Direction A — Classical Kanban Board',
+    'Direction B — Split-Dashboard Pipeline',
+    'Direction C — Editorial Porcelain Frame Board'
+  ];
+  const subs = [
+    'Classic Trello style with floating metrics board',
+    'Compact denser stats indicator and frame columns',
+    'Unified porcelain card frame containing the header, inline stats, and board'
+  ];
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const dots = document.querySelectorAll('.dot');
+  function goTo(n) {
+    slides[current].classList.remove('active');
+    dots[current].classList.remove('active');
+    current = n;
+    slides[current].classList.add('active');
+    dots[current].classList.add('active');
+    document.getElementById('slide-title').textContent = titles[current];
+    document.getElementById('slide-sub').textContent = subs[current];
+  }
+  function nextSlide() { goTo((current + 1) % 3); }
+  function prevSlide() { goTo((current + 2) % 3); }
+</script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  Calendar, 
+  Calendar as CalendarIcon, 
   Clock, 
   MapPin, 
   User, 
@@ -12,7 +12,8 @@ import {
   ChevronLeft, 
   ChevronRight,
   Home,
-  AlertCircle
+  AlertCircle,
+  CalendarDays
 } from 'lucide-react';
 import { useProfile } from '@/lib/auth';
 import { getPermissions } from '@/lib/permissions';
@@ -25,29 +26,45 @@ interface SiteVisit {
   client_name: string;
   property_title: string;
   location: string;
-  visit_date: number; // day of June 2026
-  visit_date_raw?: string;
+  visit_date_raw: string; // YYYY-MM-DD
   visit_time: string;
   status: 'Confirmed' | 'Pending' | 'Cancelled';
   agent_notes: string;
   reschedule_reason?: string;
 }
 
+// Utility: format Date object to YYYY-MM-DD string
+function formatDateKey(d: Date): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+
 export default function SiteVisitsPage() {
   const profile = useProfile();
   const perms = getPermissions(profile?.role);
 
-  const [selectedDay, setSelectedDay] = useState<number>(17); // Default June 17, 2026
+  // Default to June 2026 for demo consistency, but fully navigable!
+  const [currentMonthDate, setCurrentMonthDate] = useState<Date>(new Date(2026, 5, 1));
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date(2026, 5, 17));
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'calendar' | 'all'>('calendar');
   
   // Reschedule Modal State
   const [rescheduleVisit, setRescheduleVisit] = useState<SiteVisit | null>(null);
-  const [rescheduleDay, setRescheduleDay] = useState<number>(18);
+  const [rescheduleDateStr, setRescheduleDateStr] = useState('2026-06-18');
   const [rescheduleTime, setRescheduleTime] = useState('03:00 PM');
   const [rescheduleReason, setRescheduleReason] = useState('');
   
   // Form input states
+  const [newVisitDateStr, setNewVisitDateStr] = useState('2026-06-17');
   const [visitTime, setVisitTime] = useState('02:00 PM');
   const [notes, setNotes] = useState('');
 
@@ -57,6 +74,11 @@ export default function SiteVisitsPage() {
   const [propertiesList, setPropertiesList] = useState<any[]>([]);
   const [selectedLeadId, setSelectedLeadId] = useState('');
   const [selectedPropertyId, setSelectedPropertyId] = useState('');
+
+  // Synchronize new visit date str with selected date
+  useEffect(() => {
+    setNewVisitDateStr(formatDateKey(selectedDate));
+  }, [selectedDate]);
 
   useEffect(() => {
     async function loadData() {
@@ -114,8 +136,6 @@ export default function SiteVisitsPage() {
 
         if (visitsData) {
           const mapped: SiteVisit[] = visitsData.map((v: any) => {
-            const dateParts = v.visit_date ? v.visit_date.split('-') : [];
-            const dayNum = dateParts.length === 3 ? parseInt(dateParts[2], 10) : 17;
             return {
               id: v.id,
               lead_id: v.lead_id,
@@ -123,8 +143,7 @@ export default function SiteVisitsPage() {
               client_name: v.leads?.client_name || 'Unknown Client',
               property_title: v.properties?.title || 'Unknown Property',
               location: v.properties?.location || 'TBD',
-              visit_date: dayNum,
-              visit_date_raw: v.visit_date,
+              visit_date_raw: v.visit_date || '2026-06-17',
               visit_time: v.visit_time || '02:00 PM',
               status: (v.status === 'Confirmed' || v.status === 'Scheduled' ? 'Confirmed' : (v.status === 'Cancelled' ? 'Cancelled' : 'Pending')) as 'Confirmed' | 'Pending' | 'Cancelled',
               agent_notes: v.outcome || v.client_feedback || 'No additional notes.',
@@ -143,7 +162,7 @@ export default function SiteVisitsPage() {
       }
     }
     loadData();
-  }, [profile]);
+  }, [profile, perms.canViewAllCalendar]);
 
   const handleUpdateStatus = async (visitId: string, newStatus: 'Confirmed' | 'Cancelled') => {
     setVisits(prev => prev.map(v => v.id === visitId ? { ...v, status: newStatus } : v));
@@ -159,7 +178,7 @@ export default function SiteVisitsPage() {
 
   const handleOpenReschedule = (visit: SiteVisit) => {
     setRescheduleVisit(visit);
-    setRescheduleDay(visit.visit_date || 18);
+    setRescheduleDateStr(visit.visit_date_raw || formatDateKey(new Date()));
     setRescheduleTime(visit.visit_time || '03:00 PM');
     setRescheduleReason(visit.reschedule_reason || '');
   };
@@ -168,13 +187,10 @@ export default function SiteVisitsPage() {
     e.preventDefault();
     if (!rescheduleVisit) return;
 
-    const newDateFormatted = `2026-06-${rescheduleDay.toString().padStart(2, '0')}`;
-    
     // Optimistic update
     setVisits(prev => prev.map(v => v.id === rescheduleVisit.id ? {
       ...v,
-      visit_date: rescheduleDay,
-      visit_date_raw: newDateFormatted,
+      visit_date_raw: rescheduleDateStr,
       visit_time: rescheduleTime,
       reschedule_reason: rescheduleReason,
       agent_notes: rescheduleReason ? `Rescheduled: ${rescheduleReason}` : v.agent_notes
@@ -184,10 +200,10 @@ export default function SiteVisitsPage() {
       await supabase
         .from('site_visits')
         .update({
-          visit_date: newDateFormatted,
+          visit_date: rescheduleDateStr,
           visit_time: rescheduleTime,
           next_action: rescheduleReason,
-          outcome: rescheduleReason ? `Rescheduled to June ${rescheduleDay}, 2026. Reason: ${rescheduleReason}` : rescheduleVisit.agent_notes
+          outcome: rescheduleReason ? `Rescheduled to ${rescheduleDateStr}. Reason: ${rescheduleReason}` : rescheduleVisit.agent_notes
         })
         .eq('id', rescheduleVisit.id);
     } catch (err) {
@@ -197,27 +213,98 @@ export default function SiteVisitsPage() {
     setRescheduleVisit(null);
   };
 
-  // June 2026 calendar configuration
-  // June 1, 2026 is a Monday. June has 30 days.
-  const daysInJune = 30;
-  const calendarOffset = 0; // Monday starts at index 0 in our layout
-
-  const calendarDays = Array.from({ length: daysInJune }, (_, i) => i + 1);
-
-  // Get visits for selected day
-  const selectedDayVisits = visits.filter(v => v.visit_date === selectedDay);
-
-  // Check if a day has any visits
-  const hasVisits = (day: number) => {
-    return visits.some(v => v.visit_date === day);
+  // Month navigation handlers
+  const handlePrevMonth = () => {
+    setCurrentMonthDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
   };
 
-  // Check status color for dots
-  const getDayDotStyle = (day: number) => {
-    const dayVisits = visits.filter(v => v.visit_date === day);
+  const handleNextMonth = () => {
+    setCurrentMonthDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  };
+
+  const handleMonthChange = (monthIndex: number) => {
+    setCurrentMonthDate(prev => new Date(prev.getFullYear(), monthIndex, 1));
+  };
+
+  const handleYearChange = (year: number) => {
+    setCurrentMonthDate(prev => new Date(year, prev.getMonth(), 1));
+  };
+
+  const handleJumpToToday = () => {
+    const today = new Date();
+    setCurrentMonthDate(new Date(today.getFullYear(), today.getMonth(), 1));
+    setSelectedDate(today);
+  };
+
+  // ── DYNAMIC CALENDAR GRID COMPUTATION ──
+  const currYear = currentMonthDate.getFullYear();
+  const currMonth = currentMonthDate.getMonth();
+
+  // First day of month (0 = Sun, 1 = Mon, ..., 6 = Sat)
+  const firstDayIndex = new Date(currYear, currMonth, 1).getDay();
+  // Monday start offset: 0 for Mon, 1 for Tue, ..., 6 for Sun
+  const startOffset = (firstDayIndex + 6) % 7;
+
+  const totalDaysInMonth = new Date(currYear, currMonth + 1, 0).getDate();
+  const totalDaysInPrevMonth = new Date(currYear, currMonth, 0).getDate();
+
+  interface CalendarCell {
+    date: Date;
+    dateStr: string;
+    dayNum: number;
+    isCurrentMonth: boolean;
+  }
+
+  const calendarGrid: CalendarCell[] = [];
+
+  // Previous month padding cells
+  for (let i = startOffset - 1; i >= 0; i--) {
+    const dayNum = totalDaysInPrevMonth - i;
+    const date = new Date(currYear, currMonth - 1, dayNum);
+    calendarGrid.push({
+      date,
+      dateStr: formatDateKey(date),
+      dayNum,
+      isCurrentMonth: false
+    });
+  }
+
+  // Current month cells
+  for (let dayNum = 1; dayNum <= totalDaysInMonth; dayNum++) {
+    const date = new Date(currYear, currMonth, dayNum);
+    calendarGrid.push({
+      date,
+      dateStr: formatDateKey(date),
+      dayNum,
+      isCurrentMonth: true
+    });
+  }
+
+  // Next month padding cells to complete 35 or 42 grid cells
+  const remainingCells = (7 - (calendarGrid.length % 7)) % 7;
+  for (let dayNum = 1; dayNum <= remainingCells; dayNum++) {
+    const date = new Date(currYear, currMonth + 1, dayNum);
+    calendarGrid.push({
+      date,
+      dateStr: formatDateKey(date),
+      dayNum,
+      isCurrentMonth: false
+    });
+  }
+
+  // Selected date matching
+  const selectedDateStr = formatDateKey(selectedDate);
+  const selectedDayVisits = visits.filter(v => v.visit_date_raw === selectedDateStr);
+
+  const hasVisitsOnDate = (dateStr: string) => {
+    return visits.some(v => v.visit_date_raw === dateStr);
+  };
+
+  const getDayDotStyle = (dateStr: string) => {
+    const dayVisits = visits.filter(v => v.visit_date_raw === dateStr);
     if (dayVisits.some(v => v.status === 'Cancelled')) return 'bg-rose-500';
     if (dayVisits.some(v => v.status === 'Pending')) return 'bg-amber-500';
-    return 'bg-zinc-500';
+    return 'bg-emerald-600';
   };
 
   // Handle visit submission
@@ -227,19 +314,18 @@ export default function SiteVisitsPage() {
 
     const leadObj = leadsList.find(l => l.id === selectedLeadId);
     const propObj = propertiesList.find(p => p.id === selectedPropertyId);
-    const formattedDate = `2026-06-${selectedDay.toString().padStart(2, '0')}`;
 
     const newVisitData = {
       lead_id: selectedLeadId,
       property_id: selectedPropertyId,
-      visit_date: formattedDate,
+      visit_date: newVisitDateStr,
       visit_time: visitTime,
       status: 'Pending',
       outcome: notes
     };
 
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('site_visits')
         .insert([newVisitData])
         .select(`
@@ -257,16 +343,16 @@ export default function SiteVisitsPage() {
         .single();
 
       if (data) {
-        const mappedNew = {
+        const mappedNew: SiteVisit = {
           id: data.id,
           lead_id: data.lead_id,
           property_id: data.property_id,
-          client_name: data.leads?.client_name || leadObj?.client_name || 'Unknown',
-          property_title: data.properties?.title || propObj?.title || 'Unknown',
+          client_name: data.leads?.client_name || leadObj?.client_name || 'Unknown Client',
+          property_title: data.properties?.title || propObj?.title || 'Unknown Property',
           location: data.properties?.location || propObj?.location || 'TBD',
-          visit_date: selectedDay,
-          visit_time: data.visit_time,
-          status: 'Pending' as const,
+          visit_date_raw: data.visit_date || newVisitDateStr,
+          visit_time: data.visit_time || visitTime,
+          status: 'Pending',
           agent_notes: data.outcome || 'No additional notes.'
         };
         setVisits(prev => [...prev, mappedNew]);
@@ -282,185 +368,401 @@ export default function SiteVisitsPage() {
     setNotes('');
   };
 
+  // Years array for selector (2024 to 2030)
+  const availableYears = [2024, 2025, 2026, 2027, 2028, 2029, 2030];
+
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-12 text-zinc-900">
+    <div className="w-full space-y-6 pb-20 text-zinc-900 text-left">
       
-
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full min-h-[600px]">
-        {/* Calendar View */}
-        <div className="lg:col-span-1 bg-white border border-zinc-200 rounded-3xl p-6 shadow-sm flex flex-col">
-          <div className="flex items-center justify-between mb-8">
-            <h3 className="font-bold text-zinc-900">June 2026</h3>
-            <div className="flex gap-1">
-              <button className="p-1.5 hover:bg-zinc-100 rounded-lg transition-colors text-zinc-400">
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button className="p-1.5 hover:bg-zinc-100 rounded-lg transition-colors text-zinc-400">
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* Weekday Labels */}
-          <div className="grid grid-cols-7 gap-1 mb-4">
-            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, idx) => (
-              <div key={`${day}-${idx}`} className="h-8 flex items-center justify-center text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
-                {day}
-              </div>
-            ))}
-          </div>
-
-          {/* Days Grid */}
-          <div className="grid grid-cols-7 gap-1 flex-1">
-            {calendarDays.map((day) => (
+      {/* ── UNIFIED PORCELAIN CARD FRAME (Direction C Signature) ── */}
+      <div className="bg-white border border-[#e8e7e4] rounded-[20px] shadow-xs overflow-hidden">
+        
+        {/* Header Bar */}
+        <div className="p-4 md:px-8 border-b border-[#ebebeb] flex items-center justify-end gap-4">
+          <div className="flex items-center gap-3">
+            {/* View Mode Segmented Controls */}
+            <div className="flex bg-[#f0f0ee] p-1 rounded-xl border border-[#e5e5e3]">
               <button
-                key={day}
-                onClick={() => setSelectedDay(day)}
-                className={`aspect-square flex flex-col items-center justify-between p-2 rounded-xl border transition-all relative ${
-                  selectedDay === day 
-                    ? 'bg-zinc-900 border-zinc-900 text-white shadow-lg shadow-zinc-900/10' 
-                    : 'bg-white border-transparent hover:border-zinc-200 text-zinc-600'
+                type="button"
+                onClick={() => setActiveTab('calendar')}
+                className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                  activeTab === 'calendar'
+                    ? 'bg-white text-zinc-900 shadow-xs'
+                    : 'text-zinc-500 hover:text-zinc-800'
                 }`}
               >
-                <span className="text-xs font-bold">{day}</span>
-                {hasVisits(day) && (
-                  <span className={`h-1.5 w-1.5 rounded-full ${getDayDotStyle(day)} animate-pulse`} />
-                )}
+                Calendar View
               </button>
-            ))}
-          </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab('all')}
+                className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                  activeTab === 'all'
+                    ? 'bg-white text-zinc-900 shadow-xs'
+                    : 'text-zinc-500 hover:text-zinc-800'
+                }`}
+              >
+                All Visits ({visits.length})
+              </button>
+            </div>
 
-          <div className="mt-8 pt-6 border-t border-zinc-100 space-y-3">
-            <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
-              <div className="h-2 w-2 rounded-full bg-zinc-500" />
-              Confirmed Viewing
-            </div>
-            <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
-              <div className="h-2 w-2 rounded-full bg-amber-500" />
-              Pending Confirmation
-            </div>
-            <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
-              <div className="h-2 w-2 rounded-full bg-rose-500" />
-              Cancelled Visit
-            </div>
+            {/* Schedule New Visit Action Button */}
+            <button
+              type="button"
+              onClick={() => setIsFormOpen(true)}
+              className="dc-btn gold font-extrabold text-[11px] px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-xs cursor-pointer"
+            >
+              <Plus className="h-4 w-4" />
+              Schedule Visit
+            </button>
           </div>
         </div>
 
-        {/* Selected Day Agenda */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest ml-1">
-              Agenda for June {selectedDay}, 2026
-            </h3>
-            <span className="text-[10px] font-bold text-zinc-600">{selectedDayVisits.length} viewings scheduled</span>
-          </div>
+        {/* ── CALENDAR VIEW MODE ── */}
+        {activeTab === 'calendar' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[580px]">
+            
+            {/* Column 1: Month Calendar Navigator (4 cols) */}
+            <div className="lg:col-span-4 border-r border-[#ebebeb] p-6 flex flex-col justify-between bg-white">
+              <div>
+                
+                {/* Month & Year Selectors Bar */}
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-1.5">
+                    {/* Month Select */}
+                    <select
+                      value={currMonth}
+                      onChange={(e) => handleMonthChange(parseInt(e.target.value, 10))}
+                      className="text-[13px] font-extrabold text-zinc-900 bg-transparent border-none focus:outline-none cursor-pointer hover:text-[#b8922e] transition-colors"
+                    >
+                      {MONTH_NAMES.map((name, idx) => (
+                        <option key={name} value={idx}>{name}</option>
+                      ))}
+                    </select>
 
-          <div className="space-y-3">
-            {selectedDayVisits.map((visit) => (
-              <div 
-                key={visit.id}
-                className="bg-white border border-zinc-200 p-6 rounded-3xl shadow-sm hover:border-zinc-500/30 hover:shadow-lg transition-all group"
-              >
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                  <div className="flex gap-4">
-                    <div className="h-12 w-12 rounded-2xl bg-zinc-50 flex items-center justify-center group-hover:bg-zinc-50 transition-colors">
-                      <Clock className="h-6 w-6 text-zinc-400 group-hover:text-zinc-500" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-bold text-zinc-900">{visit.visit_time}</span>
-                        <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-widest ${
-                          visit.status === 'Confirmed' ? 'bg-zinc-50 text-zinc-600 border border-zinc-100' :
-                          visit.status === 'Pending' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
-                          'bg-rose-50 text-rose-600 border border-rose-100'
-                        }`}>
-                          {visit.status}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-700">
-                        <User className="h-3.5 w-3.5 text-zinc-400" />
-                        {visit.client_name}
-                      </div>
-                    </div>
+                    {/* Year Select */}
+                    <select
+                      value={currYear}
+                      onChange={(e) => handleYearChange(parseInt(e.target.value, 10))}
+                      className="text-[13px] font-extrabold text-zinc-600 bg-transparent border-none focus:outline-none cursor-pointer hover:text-zinc-900 transition-colors"
+                    >
+                      {availableYears.map(y => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
                   </div>
 
-                  <div className="flex-1 md:px-8">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-900 mb-1">
-                      <Home className="h-3.5 w-3.5 text-zinc-500" />
-                      {visit.property_title}
-                    </div>
-                    <div className="flex items-center gap-1 text-[10px] font-medium text-zinc-400">
-                      <MapPin className="h-3 w-3" />
-                      {visit.location}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button 
-                      onClick={() => handleOpenReschedule(visit)}
-                      className="px-3 py-2 rounded-xl bg-zinc-50 border border-zinc-200 text-xs font-bold text-zinc-700 hover:bg-zinc-100 hover:border-zinc-300 transition-all cursor-pointer flex items-center gap-1.5"
-                      title="Reschedule Visit"
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={handleJumpToToday}
+                      className="px-2 py-1 text-[9.5px] font-extrabold text-zinc-500 bg-zinc-100 hover:bg-zinc-200 rounded-md transition-colors mr-1"
+                      title="Jump to Today"
                     >
-                      <Calendar className="h-3.5 w-3.5 text-zinc-500" />
-                      Reschedule
+                      Today
                     </button>
                     <button 
-                      onClick={() => handleUpdateStatus(visit.id, 'Confirmed')}
-                      className="h-10 w-10 rounded-xl bg-zinc-50 border border-zinc-200 flex items-center justify-center text-zinc-400 hover:text-emerald-600 hover:border-emerald-500 transition-all cursor-pointer"
-                      title="Confirm Viewing"
+                      type="button" 
+                      onClick={handlePrevMonth}
+                      className="p-1.5 hover:bg-zinc-100 rounded-lg transition-colors text-zinc-500"
+                      title="Previous Month"
                     >
-                      <Check className="h-4 w-4" />
+                      <ChevronLeft className="h-4 w-4" />
                     </button>
                     <button 
-                      onClick={() => handleUpdateStatus(visit.id, 'Cancelled')}
-                      className="h-10 w-10 rounded-xl bg-zinc-50 border border-zinc-200 flex items-center justify-center text-zinc-400 hover:text-rose-500 hover:border-rose-500 transition-all cursor-pointer"
-                      title="Cancel Viewing"
+                      type="button" 
+                      onClick={handleNextMonth}
+                      className="p-1.5 hover:bg-zinc-100 rounded-lg transition-colors text-zinc-500"
+                      title="Next Month"
                     >
-                      <X className="h-4 w-4" />
+                      <ChevronRight className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
 
-                {visit.agent_notes && (
-                  <div className="mt-5 pt-5 border-t border-zinc-50 flex gap-2">
-                    <AlertCircle className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
-                    <p className="text-[11px] text-zinc-500 font-medium leading-relaxed italic">
-                      &quot;{visit.agent_notes}&quot;
-                    </p>
+                {/* Weekday Labels (Monday start) */}
+                <div className="grid grid-cols-7 gap-1 mb-2">
+                  {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, idx) => (
+                    <div key={`${day}-${idx}`} className="h-7 flex items-center justify-center text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider">
+                      {day}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Days Grid */}
+                <div className="grid grid-cols-7 gap-1">
+                  {calendarGrid.map((cell, idx) => {
+                    const isSelected = selectedDateStr === cell.dateStr;
+                    const dayHasVisits = hasVisitsOnDate(cell.dateStr);
+
+                    return (
+                      <button
+                        key={`${cell.dateStr}-${idx}`}
+                        type="button"
+                        onClick={() => {
+                          setSelectedDate(cell.date);
+                          if (!cell.isCurrentMonth) {
+                            setCurrentMonthDate(new Date(cell.date.getFullYear(), cell.date.getMonth(), 1));
+                          }
+                        }}
+                        className={`aspect-square flex flex-col items-center justify-center rounded-xl border transition-all relative ${
+                          isSelected
+                            ? 'bg-[#fffdf5] border-[#d4ad4d] text-[#b8922e] font-extrabold shadow-2xs'
+                            : cell.isCurrentMonth
+                            ? 'bg-white border-[#f0f0ee] hover:border-zinc-300 text-zinc-800 font-bold'
+                            : 'bg-zinc-50/60 border-transparent text-zinc-300 font-medium'
+                        }`}
+                      >
+                        <span className="text-[11px]">{cell.dayNum}</span>
+                        {dayHasVisits && (
+                          <div className={`w-2 h-0.5 rounded-full mt-1 ${getDayDotStyle(cell.dateStr)}`} />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Status Legend */}
+              <div className="mt-8 pt-5 border-t border-[#f5f5f3] space-y-2.5">
+                <div className="text-[9px] font-extrabold text-zinc-300 uppercase tracking-widest mb-1">Status Legend</div>
+                <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-600">
+                  <div className="h-2 w-2 rounded-full bg-emerald-600" />
+                  Confirmed Viewing
+                </div>
+                <div className="flex items-center gap-2 text-[10px] font-bold text-amber-700">
+                  <div className="h-2 w-2 rounded-full bg-amber-500" />
+                  Pending Confirmation (Default)
+                </div>
+                <div className="flex items-center gap-2 text-[10px] font-bold text-rose-600">
+                  <div className="h-2 w-2 rounded-full bg-rose-500" />
+                  Cancelled Visit
+                </div>
+              </div>
+            </div>
+
+            {/* Column 2: Selected Day Agenda & Action Toolbar (8 cols) */}
+            <div className="lg:col-span-8 p-6 md:p-8 bg-[#fafaf8]/50 space-y-5">
+              
+              <div className="flex items-center justify-between border-b border-[#ebebeb] pb-4">
+                <div>
+                  <h3 className="text-[13px] font-extrabold text-zinc-900 uppercase tracking-wider">
+                    Agenda · {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                  </h3>
+                  <p className="text-[10px] text-zinc-400 font-medium mt-0.5">
+                    Showing all property tours scheduled for this date
+                  </p>
+                </div>
+                <span className="px-3 py-1 rounded-full text-[10px] font-extrabold bg-white border border-[#e8e7e4] text-[#d4ad4d]">
+                  {selectedDayVisits.length} {selectedDayVisits.length === 1 ? 'tour' : 'tours'} scheduled
+                </span>
+              </div>
+
+              {/* Agenda Cards List */}
+              <div className="space-y-4">
+                {selectedDayVisits.map((visit) => (
+                  <div 
+                    key={visit.id}
+                    className={`bg-white border rounded-2xl p-5 shadow-xs transition-all space-y-4 hover:border-[#d4ad4d]/40 ${
+                      visit.status === 'Confirmed' ? 'border-l-4 border-l-emerald-600 border-t border-r border-b border-[#e8e7e4]' :
+                      visit.status === 'Cancelled' ? 'border-l-4 border-l-rose-500 border-t border-r border-b border-[#e8e7e4]' :
+                      'border-l-4 border-l-amber-500 border-t border-r border-b border-[#e8e7e4]'
+                    }`}
+                  >
+                    {/* Top Row: Time & Status Tag */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-zinc-400" />
+                        <span className="text-[13px] font-extrabold text-zinc-900">{visit.visit_time}</span>
+                      </div>
+                      <span className={`px-2.5 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider border ${
+                        visit.status === 'Confirmed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        visit.status === 'Cancelled' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                        'bg-amber-50 text-amber-700 border-amber-200'
+                      }`}>
+                        {visit.status === 'Confirmed' ? '✓ Confirmed Viewing' :
+                         visit.status === 'Cancelled' ? '✕ Cancelled Visit' :
+                         '● Pending Confirmation'}
+                      </span>
+                    </div>
+
+                    {/* Middle Grid: Client Lead + Property details */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-3 border-y border-[#f5f5f3]">
+                      <div className="space-y-1">
+                        <div className="text-[8.5px] font-extrabold text-zinc-300 uppercase tracking-wider">Client Lead</div>
+                        <div className="text-[12px] font-extrabold text-zinc-900 flex items-center gap-1.5">
+                          <User className="h-3.5 w-3.5 text-zinc-400" />
+                          {visit.client_name}
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-[8.5px] font-extrabold text-zinc-300 uppercase tracking-wider">Property Listing</div>
+                        <div className="text-[12px] font-extrabold text-zinc-900 flex items-center gap-1.5">
+                          <Home className="h-3.5 w-3.5 text-zinc-400" />
+                          {visit.property_title}
+                        </div>
+                        <div className="text-[10px] font-medium text-zinc-400 flex items-center gap-1">
+                          <MapPin className="h-3 w-3 text-zinc-300" />
+                          {visit.location}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Notes Box */}
+                    {visit.agent_notes && (
+                      <div className="bg-[#fafaf8] border border-[#ebebeb] rounded-xl p-3 flex items-start gap-2">
+                        <AlertCircle className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+                        <p className="text-[10.5px] text-zinc-600 font-medium italic leading-relaxed">
+                          &quot;{visit.agent_notes}&quot;
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Bottom Action Bar: Confirm, Reschedule, Cancel */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                      <span className="text-[9px] font-extrabold text-zinc-300 uppercase tracking-wider">Viewing Controls</span>
+                      <div className="flex items-center gap-2">
+                        {visit.status !== 'Confirmed' && (
+                          <button 
+                            type="button"
+                            onClick={() => handleUpdateStatus(visit.id, 'Confirmed')}
+                            className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10.5px] font-extrabold hover:bg-emerald-100 transition-colors flex items-center gap-1 cursor-pointer"
+                          >
+                            <Check className="h-3.5 w-3.5" />
+                            Confirm Visit
+                          </button>
+                        )}
+                        <button 
+                          type="button"
+                          onClick={() => handleOpenReschedule(visit)}
+                          className="px-3 py-1.5 rounded-lg bg-white border border-[#e8e7e4] text-zinc-700 text-[10.5px] font-extrabold hover:bg-zinc-50 transition-colors flex items-center gap-1 cursor-pointer"
+                        >
+                          <CalendarDays className="h-3.5 w-3.5 text-[#d4ad4d]" />
+                          Reschedule
+                        </button>
+                        {visit.status !== 'Cancelled' && (
+                          <button 
+                            type="button"
+                            onClick={() => handleUpdateStatus(visit.id, 'Cancelled')}
+                            className="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-[10.5px] font-extrabold hover:bg-rose-100 transition-colors flex items-center gap-1 cursor-pointer"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                            Cancel
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                  </div>
+                ))}
+
+                {selectedDayVisits.length === 0 && (
+                  <div className="py-20 flex flex-col items-center justify-center bg-white rounded-2xl border-2 border-dashed border-[#ebebeb] text-zinc-400 space-y-2">
+                    <CalendarIcon className="h-10 w-10 text-zinc-300" />
+                    <p className="text-[12px] font-bold text-zinc-600">No viewings scheduled for {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                    <p className="text-[10px] text-zinc-400">Click &quot;Schedule Visit&quot; above to add a new client tour</p>
                   </div>
                 )}
               </div>
-            ))}
 
-            {selectedDayVisits.length === 0 && (
-              <div className="py-20 flex flex-col items-center justify-center bg-zinc-50 rounded-3xl border-2 border-dashed border-zinc-200 text-zinc-300">
-                <Calendar className="h-12 w-12 opacity-20 mb-3" />
-                <p className="text-xs font-bold uppercase tracking-widest">No viewings scheduled for this day</p>
-              </div>
-            )}
+            </div>
+
           </div>
-        </div>
+        )}
+
+        {/* ── ALL VISITS TABLE VIEW MODE ── */}
+        {activeTab === 'all' && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-[#fafaf8] border-b border-[#ebebeb]">
+                  <th className="py-3 px-6 text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider">Date & Time</th>
+                  <th className="py-3 px-6 text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider">Client Lead</th>
+                  <th className="py-3 px-6 text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider">Property Listing</th>
+                  <th className="py-3 px-6 text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider">Status</th>
+                  <th className="py-3 px-6 text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider">Instructions</th>
+                  <th className="py-3 px-6 text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#f5f5f3]">
+                {visits.map((v) => (
+                  <tr key={v.id} className="hover:bg-[#fafaf8]/80 transition-colors">
+                    <td className="py-4 px-6 text-[11.5px] font-extrabold text-zinc-900">
+                      {v.visit_date_raw}
+                      <div className="text-[10px] font-medium text-zinc-400">{v.visit_time}</div>
+                    </td>
+                    <td className="py-4 px-6 text-[11.5px] font-extrabold text-zinc-900">
+                      {v.client_name}
+                    </td>
+                    <td className="py-4 px-6 text-[11.5px] font-extrabold text-zinc-900">
+                      {v.property_title}
+                      <div className="text-[10px] font-medium text-zinc-400">{v.location}</div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <select
+                        value={v.status}
+                        onChange={(e) => handleUpdateStatus(v.id, e.target.value as 'Confirmed' | 'Cancelled')}
+                        className={`px-2.5 py-1 rounded-md text-[10px] font-extrabold border cursor-pointer focus:outline-none ${
+                          v.status === 'Confirmed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                          v.status === 'Cancelled' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                          'bg-amber-50 text-amber-700 border-amber-200'
+                        }`}
+                      >
+                        <option value="Pending">Pending Confirmation</option>
+                        <option value="Confirmed">Confirmed</option>
+                        <option value="Cancelled">Cancelled</option>
+                      </select>
+                    </td>
+                    <td className="py-4 px-6 text-[10.5px] font-medium text-zinc-500 max-w-xs truncate">
+                      {v.agent_notes}
+                    </td>
+                    <td className="py-4 px-6 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenReschedule(v)}
+                          className="px-2.5 py-1 rounded-lg border border-[#e8e7e4] text-zinc-700 text-[10px] font-bold hover:bg-zinc-50"
+                        >
+                          Reschedule
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateStatus(v.id, 'Cancelled')}
+                          className="px-2.5 py-1 rounded-lg border border-rose-200 bg-rose-50 text-rose-700 text-[10px] font-bold hover:bg-rose-100"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
       </div>
 
-      {/* Schedule Form Modal */}
+      {/* ── SCHEDULE NEW VIEWING FORM MODAL ── */}
       {isFormOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-950/40 backdrop-blur-sm" onClick={() => setIsFormOpen(false)} />
-          <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-zinc-100 flex items-center justify-between">
-              <h3 className="font-bold text-zinc-900">Schedule New Viewing</h3>
-              <button onClick={() => setIsFormOpen(false)} className="p-2 hover:bg-zinc-100 rounded-full transition-colors">
-                <X className="h-5 w-5 text-zinc-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/40 backdrop-blur-xs">
+          <div className="relative w-full max-w-md bg-white border border-[#e8e7e4] rounded-2xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-200 text-left">
+            <div className="p-5 border-b border-[#ebebeb] flex items-center justify-between bg-[#fafaf8]">
+              <div>
+                <h3 className="text-[14px] font-extrabold text-zinc-900">Schedule New Site Tour</h3>
+                <p className="text-[10px] text-zinc-400 font-medium">Tour will be saved as Pending Confirmation by default</p>
+              </div>
+              <button type="button" onClick={() => setIsFormOpen(false)} className="p-1.5 hover:bg-zinc-200/50 rounded-lg transition-colors text-zinc-400">
+                <X className="h-4 w-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-5">
-              <div className="space-y-2 text-left">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Client Lead</label>
+            <form onSubmit={handleSubmit} className="p-5 space-y-4">
+              <div className="space-y-1">
+                <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider">Client Lead *</label>
                 <select
                   required
-                  className="w-full px-4 py-3 rounded-xl bg-zinc-50 border border-zinc-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all cursor-pointer"
+                  className="w-full px-3 py-2 rounded-xl bg-white border border-[#e8e7e4] text-xs font-bold text-zinc-800 focus:outline-none focus:border-[#d4ad4d]"
                   value={selectedLeadId}
                   onChange={(e) => setSelectedLeadId(e.target.value)}
                 >
@@ -471,11 +773,11 @@ export default function SiteVisitsPage() {
                 </select>
               </div>
 
-              <div className="space-y-2 text-left">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Property Listing</label>
+              <div className="space-y-1">
+                <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider">Property Listing *</label>
                 <select
                   required
-                  className="w-full px-4 py-3 rounded-xl bg-zinc-50 border border-zinc-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all cursor-pointer"
+                  className="w-full px-3 py-2 rounded-xl bg-white border border-[#e8e7e4] text-xs font-bold text-zinc-800 focus:outline-none focus:border-[#d4ad4d]"
                   value={selectedPropertyId}
                   onChange={(e) => setSelectedPropertyId(e.target.value)}
                 >
@@ -486,47 +788,59 @@ export default function SiteVisitsPage() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Date</label>
-                  <div className="w-full px-4 py-3 rounded-xl bg-zinc-100 border border-zinc-200 text-sm font-bold text-zinc-500 cursor-not-allowed">
-                    June {selectedDay}, 2026
-                  </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider">Tour Date *</label>
+                  <input
+                    type="date"
+                    required
+                    value={newVisitDateStr}
+                    onChange={(e) => setNewVisitDateStr(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-[#e8e7e4] text-xs font-bold text-zinc-800 focus:outline-none focus:border-[#d4ad4d]"
+                  />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Time</label>
+                <div className="space-y-1">
+                  <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider">Tour Time *</label>
                   <input 
                     type="text" 
                     required
-                    placeholder="10:00 AM"
-                    className="w-full px-4 py-3 rounded-xl bg-zinc-50 border border-zinc-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all"
+                    placeholder="02:30 PM"
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-[#e8e7e4] text-xs font-bold text-zinc-800 focus:outline-none focus:border-[#d4ad4d]"
                     value={visitTime}
                     onChange={(e) => setVisitTime(e.target.value)}
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Special Instructions</label>
+              <div className="space-y-1">
+                <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider">Instructions / Focus Areas</label>
                 <textarea 
-                  className="w-full h-24 px-4 py-3 rounded-xl bg-zinc-50 border border-zinc-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all resize-none"
-                  placeholder="Any specific focus areas for the viewing?"
+                  className="w-full h-20 px-3 py-2 rounded-xl bg-white border border-[#e8e7e4] text-xs font-medium text-zinc-800 focus:outline-none focus:border-[#d4ad4d] resize-none"
+                  placeholder="E.g., Client wants to inspect parking bay & clubhouse..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 />
               </div>
 
-              <div className="pt-4 flex items-center gap-3">
+              {/* Explicit Default Status note */}
+              <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 flex items-center gap-2">
+                <AlertCircle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                <span className="text-[10px] font-extrabold text-amber-800">
+                  Initial Status: Pending Confirmation
+                </span>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-[#ebebeb]">
                 <button 
                   type="button"
                   onClick={() => setIsFormOpen(false)}
-                  className="flex-1 py-3 rounded-xl text-xs font-bold text-zinc-500 hover:text-zinc-900 transition-all"
+                  className="px-4 py-2 rounded-xl border border-[#e8e7e4] text-xs font-bold text-zinc-600 hover:bg-zinc-50"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit"
-                  className="flex-1 py-3 rounded-xl bg-zinc-600 text-white text-xs font-bold hover:bg-zinc-500 transition-all shadow-lg shadow-zinc-500/20"
+                  className="px-4 py-2 rounded-xl bg-[#d4ad4d] text-white text-xs font-extrabold hover:bg-[#b8922e] transition-all shadow-2xs"
                 >
                   Confirm Schedule
                 </button>
@@ -535,6 +849,82 @@ export default function SiteVisitsPage() {
           </div>
         </div>
       )}
+
+      {/* ── RESCHEDULE VIEWING MODAL ── */}
+      {rescheduleVisit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/40 backdrop-blur-xs">
+          <div className="relative w-full max-w-md bg-white border border-[#e8e7e4] rounded-2xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-200 text-left">
+            <div className="p-5 border-b border-[#ebebeb] flex items-center justify-between bg-[#fafaf8]">
+              <div>
+                <h3 className="text-[14px] font-extrabold text-zinc-900">Reschedule Site Viewing</h3>
+                <p className="text-[10px] text-zinc-400 font-medium">Updating viewing date for {rescheduleVisit.client_name}</p>
+              </div>
+              <button type="button" onClick={() => setRescheduleVisit(null)} className="p-1.5 hover:bg-zinc-200/50 rounded-lg transition-colors text-zinc-400">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleRescheduleSubmit} className="p-5 space-y-4">
+              <div className="space-y-1">
+                <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider">Property Listing</label>
+                <div className="px-3 py-2 rounded-xl bg-[#fafaf8] border border-[#e8e7e4] text-xs font-bold text-zinc-700">
+                  {rescheduleVisit.property_title} ({rescheduleVisit.location})
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider">New Date *</label>
+                  <input
+                    type="date"
+                    required
+                    value={rescheduleDateStr}
+                    onChange={(e) => setRescheduleDateStr(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-[#e8e7e4] text-xs font-bold text-zinc-800 focus:outline-none focus:border-[#d4ad4d]"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider">New Time *</label>
+                  <input 
+                    type="text" 
+                    required
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-[#e8e7e4] text-xs font-bold text-zinc-800 focus:outline-none focus:border-[#d4ad4d]"
+                    value={rescheduleTime}
+                    onChange={(e) => setRescheduleTime(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider">Reschedule Reason / Next Steps</label>
+                <textarea 
+                  className="w-full h-20 px-3 py-2 rounded-xl bg-white border border-[#e8e7e4] text-xs font-medium text-zinc-800 focus:outline-none focus:border-[#d4ad4d] resize-none"
+                  placeholder="E.g., Client requested afternoon postponement..."
+                  value={rescheduleReason}
+                  onChange={(e) => setRescheduleReason(e.target.value)}
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-[#ebebeb]">
+                <button 
+                  type="button"
+                  onClick={() => setRescheduleVisit(null)}
+                  className="px-4 py-2 rounded-xl border border-[#e8e7e4] text-xs font-bold text-zinc-600 hover:bg-zinc-50"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-[#d4ad4d] text-white text-xs font-extrabold hover:bg-[#b8922e] transition-all shadow-2xs"
+                >
+                  Save Reschedule
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

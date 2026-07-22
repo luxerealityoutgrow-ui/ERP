@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luxe Realty — Option 1 Deep Operational Control Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: #f0f0ee; padding: 24px; color: #1a1a1a; }
+
+  /* ── Carousel Nav ── */
+  .carousel { position: relative; }
+  .slide { display: none; }
+  .slide.active { display: block; }
+  .nav { display: flex; gap: 10px; justify-content: center; margin-top: 24px; }
+  .dot { width: 24px; height: 4px; border-radius: 99px; background: #d1cfc8; cursor: pointer; transition: all .25s; border: none; }
+  .dot.active { background: #d4ad4d; width: 44px; }
+  .arrows { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .arrow-btn { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 8px 16px; font-size: 12px; font-weight: 700; color: #666; cursor: pointer; transition: all .15s; }
+  .arrow-btn:hover { background: #f6f6f4; color: #1a1a1a; }
+  .direction-title { font-size: 17px; font-weight: 800; color: #1a1a1a; text-align: center; }
+  .direction-sub { font-size: 11.5px; color: #888; text-align: center; margin-top: 3px; }
+
+  /* Description card */
+  .desc-card { margin-top: 16px; padding: 14px 18px; background: white; border-radius: 12px; border: 1px solid #e8e8e6; font-size: 11px; color: #666; line-height: 1.8; text-align: left; }
+
+  /* Shared UI Elements */
+  .dc-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; height: 30px; border-radius: 8px;
+    font-size: 10.5px; font-weight: 700; color: #444;
+    background: white; border: 1px solid #e5e5e3;
+    transition: all 0.15s; cursor: pointer;
+  }
+  .dc-btn.gold { background: #d4ad4d; border-color: #d4ad4d; color: white; }
+
+  .kpi-num { font-size: 20px; font-weight: 900; tracking-tight: -0.5px; color: #111; }
+  .kpi-lbl { font-size: 8.5px; font-weight: 850; text-transform: uppercase; color: #aaa; letter-spacing: 0.08em; }
+
+  /* Duration Filter Pill */
+  .dur-btn { padding: 4px 10px; font-size: 10px; font-weight: 700; color: #666; border-radius: 6px; border: none; background: transparent; cursor: pointer; }
+  .dur-btn.active { background: white; color: #111; font-weight: 850; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+
+  /* Status Tags */
+  .ds-tag { font-size: 8px; font-weight: 850; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; border: 1px solid #ebebeb; }
+  .ds-tag.confirmed { background: #f0fff4; border-color: #bbf3d0; color: #166534; }
+  .ds-tag.pending { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+  .ds-tag.hot { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+  .ds-tag.warm { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+
+  /* ════════════════════════════════════
+     OPTION 1 — Editorial Porcelain Control Cabinet
+  ════════════════════════════════════ */
+  .opt1-frame { background: white; border: 1px solid #e8e7e4; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.015); text-align: left; }
+  .opt1-hdr { padding: 18px 24px; border-bottom: 1px solid #ebebeb; display: flex; justify-content: space-between; align-items: center; }
+  
+  .opt1-kpi-bar { display: grid; grid-template-columns: repeat(5, 1fr); border-bottom: 1px solid #ebebeb; background: #fafaf8/40; }
+  .opt1-kpi-item { padding: 14px 20px; border-right: 1px solid #ebebeb; }
+  .opt1-kpi-item:last-child { border-right: none; }
+
+  .opt1-body { display: grid; grid-template-columns: 8fr 4fr; }
+  .opt1-main { padding: 20px 24px; border-right: 1px solid #ebebeb; display: flex; flex-direction: column; gap: 20px; }
+  .opt1-side { padding: 20px 24px; background: #fafaf8/50; display: flex; flex-direction: column; gap: 18px; }
+
+  /* Table styling */
+  .dash-table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: left; }
+  .dash-table th { background: #fafaf8; padding: 8px 12px; font-size: 8.5px; font-weight: 850; color: #aaa; text-transform: uppercase; border-bottom: 1px solid #ebebeb; }
+  .dash-table td { padding: 9px 12px; border-bottom: 1px solid #f5f5f3; }
+</style>
+</head>
+<body>
+
+<div class="carousel">
+  <div class="arrows">
+    <button class="arrow-btn" onclick="prevSlide()">← Previous</button>
+    <div>
+      <div class="direction-title" id="slide-title">Option 1 — Editorial Porcelain Control Cabinet (Deep Intelligence)</div>
+      <div class="direction-sub" id="slide-sub">Comprehensive single-page operational control with duration filters, employee efficiency scorecards, and lead insights</div>
+    </div>
+    <button class="arrow-btn" onclick="nextSlide()">Next →</button>
+  </div>
+
+  <!-- ═══════ OPTION 1 ═══════ -->
+  <div class="slide active" id="slide-0">
+    <div class="opt1-frame">
+      
+      <!-- Top Header with Duration Range Filter -->
+      <div class="opt1-hdr">
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <h2 style="font-size:16px; font-weight:900; color:#111;">Executive Operations Command</h2>
+            <span style="font-size:9px; font-weight:800; background:#f4ebd0; color:#967420; border:1px solid #e8d5a3; padding:2px 8px; border-radius:4px; text-transform:uppercase;">FULL CONTROL DECK</span>
+          </div>
+          <p style="font-size:10.5px; color:#aaa; margin-top:2px;">Real-time company performance, agent efficiency metrics & client tour logistics · Luxe Realty Pune</p>
+        </div>
+
+        <div style="display:flex; gap:10px; align-items:center;">
+          <!-- Duration Range Selector Pills -->
+          <div style="background:#f0f0ee; padding:2px; border-radius:8px; display:flex; gap:2px; border:1px solid #e5e5e3;">
+            <button class="dur-btn">Today</button>
+            <button class="dur-btn">7D</button>
+            <button class="dur-btn active">30D</button>
+            <button class="dur-btn">90D</button>
+            <button class="dur-btn">YTD</button>
+            <button class="dur-btn">All</button>
+          </div>
+
+          <button class="dc-btn gold font-bold">+ Schedule Tour</button>
+        </div>
+      </div>
+
+      <!-- Top 5 Financial & Volume Metric Bar -->
+      <div class="opt1-kpi-bar">
+        <div class="opt1-kpi-item">
+          <div class="kpi-lbl">Total Inbound Leads</div>
+          <div class="kpi-num">148</div>
+          <div style="font-size:9.5px; font-weight:800; color:#166534; margin-top:2px;">↑ +14.2% (30D Range)</div>
+        </div>
+        <div class="opt1-kpi-item">
+          <div class="kpi-lbl">Active Pipeline Value</div>
+          <div class="kpi-num">₹38.4 Cr</div>
+          <div style="font-size:9.5px; font-weight:800; color:#b8922e; margin-top:2px;">28 Hot Leads (₹22.1 Cr)</div>
+        </div>
+        <div class="opt1-kpi-item">
+          <div class="kpi-lbl">Site Tours Scheduled</div>
+          <div class="kpi-num">32 Visits</div>
+          <div style="font-size:9.5px; font-weight:800; color:#166534; margin-top:2px;">6 Tours Today (4 Confirmed)</div>
+        </div>
+        <div class="opt1-kpi-item">
+          <div class="kpi-lbl">Portfolio Inventory</div>
+          <div class="kpi-num">46 Units</div>
+          <div style="font-size:9.5px; font-weight:800; color:#666; margin-top:2px;">₹142.5 Cr Asset Value</div>
+        </div>
+        <div class="opt1-kpi-item">
+          <div class="kpi-lbl">Closed Revenue & Fee</div>
+          <div class="kpi-num">₹18.6 Cr</div>
+          <div style="font-size:9.5px; font-weight:800; color:#166534; margin-top:2px;">₹37.2L Commission (2%)</div>
+        </div>
+      </div>
+
+      <div class="opt1-body">
+        <!-- Main Column (8 Cols) -->
+        <div class="opt1-main">
+          
+          <!-- Sales Funnel Conversion Row -->
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:9.5px; font-weight:850; color:#bbb; text-transform:uppercase; letter-spacing:0.08em;">Sales Funnel Velocity & Stage Distribution</span>
+              <span style="font-size:10px; font-weight:800; color:#d4ad4d;">Avg 18 Days to Close</span>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:10px;">
+              <div style="background:#fafaf8; border:1px solid #ebebeb; padding:10px 12px; border-radius:10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#888;">NEW INQUIRIES</div>
+                <div style="font-size:15px; font-weight:900; margin-top:2px;">42 Leads</div>
+                <div style="font-size:9px; color:#aaa;">₹14.2 Cr Budget</div>
+              </div>
+              <div style="background:#fafaf8; border:1px solid #ebebeb; padding:10px 12px; border-radius:10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#888;">SITE VISITS</div>
+                <div style="font-size:15px; font-weight:900; margin-top:2px;">28 Tours</div>
+                <div style="font-size:9px; color:#aaa;">21 Completed</div>
+              </div>
+              <div style="background:#fafaf8; border:1px solid #ebebeb; padding:10px 12px; border-radius:10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#888;">FOLLOW UP</div>
+                <div style="font-size:15px; font-weight:900; margin-top:2px;">19 Deals</div>
+                <div style="font-size:9px; color:#aaa;">₹8.6 Cr Budget</div>
+              </div>
+              <div style="background:#fafaf8; border:1px solid #ebebeb; padding:10px 12px; border-radius:10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#888;">NEGOTIATION</div>
+                <div style="font-size:15px; font-weight:900; margin-top:2px;">14 Deals</div>
+                <div style="font-size:9px; color:#aaa;">₹6.2 Cr Value</div>
+              </div>
+              <div style="background:#fffdf5; border:1px solid #d4ad4d; padding:10px 12px; border-radius:10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#b8922e;">DEALS CLOSED</div>
+                <div style="font-size:15px; font-weight:900; margin-top:2px; color:#b8922e;">11 Closed</div>
+                <div style="font-size:9px; color:#b8922e; font-weight:700;">₹18.6 Cr Revenue</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- NEW: EMPLOYEE EFFICIENCY & PERFORMANCE SCORECARD MATRIX -->
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:9.5px; font-weight:850; color:#bbb; text-transform:uppercase; letter-spacing:0.08em;">Sales Team Efficiency & Performance Matrix</span>
+              <span style="font-size:10px; font-weight:800; color:#166534;">Avg Agent Efficiency: 91%</span>
+            </div>
+            <div style="border:1px solid #ebebeb; border-radius:12px; overflow:hidden;">
+              <table class="dash-table">
+                <thead>
+                  <tr>
+                    <th>Agent Name</th>
+                    <th>Role</th>
+                    <th>Leads Assigned</th>
+                    <th>Deals Closed (₹)</th>
+                    <th>Tour Conv. Rate</th>
+                    <th>Avg Response Time</th>
+                    <th>Efficiency Rating</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="font-weight:800;">Rahul Sharma</td>
+                    <td style="color:#666;">SuperAdmin / Senior Agent</td>
+                    <td style="font-weight:800;">18 Leads</td>
+                    <td style="font-weight:900; color:#b8922e;">₹8.4 Cr (5 deals)</td>
+                    <td style="font-weight:800; color:#166534;">33.3%</td>
+                    <td style="font-weight:700;">12 mins</td>
+                    <td><span style="background:#f0fff4; border:1px solid #bbf3d0; color:#166534; padding:2px 6px; border-radius:4px; font-size:9px; font-weight:850;">96/100 (EXCELLENT)</span></td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight:800;">Priya Mehta</td>
+                    <td style="color:#666;">Manager</td>
+                    <td style="font-weight:800;">14 Leads</td>
+                    <td style="font-weight:900; color:#b8922e;">₹5.2 Cr (3 deals)</td>
+                    <td style="font-weight:800; color:#166534;">28.5%</td>
+                    <td style="font-weight:700;">18 mins</td>
+                    <td><span style="background:#f0fff4; border:1px solid #bbf3d0; color:#166534; padding:2px 6px; border-radius:4px; font-size:9px; font-weight:850;">91/100 (GOLD)</span></td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight:800;">Siddharth Shetty</td>
+                    <td style="color:#666;">SalesPerson</td>
+                    <td style="font-weight:800;">11 Leads</td>
+                    <td style="font-weight:900; color:#b8922e;">₹3.8 Cr (2 deals)</td>
+                    <td style="font-weight:800; color:#166534;">25.0%</td>
+                    <td style="font-weight:700;">14 mins</td>
+                    <td><span style="background:#f0fff4; border:1px solid #bbf3d0; color:#166534; padding:2px 6px; border-radius:4px; font-size:9px; font-weight:850;">88/100 (STRONG)</span></td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight:800;">Amit Deshmukh</td>
+                    <td style="color:#666;">SalesPerson</td>
+                    <td style="font-weight:800;">9 Leads</td>
+                    <td style="font-weight:900; color:#b8922e;">₹1.2 Cr (1 deal)</td>
+                    <td style="font-weight:800; color:#92400e;">18.0%</td>
+                    <td style="font-weight:700;">35 mins</td>
+                    <td><span style="background:#fffbeb; border:1px solid #fde68a; color:#92400e; padding:2px 6px; border-radius:4px; font-size:9px; font-weight:850;">78/100 (AVERAGE)</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- NEW: LEAD INSIGHTS & ATTRIBUTION BREAKDOWN -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            
+            <!-- Lead Source Attribution -->
+            <div style="background:white; border:1px solid #ebebeb; border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:10px;">
+              <div style="font-size:9.5px; font-weight:850; color:#bbb; text-transform:uppercase;">Lead Source Attribution</div>
+              <div style="display:flex; flex-direction:column; gap:6px; font-size:10.5px;">
+                <div style="display:flex; justify-content:space-between;">
+                  <span>Google Ads Campaign</span>
+                  <span style="font-weight:800;">56 Leads (38%)</span>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                  <span>WhatsApp Inbound API</span>
+                  <span style="font-weight:800;">35 Leads (24%)</span>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                  <span>Direct Referrals</span>
+                  <span style="font-weight:800;">32 Leads (22%)</span>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                  <span>Housing.com / MagicBricks</span>
+                  <span style="font-weight:800;">25 Leads (16%)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Property Portfolio Inventory Breakdown -->
+            <div style="background:white; border:1px solid #ebebeb; border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:10px;">
+              <div style="font-size:9.5px; font-weight:850; color:#bbb; text-transform:uppercase;">Property Portfolio Status</div>
+              <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; text-align:center;">
+                <div style="background:#fafaf8; padding:8px; border-radius:8px;">
+                  <div style="font-size:15px; font-weight:900; color:#166534;">31</div>
+                  <div style="font-size:8.5px; font-weight:800; color:#888;">AVAILABLE</div>
+                </div>
+                <div style="background:#fafaf8; padding:8px; border-radius:8px;">
+                  <div style="font-size:15px; font-weight:900; color:#b8922e;">8</div>
+                  <div style="font-size:8.5px; font-weight:800; color:#888;">UNDER OFFER</div>
+                </div>
+                <div style="background:#fafaf8; padding:8px; border-radius:8px;">
+                  <div style="font-size:15px; font-weight:900; color:#333;">7</div>
+                  <div style="font-size:8.5px; font-weight:800; color:#888;">SOLD</div>
+                </div>
+              </div>
+              <div style="font-size:9.5px; color:#888; text-align:center; font-weight:600;">
+                Avg Price per Sq.Ft: ₹14,800 · Top Location: Kalyani Nagar (14 Units)
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Sidebar Column (4 Cols) -->
+        <div class="opt1-side">
+          
+          <!-- Today's Tours Agenda Widget -->
+          <div>
+            <div style="font-size:9.5px; font-weight:850; color:#bbb; text-transform:uppercase; margin-bottom:8px;">Today's Site Tours Agenda</div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="background:white; border:1px solid #ebebeb; border-left:3px solid #92400e; padding:10px 12px; border-radius:10px;">
+                <div style="font-size:11px; font-weight:800; display:flex; justify-content:space-between;">
+                  <span>02:30 PM • Swati Patil</span>
+                  <span class="ds-tag pending">PENDING</span>
+                </div>
+                <div style="font-size:9.5px; color:#666; margin-top:2px;">Nyati Evoque (Kalyani Nagar)</div>
+              </div>
+
+              <div style="background:white; border:1px solid #ebebeb; border-left:3px solid #166534; padding:10px 12px; border-radius:10px;">
+                <div style="font-size:11px; font-weight:800; display:flex; justify-content:space-between;">
+                  <span>05:00 PM • Siddharth Shetty</span>
+                  <span class="ds-tag confirmed">CONFIRMED</span>
+                </div>
+                <div style="font-size:9.5px; color:#666; margin-top:2px;">Pristine Kyra (Koregaon Park)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tour Outcome & Completion Ratios -->
+          <div style="background:white; border:1px solid #ebebeb; border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:8px;">
+            <div style="font-size:9.5px; font-weight:850; color:#bbb; text-transform:uppercase;">Tour Conversion Ratios</div>
+            <div style="display:flex; justify-content:space-between; font-size:10.5px;">
+              <span>Completed Tours</span>
+              <span style="font-weight:800; color:#166534;">21 (65.6%)</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:10.5px;">
+              <span>Pending Confirmation</span>
+              <span style="font-weight:800; color:#92400e;">7 (21.8%)</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:10.5px;">
+              <span>Cancelled Tours</span>
+              <span style="font-weight:800; color:#991b1b;">4 (12.5%)</span>
+            </div>
+          </div>
+
+          <!-- Live Operations & System Audit Stream -->
+          <div>
+            <div style="font-size:9.5px; font-weight:850; color:#bbb; text-transform:uppercase; margin-bottom:6px;">Live Operations Stream</div>
+            <div style="font-size:9.5px; color:#666; display:flex; flex-direction:column; gap:6px;">
+              <div>• <strong>Rahul S.</strong> scheduled tour for Swati Patil at 2:30 PM</div>
+              <div>• <strong>Priya M.</strong> updated Pristine Kyra price to ₹5.2 Cr</div>
+              <div>• <strong>System</strong> imported 4 leads from Google Ads webhook</div>
+              <div>• <strong>Amit D.</strong> updated lead Siddharth status to Warm</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="desc-card">
+      <strong style="color:#111;">Option 1: Editorial Porcelain Control Cabinet (Deep Intelligence Upgrade)</strong><br>
+      ✓ **Duration Range Filter**: `Today`, `7D`, `30D`, `90D`, `YTD`, `All` buttons in top header to filter entire dashboard metrics.<br>
+      ✓ **Employee Efficiency Matrix**: Evaluates each agent by Leads Assigned, Deals Closed (₹), Tour Conversion Rate (%), Response Time, and Overall Efficiency Scorecard (e.g., 96/100 Excellent).<br>
+      ✓ **Lead Insights & Attribution**: Tracks lead acquisition across Google Ads, WhatsApp Inbound, Referrals, and Housing.com.<br>
+      ✓ **Tour Outcome Ratios**: Monitors Completed (65.6%), Pending (21.8%), and Cancelled (12.5%) tour conversion metrics.<br>
+      ✓ Enclosed in a single porcelain card frame matching Luxe ERP theme.
+    </div>
+  </div>
+
+  <!-- Dots -->
+  <div class="nav">
+    <button class="dot active" onclick="goTo(0)"></button>
+  </div>
+</div>
+
+<script>
+  const titles = [
+    'Option 1 — Editorial Porcelain Control Cabinet (Deep Intelligence Upgrade)'
+  ];
+  const subs = [
+    'Comprehensive single-page operational control with duration filters, employee efficiency scorecards, lead source attributions, and site visit conversion ratios'
+  ];
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const dots = document.querySelectorAll('.dot');
+  function goTo(n) {
+    slides[current].classList.remove('active');
+    dots[current].classList.remove('active');
+    current = n;
+    slides[current].classList.add('active');
+    dots[current].classList.add('active');
+    document.getElementById('slide-title').textContent = titles[current];
+    document.getElementById('slide-sub').textContent = subs[current];
+  }
+</script>
+</body>
+</html>

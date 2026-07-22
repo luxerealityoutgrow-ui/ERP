@@ -1,0 +1,262 @@
+/* app/styles/porcelain.css */
+
+/* Warm porcelain theme overrides */
+.porcelain-bg {
+  background-color: #fafaf8;
+}
+
+.porcelain-border {
+  border-color: #e8e7e4;
+}
+
+/* ── DIRECTION C: Editorial Porcelain ── */
+.dc-stats-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 12px 24px 14px;
+  border-bottom: 1px solid #ebebeb;
+  background: #fafaf8;
+}
+
+.dc-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #777570;
+}
+
+.dc-stat-num {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1a1a1a;
+}
+
+.dc-stat-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dc-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border-bottom: 1px solid #e8e7e4;
+  background: #fafaf8;
+  flex-wrap: wrap;
+}
+
+.dc-search-container {
+  position: relative;
+  flex: 1;
+  min-width: 180px;
+  max-width: 280px;
+}
+
+.dc-search {
+  width: 100%;
+  padding: 6px 10px 6px 32px;
+  background: #ffffff;
+  border: 1px solid #dcdad5;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #1a1a1a;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.dc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  background: #ffffff;
+  border: 1px solid #dcdad5;
+  color: #55534e;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  transition: all 0.15s ease-in-out;
+}
+
+.dc-btn:hover {
+  background: #fdfdfc;
+  border-color: #c8c5be;
+  color: #1a1a1a;
+}
+
+.dc-btn.gold {
+  background: #d4ad4d;
+  border-color: #c39c3c;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(212, 173, 77, 0.25);
+}
+
+.dc-btn.gold:hover {
+  background: #c39c3c;
+  border-color: #b28b2b;
+  color: #ffffff;
+}
+
+.dc-divider {
+  width: 1px;
+  height: 20px;
+  background: #e8e7e4;
+  flex-shrink: 0;
+}
+
+.dc-seg {
+  display: flex;
+  background: #efeee9;
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.dc-seg-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  color: #777570;
+  transition: all 0.15s ease-in-out;
+}
+
+.dc-seg-btn.on {
+  background: #ffffff;
+  color: #1a1a1a;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+/* Table Style Override */
+.dc-table-container {
+  overflow-x: auto;
+  background: #ffffff;
+}
+
+.dc-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12px;
+}
+
+.dc-table thead tr {
+  background: #f7f6f2;
+}
+
+.dc-table th {
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  color: #8c8980;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #e8e7e4;
+  border-right: 1px solid #e8e7e4;
+  white-space: nowrap;
+}
+
+.dc-table th:last-child {
+  border-right: none;
+}
+
+.dc-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid #efeee9;
+  border-right: 1px solid #efeee9;
+  color: #3a3935;
+  font-weight: 500;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.dc-table td:last-child {
+  border-right: none;
+}
+
+.dc-table tbody tr:hover td {
+  background: #fafaf7;
+}
+
+/* Name cell component styling */
+.dc-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dc-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+/* Custom Badges */
+.dc-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border: 1px solid transparent;
+}
+
+.dc-hot {
+  background: #fff1f2;
+  color: #e11d48;
+  border-color: #ffe4e6;
+}
+
+.dc-warm {
+  background: #fef3c7;
+  color: #d97706;
+  border-color: #fde68a;
+}
+
+.dc-cold {
+  background: #eff6ff;
+  color: #2563eb;
+  border-color: #dbeafe;
+}
+
+.dc-badge-status {
+  background: #f4f4f5;
+  color: #52525b;
+  border-color: #e4e4e7;
+}
+
+.dc-badge-active {
+  background: #ecfdf5;
+  color: #059669;
+  border-color: #a7f3d0;
+}
+
+.dc-badge-inactive {
+  background: #f4f4f5;
+  color: #71717a;
+  border-color: #e4e4e7;
+}

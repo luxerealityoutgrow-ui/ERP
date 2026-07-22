@@ -97,8 +97,12 @@ export default function PipelinePage() {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'board' | 'list'>('board');
 
-  // Properties list for site visit scheduling
+  // Raw leads and properties list for dropdown selectors
+  const [rawLeadsList, setRawLeadsList] = useState<any[]>([]);
   const [propertiesList, setPropertiesList] = useState<any[]>([]);
+  const [selectedLeadId, setSelectedLeadId] = useState<string>('');
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string>('');
+
   const [siteVisitDeal, setSiteVisitDeal] = useState<Deal | null>(null);
   const [siteVisitPropId, setSiteVisitPropId] = useState('');
   const [siteVisitDate, setSiteVisitDate] = useState('2026-06-18');
@@ -124,20 +128,30 @@ export default function PipelinePage() {
 
         const { data, error } = await query;
         if (data) {
+          setRawLeadsList(data);
           setDeads(data.map(mapLeadToDeal));
+          if (data.length > 0) {
+            setSelectedLeadId(data[0].id);
+            setClientName(data[0].client_name || '');
+            if (data[0].budget_max) setBudget(data[0].budget_max.toString());
+          }
         } else {
           setDeads([]);
         }
 
-        // Fetch properties for site visit scheduling
+        // Fetch properties for site visit scheduling & new deal dropdown
         const { data: propsData } = await supabase
           .from('properties')
-          .select('id, title, location')
+          .select('id, title, location, price, configuration')
           .eq('is_active', true)
           .order('title');
         if (propsData) {
           setPropertiesList(propsData);
-          if (propsData.length > 0) setSiteVisitPropId(propsData[0].id);
+          if (propsData.length > 0) {
+            setSiteVisitPropId(propsData[0].id);
+            setSelectedPropertyId(propsData[0].id);
+            setPropertyPref(propsData[0].title);
+          }
         }
       } catch (err) {
         console.error('Error loading deals:', err);
@@ -158,12 +172,6 @@ export default function PipelinePage() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       if (params.get('action') === 'new-deal') {
-        setClientName('');
-        setBudget('');
-        setPropertyPref('TBD');
-        setSource('Manual Entry');
-        setStage('New inquiry');
-        setNotes('');
         setIsAddModalOpen(true);
         const newUrl = window.location.pathname;
         window.history.replaceState({}, '', newUrl);
@@ -402,208 +410,205 @@ export default function PipelinePage() {
   }, [deals]);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-10 text-zinc-900 px-4 md:px-0">
+    <div className="w-full pb-20 text-zinc-900 text-left">
       
-      {/* ── PIPELINE HEADER ── */}
-      <div className="bg-white p-6 rounded-2xl border border-zinc-200 text-left">
-        {/* ── KPI METRICS BOARD ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Unified Direction C Frame Card */}
+      <div className="overflow-hidden bg-white border border-[#e8e7e4] rounded-2xl shadow-sm">
+        
+        {/* Editorial Header */}
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 px-6 py-5 border-b border-[#ebebeb]">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-[20px] font-extrabold tracking-tight text-zinc-900" style={{ letterSpacing: '-0.4px' }}>
+                Sales Deal Pipeline
+              </h1>
+              <span className="bg-zinc-900 text-white text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
+                {deals.length}
+              </span>
+            </div>
+            <p className="text-[11px] text-zinc-400 font-medium mt-0.5">Track active opportunities, forecasts, and target progress</p>
+          </div>
           
-          {/* Card 1: Total Pipeline */}
-          <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-2xl flex items-center gap-4">
-            <div className="p-2.5 rounded-2xl bg-white border border-zinc-200 text-zinc-700">
-              <BarChart3 className="h-5 w-5" />
+          <div className="flex items-center gap-2 shrink-0">
+            {/* View Mode Toggle (Segmented control) */}
+            <div className="flex items-center gap-1 bg-[#f0f0ee] p-0.5 rounded-lg border border-[#e5e5e3]">
+              <button
+                type="button"
+                onClick={() => setViewMode('board')}
+                className={`px-3 py-1 text-[10.5px] font-bold rounded-md transition-all cursor-pointer ${
+                  viewMode === 'board'
+                    ? 'bg-white text-zinc-900 shadow-sm'
+                    : 'text-zinc-400 hover:text-zinc-700'
+                }`}
+              >
+                Board
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                className={`px-3 py-1 text-[10.5px] font-bold rounded-md transition-all cursor-pointer ${
+                  viewMode === 'list'
+                    ? 'bg-white text-zinc-900 shadow-sm'
+                    : 'text-zinc-400 hover:text-zinc-700'
+                }`}
+              >
+                List
+              </button>
             </div>
-            <div>
-              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Gross Pipeline Value</p>
-              <p className="text-lg font-black text-zinc-900 mt-0.5">{formatPriceShort(metrics.pipelineTotal)}</p>
-              <p className="text-[9px] font-bold text-zinc-400 mt-0.5">{deals.length} Active Deals</p>
-            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setClientName('');
+                setBudget('');
+                setPropertyPref('TBD');
+                setSource('Manual Entry');
+                setStage('New inquiry');
+                setNotes('');
+                setIsAddModalOpen(true);
+              }}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#d4ad4d] text-white text-[11px] font-bold hover:bg-[#b8922e] transition-all shadow-[0_2px_8px_rgba(212,173,77,.35)] cursor-pointer"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add Deal
+            </button>
+          </div>
+        </div>
+
+        {/* Inline Stats Bar - Glued directly under the header */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 bg-[#fafaf8] border-b border-[#ebebeb]">
+          <div className="px-6 py-4 border-r border-[#ebebeb] text-left">
+            <span className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-widest block">Gross Pipeline</span>
+            <span className="text-[15px] font-black text-zinc-900 mt-1 block">{formatPriceShort(metrics.pipelineTotal)}</span>
+            <span className="text-[9.5px] text-zinc-400 font-medium block mt-0.5">{deals.length} Active Opportunities</span>
+          </div>
+          
+          <div className="px-6 py-4 border-r border-[#ebebeb] text-left">
+            <span className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-widest block">Weighted Forecast</span>
+            <span className="text-[15px] font-black text-zinc-900 mt-1 block">{formatPriceShort(metrics.weightedTotal)}</span>
+            <span className="text-[9.5px] text-zinc-400 font-medium block mt-0.5">Based on stage probabilities</span>
           </div>
 
-          {/* Card 2: Weighted Revenue */}
-          <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-2xl flex items-center gap-4">
-            <div className="p-2.5 rounded-2xl bg-white border border-zinc-200 text-zinc-700">
-              <TrendingUp className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Weighted Forecast (15%-100%)</p>
-              <p className="text-lg font-black text-zinc-900 mt-0.5">{formatPriceShort(metrics.weightedTotal)}</p>
-              <p className="text-[9px] font-bold text-zinc-400 mt-0.5">Based on Stage Probabilities</p>
-            </div>
+          <div className="px-6 py-4 border-r border-[#ebebeb] text-left">
+            <span className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-widest block">Closed Target Progress</span>
+            <span className="text-[15px] font-black text-zinc-900 mt-1 block">
+              {formatPriceShort(metrics.closedTotal)}
+              <span className="text-[11px] text-zinc-400 font-bold ml-1">/ {formatPriceShort(metrics.targetGoal)}</span>
+            </span>
+            <span className="text-[9.5px] text-zinc-400 font-medium block mt-0.5">Closed deals value</span>
           </div>
 
-          {/* Card 3: Target Progress */}
-          <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-2xl sm:col-span-2 lg:col-span-1">
-            <div className="flex justify-between items-start mb-2">
-              <div>
-                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Closed Target Progress</p>
-                <p className="text-lg font-black text-zinc-900 mt-0.5">{formatPriceShort(metrics.closedTotal)} <span className="text-xs font-bold text-zinc-400">/ {formatPriceShort(metrics.targetGoal)}</span></p>
-              </div>
-              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">{metrics.progressPercent}%</span>
+          <div className="px-6 py-4 flex flex-col justify-center text-left">
+            <div className="flex justify-between items-center mb-1.5">
+              <span className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-widest">Achieved</span>
+              <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded-full">{metrics.progressPercent}%</span>
             </div>
-            {/* Linear Progress Bar */}
-            <div className="w-full bg-zinc-200 h-2 rounded-full overflow-hidden">
+            <div className="w-full bg-[#e8e7e4] h-1.5 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-emerald-500 rounded-full transition-all duration-700"
                 style={{ width: `${metrics.progressPercent}%` }}
               />
             </div>
           </div>
-
-        </div>
-      </div>
-
-      {/* ── VIEW TOGGLE BAR ── */}
-      <div className="flex items-center justify-between bg-white border border-zinc-200 p-2.5 rounded-2xl">
-        <div className="flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 p-1 rounded-2xl">
-          <button
-            onClick={() => setViewMode('board')}
-            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
-              viewMode === 'board'
-                ? 'bg-white text-zinc-900 font-bold border border-zinc-200 shadow-2xs'
-                : 'text-zinc-500 hover:text-zinc-900'
-            }`}
-          >
-            <Layout className="h-3.5 w-3.5" />
-            Board View
-          </button>
-          <button
-            onClick={() => setViewMode('list')}
-            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
-              viewMode === 'list'
-                ? 'bg-white text-zinc-900 font-bold border border-zinc-200 shadow-2xs'
-                : 'text-zinc-500 hover:text-zinc-900'
-            }`}
-          >
-            <List className="h-3.5 w-3.5" />
-            List View
-          </button>
         </div>
 
-        <button
-          onClick={() => {
-            setClientName('');
-            setBudget('');
-            setPropertyPref('TBD');
-            setSource('Manual Entry');
-            setStage('New inquiry');
-            setNotes('');
-            setIsAddModalOpen(true);
-          }}
-          className="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-900 text-white px-3.5 py-1.5 text-xs font-semibold rounded-2xl transition-all shadow-2xs cursor-pointer"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          Add Deal
-        </button>
-      </div>
+        {/* Main Board/List Area inside the single card */}
+        {viewMode === 'board' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 bg-white divide-y md:divide-y-0 md:divide-x divide-[#ebebeb]">
+            {STAGES.map((stageName) => {
+              const stageDeals = deals.filter(d => d.stage === stageName);
+              const stageValue = stageDeals.reduce((acc, d) => acc + d.budget, 0);
+              const config = STAGE_CONFIGS[stageName];
+              const isDraggingOver = dragOverStage === stageName;
 
-      {/* ── PIPELINE MAIN VIEW CONTENT ── */}
-      {viewMode === 'board' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full pb-6">
-        {STAGES.map((stageName) => {
-          const stageDeals = deals.filter(d => d.stage === stageName);
-          const stageValue = stageDeals.reduce((acc, d) => acc + d.budget, 0);
-          const config = STAGE_CONFIGS[stageName];
-          const isDraggingOver = dragOverStage === stageName;
+              return (
+                <div 
+                  key={stageName}
+                  className="flex flex-col min-h-[580px] bg-white text-left"
+                  onDragOver={(e) => onDragOver(e, stageName)}
+                  onDrop={(e) => onDrop(e, stageName)}
+                >
+                  {/* Column Header */}
+                  <div className="flex items-center justify-between px-5 py-4 border-b border-[#f5f5f3] bg-[#fafaf8]/30">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={`h-2 w-2 rounded-full shrink-0 ${config.indicatorColor}`} />
+                      <span className="text-[10px] font-extrabold text-zinc-800 uppercase tracking-wider truncate">{stageName}</span>
+                      <span className="bg-zinc-100 border border-zinc-200 text-[9px] font-bold text-zinc-400 px-1.5 py-0.2 rounded-full shrink-0">
+                        {stageDeals.length}
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-extrabold text-zinc-900 ml-2">
+                      {formatPriceShort(stageValue)}
+                    </span>
+                  </div>
 
-          return (
-            <div 
-              key={stageName}
-              className="w-full flex flex-col gap-4 text-left"
-              onDragOver={(e) => onDragOver(e, stageName)}
-              onDrop={(e) => onDrop(e, stageName)}
-            >
-              {/* Column Header */}
-              <div className="flex items-center justify-between px-2">
-                <div className="flex items-center gap-2">
-                  <span className={`h-2.5 w-2.5 rounded-full ${config.indicatorColor}`} />
-                  <span className="text-xs font-bold text-zinc-900 uppercase tracking-wider">{stageName}</span>
-                  <span className="px-2 py-0.5 rounded-full bg-zinc-50 border border-zinc-200 text-[9px] font-bold text-zinc-500">
-                    {stageDeals.length}
-                  </span>
-                </div>
-                <span className="text-[10px] font-bold text-zinc-900">
-                  {formatPriceShort(stageValue)}
-                </span>
-              </div>
-
-              {/* Column Dropzone */}
-              <div 
-                className={`flex-1 rounded-2xl p-3 border transition-all duration-200 min-h-[520px] flex flex-col gap-3 ${
-                  isDraggingOver 
-                    ? 'bg-zinc-50 border-zinc-400 border-dashed' 
-                    : 'bg-zinc-50/50 border-zinc-200'
-                }`}
-              >
-                {stageDeals.map((deal) => (
-                  <div
-                    key={deal.id}
-                    draggable
-                    onDragStart={(e) => onDragStart(e, deal.id)}
-                    onDragEnd={onDragEnd}
-                    onClick={() => handleOpenEditModal(deal)}
-                    className="bg-white border border-zinc-200 p-4 rounded-2xl transition-all cursor-grab active:cursor-grabbing group select-none hover:border-zinc-300 hover:bg-zinc-50"
+                  {/* Column Dropzone / Cards list */}
+                  <div 
+                    className={`flex-1 p-4 flex flex-col gap-3 transition-colors duration-250 ${
+                      isDraggingOver ? 'bg-[#fafaf8]' : 'bg-white'
+                    }`}
                   >
-                    <div className="flex items-start justify-between mb-3 gap-2">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        {/* Circular Avatar */}
-                        <div className="h-7 w-7 rounded-full overflow-hidden bg-zinc-100 flex items-center justify-center shrink-0">
-                          <img src="/lead-avatar.png" alt="" className="h-full w-full object-cover" />
+                    {stageDeals.map((deal) => (
+                      <div
+                        key={deal.id}
+                        draggable
+                        onDragStart={(e) => onDragStart(e, deal.id)}
+                        onDragEnd={onDragEnd}
+                        onClick={() => handleOpenEditModal(deal)}
+                        className="bg-white border border-[#e8e7e4] p-4 rounded-xl shadow-xs transition-all duration-200 cursor-grab active:cursor-grabbing hover:border-zinc-300 hover:shadow-sm"
+                      >
+                        <div className="flex items-start justify-between mb-2.5 gap-2">
+                          <h4 className="text-[11.5px] font-extrabold text-zinc-900 tracking-tight leading-tight select-none">
+                            {deal.client_name}
+                          </h4>
+                          <span className="text-[11px] font-extrabold text-[#d4ad4d] shrink-0 leading-tight">
+                            {formatPriceShort(deal.budget)}
+                          </span>
                         </div>
-                        <h4 className="text-xs font-bold text-zinc-900 group-hover:text-zinc-600 transition-colors truncate">
-                          {deal.client_name}
-                        </h4>
+
+                        <div className="flex items-center gap-1.5 text-[9.5px] text-zinc-400 font-semibold mb-3">
+                          <Building className="h-3 w-3 text-zinc-300 shrink-0" />
+                          <span className="truncate">Preference: <span className="text-zinc-650">{deal.property_preference}</span></span>
+                        </div>
+
+                        <div className="flex items-center justify-between border-t border-[#f5f5f3] pt-2.5 text-[9px] font-bold text-zinc-400">
+                          <span className="bg-[#f5f5f3] text-zinc-500 px-2 py-0.5 rounded text-[8px] font-bold tracking-wider uppercase scale-95 origin-left">
+                            {deal.source}
+                          </span>
+                          <div className="flex items-center gap-1 font-medium">
+                            <Clock className="h-3 w-3 text-zinc-300" />
+                            {deal.lastActive}
+                          </div>
+                        </div>
                       </div>
-                      <span className="text-[10px] font-bold text-zinc-950 shrink-0">
-                        {formatPriceShort(deal.budget)}
-                      </span>
-                    </div>
+                    ))}
 
-                    <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-semibold mb-4">
-                      <Building className="h-3.5 w-3.5 text-zinc-400" />
-                      Preference: <span className="text-zinc-700">{deal.property_preference}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between border-t border-zinc-100 pt-3 text-[9px] font-bold text-zinc-400">
-                      <span className="uppercase tracking-widest bg-zinc-50 border border-zinc-200 px-2 py-0.5 rounded-full text-zinc-500 text-[8px] font-bold scale-95 origin-left">
-                        {deal.source}
-                      </span>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {deal.lastActive}
+                    {stageDeals.length === 0 && (
+                      <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-[#e8e7e4] rounded-xl py-12 px-4 bg-zinc-50/10 min-h-[160px]">
+                        <Briefcase className="h-6 w-6 text-zinc-300 opacity-60 mb-2" />
+                        <span className="text-[9px] font-extrabold uppercase tracking-widest text-zinc-300">Drag Deals Here</span>
                       </div>
-                    </div>
+                    )}
                   </div>
-                ))}
-
-                {stageDeals.length === 0 && (
-                  <div className="flex-1 flex flex-col items-center justify-center text-zinc-300 border border-dashed border-zinc-200 rounded-2xl py-12 px-4">
-                    <Briefcase className="h-8 w-8 opacity-20 mb-2" />
-                    <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400">Drag Deals Here</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-      })}
-    </div>
-      ) : (
-        <div className="bg-white border border-zinc-200 rounded-2xl shadow-md overflow-hidden text-left">
-          <div className="overflow-x-auto">
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="bg-white text-left overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-zinc-50 border-b border-zinc-200">
-                  <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Client Name</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Budget</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Stage</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Property Preference</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Source</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Last Active</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-wider text-right">Actions</th>
+                <tr className="bg-[#fafaf8] border-b border-[#ebebeb]">
+                  <th className="px-6 py-3.5 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-left">Client Name</th>
+                  <th className="px-6 py-3.5 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-left">Budget</th>
+                  <th className="px-6 py-3.5 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-left">Stage</th>
+                  <th className="px-6 py-3.5 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-left">Property Preference</th>
+                  <th className="px-6 py-3.5 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-left">Source</th>
+                  <th className="px-6 py-3.5 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-left">Last Active</th>
+                  <th className="px-6 py-3.5 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-right" style={{ width: '100px' }}>Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-200">
+              <tbody className="divide-y divide-[#f5f5f3]">
                 {deals.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-6 py-12 text-center text-xs font-semibold text-zinc-400">
@@ -616,25 +621,20 @@ export default function PipelinePage() {
                     return (
                       <tr 
                         key={deal.id}
-                        className="hover:bg-zinc-50 transition-colors group cursor-pointer"
+                        className="hover:bg-[#fafaf8] transition-colors group cursor-pointer"
                         onClick={() => handleOpenEditModal(deal)}
                       >
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded-full overflow-hidden bg-zinc-100 flex items-center justify-center shrink-0">
-                              <img src="/lead-avatar.png" alt="" className="h-full w-full object-cover" />
-                            </div>
-                            <p className="text-xs font-bold text-zinc-900 group-hover:text-zinc-600 transition-colors">
-                              {deal.client_name}
-                            </p>
-                          </div>
+                        <td className="px-6 py-3.5">
+                          <p className="text-xs font-bold text-zinc-900 group-hover:text-[#d4ad4d] transition-colors">
+                            {deal.client_name}
+                          </p>
                         </td>
-                        <td className="px-6 py-4">
-                          <p className="text-xs font-black text-zinc-950">
+                        <td className="px-6 py-3.5">
+                          <p className="text-xs font-bold text-zinc-900">
                             {formatCurrency(deal.budget)}
                           </p>
                         </td>
-                        <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                        <td className="px-6 py-3.5" onClick={(e) => e.stopPropagation()}>
                           <select
                             value={deal.stage}
                             onChange={async (e) => {
@@ -649,43 +649,42 @@ export default function PipelinePage() {
                                 console.error('Error updating stage:', err);
                               }
                             }}
-                            className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border outline-none cursor-pointer transition-colors ${config.color} ${config.bgColor} ${config.borderColor}`}
+                            className={`text-[9.5px] font-extrabold px-2 py-0.5 rounded border outline-none cursor-pointer transition-colors ${config.color} ${config.bgColor} ${config.borderColor}`}
                           >
                             {STAGES.map(s => (
                               <option key={s} value={s}>{s}</option>
                             ))}
                           </select>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-1.5 text-xs text-zinc-700 font-semibold">
-                            <Building className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                        <td className="px-6 py-3.5">
+                          <div className="flex items-center gap-1.5 text-xs text-zinc-650 font-semibold">
+                            <Building className="h-3.5 w-3.5 text-zinc-300 shrink-0" />
                             {deal.property_preference}
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className="text-[10px] font-bold text-zinc-500 bg-zinc-50 border border-zinc-200 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                        <td className="px-6 py-3.5">
+                          <span className="text-[9.5px] font-bold text-zinc-500 bg-[#f5f5f3] px-2 py-0.5 rounded uppercase tracking-wider">
                             {deal.source}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-1.5 text-xs text-zinc-550 font-semibold">
-                            <Clock className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                        <td className="px-6 py-3.5">
+                          <div className="flex items-center gap-1.5 text-xs text-zinc-400 font-semibold">
+                            <Clock className="h-3.5 w-3.5 text-zinc-300 shrink-0" />
                             {deal.lastActive}
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center justify-end gap-2">
+                        <td className="px-6 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-end gap-1">
                             <button
                               onClick={() => handleOpenEditModal(deal)}
-                              className="p-1.5 rounded-2xl border border-zinc-200 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50 transition-all bg-white cursor-pointer"
-                              title="Edit Deal"
+                              className="text-[10px] font-bold text-[#d4ad4d] hover:text-[#b8922e] transition-colors px-2 py-1 whitespace-nowrap"
                             >
-                              <Edit2 className="h-3.5 w-3.5" />
+                              Edit
                             </button>
                             <button
                               onClick={() => handleDeleteDeal(deal.id)}
-                              className="p-1.5 rounded-2xl border border-zinc-200 text-red-500 hover:text-red-650 hover:bg-zinc-50 transition-all bg-white cursor-pointer"
-                              title="Delete Deal"
+                              className="p-1 rounded text-zinc-300 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                              title="Delete"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
@@ -698,128 +697,211 @@ export default function PipelinePage() {
               </tbody>
             </table>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* ── ADD DEAL MODAL ── */}
+      {/* ── ADD DEAL MODAL (Direction A — Floating Split-Pane Modal) ── */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-950/40 backdrop-blur-sm" onClick={() => setIsAddModalOpen(false)} />
-          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-lg border border-zinc-200 overflow-hidden animate-in zoom-in-95 duration-150 text-left">
-            <div className="p-6 border-b border-zinc-200 flex items-center justify-between bg-zinc-50">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-2xl bg-zinc-900 text-white flex items-center justify-center">
-                  <Plus className="h-5 w-5" />
-                </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/40 backdrop-blur-xs">
+          <div className="relative w-full max-w-3xl bg-white rounded-[20px] shadow-2xl border border-[#e8e7e4] overflow-hidden animate-in zoom-in-95 duration-200 text-left grid grid-cols-1 md:grid-cols-12">
+            
+            {/* Left Summary Pane (5 cols) */}
+            <div className="md:col-span-5 p-6 bg-[#fafaf8] border-r border-[#ebebeb] flex flex-col justify-between space-y-6">
+              <div>
+                <span className="px-2 py-0.5 rounded text-[8.5px] font-extrabold bg-[#f4ebd0] text-[#967420] border border-[#e8d5a3] uppercase tracking-wider">
+                  DEAL SUMMARY PREVIEW
+                </span>
+                <h3 className="text-[16px] font-extrabold text-zinc-900 mt-2 tracking-tight">New Sales Deal</h3>
+                <p className="text-[10.5px] text-zinc-400 font-medium mt-0.5">
+                  Link a qualified lead to an active property listing from the inventory.
+                </p>
+              </div>
+
+              {/* Dynamic Live Preview Box */}
+              <div className="bg-white border border-[#e8e7e4] rounded-xl p-4 space-y-3 shadow-2xs">
                 <div>
-                  <h3 className="font-extrabold text-zinc-900 text-sm">Add New Deal</h3>
-                  <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Enter prospect details</p>
+                  <span className="text-[8.5px] font-extrabold text-zinc-400 uppercase tracking-wider block">SELECTED CLIENT</span>
+                  <div className="text-[13px] font-extrabold text-zinc-900 mt-0.5">
+                    {rawLeadsList.find(l => l.id === selectedLeadId)?.client_name || clientName || 'Select Client Below'}
+                  </div>
+                  <div className="text-[10px] text-zinc-400 font-medium mt-0.5">
+                    {rawLeadsList.find(l => l.id === selectedLeadId)?.phone || 'Phone'} · 
+                    <span className="ml-1 text-rose-600 font-bold">
+                      {rawLeadsList.find(l => l.id === selectedLeadId)?.status || 'Hot Lead'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="border-t border-[#f5f5f3] pt-2.5">
+                  <span className="text-[8.5px] font-extrabold text-zinc-400 uppercase tracking-wider block">MATCHED PROPERTY LISTING</span>
+                  <div className="text-[13px] font-extrabold text-zinc-900 mt-0.5">
+                    {propertiesList.find(p => p.id === selectedPropertyId)?.title || propertyPref || 'Select Property Below'}
+                  </div>
+                  <div className="text-[10px] font-extrabold text-[#b8922e] mt-0.5">
+                    {propertiesList.find(p => p.id === selectedPropertyId)?.location || 'Pune'} · 
+                    ₹{((propertiesList.find(p => p.id === selectedPropertyId)?.price || parseInt(budget) || 0) / 10000000).toFixed(2)} Cr
+                  </div>
                 </div>
               </div>
-              <button onClick={() => setIsAddModalOpen(false)} className="p-1.5 hover:bg-zinc-200 rounded-full transition-colors">
-                <X className="h-4 w-4 text-zinc-400" />
-              </button>
+
+              <div className="text-[9.5px] text-zinc-400 font-semibold">
+                Luxe ERP Pipeline Engine
+              </div>
             </div>
 
-            <form onSubmit={handleSaveAdd}>
-              <div className="p-6 space-y-4">
-                
-                {/* Client Name */}
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Client Name</label>
-                  <input 
-                    type="text" 
-                    required
-                    placeholder="e.g. Rahul Bajaj"
-                    value={clientName}
-                    onChange={(e) => setClientName(e.target.value)}
-                    className="w-full bg-white border border-zinc-200 rounded-2xl px-3 py-2 text-xs text-zinc-900 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400/20 transition-all"
-                  />
+            {/* Right Form Controls Pane (7 cols) */}
+            <div className="md:col-span-7 p-6 space-y-4 flex flex-col justify-between">
+              <div className="flex items-center justify-between border-b border-[#f5f5f3] pb-3">
+                <h4 className="text-[13px] font-extrabold text-zinc-900">Deal Parameters</h4>
+                <button type="button" onClick={() => setIsAddModalOpen(false)} className="p-1 text-zinc-400 hover:text-zinc-700 transition-colors">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveAdd} className="space-y-3.5">
+                {/* Client Name Type-able & Searchable Autocomplete Field */}
+                <div className="space-y-1 text-left">
+                  <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider block">
+                    Client Name (Type or Select Lead) *
+                  </label>
+                  <div className="relative">
+                    <input 
+                      type="text"
+                      required
+                      list="leads-datalist"
+                      placeholder="Type client name to search leads..."
+                      value={clientName}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setClientName(val);
+                        const matched = rawLeadsList.find(l => 
+                          l.client_name?.toLowerCase() === val.toLowerCase() ||
+                          `${l.client_name} (${l.phone})`.toLowerCase().includes(val.toLowerCase())
+                        );
+                        if (matched) {
+                          setSelectedLeadId(matched.id);
+                          if (matched.budget_max) setBudget(matched.budget_max.toString());
+                        }
+                      }}
+                      className="w-full bg-[#fafaf8] border border-[#e8e7e4] rounded-xl px-3.5 py-2 text-xs font-bold text-zinc-900 focus:outline-none focus:border-[#d4ad4d] transition-all"
+                    />
+                    <datalist id="leads-datalist">
+                      {rawLeadsList.map(l => (
+                        <option key={l.id} value={l.client_name}>
+                          {l.phone ? `${l.phone} · ` : ''}{l.status || 'Hot'}
+                        </option>
+                      ))}
+                    </datalist>
+                  </div>
                 </div>
 
-                {/* Budget */}
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Budget Value (₹)</label>
+                {/* Property Name Type-able & Searchable Autocomplete Field */}
+                <div className="space-y-1 text-left">
+                  <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider block">
+                    Property Name (Type or Select Listing) *
+                  </label>
+                  <div className="relative">
+                    <input 
+                      type="text"
+                      required
+                      list="properties-datalist"
+                      placeholder="Type property title or location..."
+                      value={propertyPref}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setPropertyPref(val);
+                        const matched = propertiesList.find(p => 
+                          p.title?.toLowerCase() === val.toLowerCase() ||
+                          `${p.title} (${p.location})`.toLowerCase().includes(val.toLowerCase())
+                        );
+                        if (matched) {
+                          setSelectedPropertyId(matched.id);
+                          if (matched.price) setBudget(matched.price.toString());
+                        }
+                      }}
+                      className="w-full bg-[#fafaf8] border border-[#e8e7e4] rounded-xl px-3.5 py-2 text-xs font-bold text-zinc-900 focus:outline-none focus:border-[#d4ad4d] transition-all"
+                    />
+                    <datalist id="properties-datalist">
+                      {propertiesList.map(p => (
+                        <option key={p.id} value={p.title}>
+                          {p.location} · ₹{((p.price || 0) / 10000000).toFixed(2)} Cr
+                        </option>
+                      ))}
+                    </datalist>
+                  </div>
+                </div>
+
+                {/* Budget Value */}
+                <div className="space-y-1 text-left">
+                  <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider block">Agreed Deal Value (₹) *</label>
                   <input 
                     type="number" 
                     required
-                    placeholder="e.g. 35000000"
+                    placeholder="e.g. 25000000"
                     value={budget}
                     onChange={(e) => setBudget(e.target.value)}
-                    className="w-full bg-white border border-zinc-200 rounded-2xl px-3 py-2 text-xs text-zinc-900 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400/20 transition-all"
+                    className="w-full bg-[#fafaf8] border border-[#e8e7e4] rounded-xl px-3.5 py-2 text-xs font-bold text-zinc-900 focus:outline-none focus:border-[#d4ad4d] transition-all"
                   />
                 </div>
 
-                {/* Property Preference & Stage */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Property Pref</label>
-                    <select 
-                      value={propertyPref}
-                      onChange={(e) => setPropertyPref(e.target.value)}
-                      className="w-full bg-white border border-zinc-200 rounded-2xl px-3 py-2 text-xs text-zinc-900 focus:outline-none focus:border-zinc-400 transition-all"
-                    >
-                      {PROPERTY_PREFERENCES.map(p => (
-                        <option key={p} value={p}>{p}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Initial Stage</label>
+                {/* Stage & Source Grid */}
+                <div className="grid grid-cols-2 gap-3 text-left">
+                  <div className="space-y-1">
+                    <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider block">Initial Stage *</label>
                     <select 
                       value={stage}
                       onChange={(e) => setStage(e.target.value)}
-                      className="w-full bg-white border border-zinc-200 rounded-2xl px-3 py-2 text-xs text-zinc-900 focus:outline-none focus:border-zinc-400 transition-all"
+                      className="w-full bg-[#fafaf8] border border-[#e8e7e4] rounded-xl px-3 py-2 text-xs font-bold text-zinc-900 focus:outline-none focus:border-[#d4ad4d] transition-all cursor-pointer"
                     >
                       {STAGES.map(s => (
                         <option key={s} value={s}>{s}</option>
                       ))}
                     </select>
                   </div>
-                </div>
 
-                {/* Lead Source */}
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Lead Source</label>
-                  <select 
-                    value={source}
-                    onChange={(e) => setSource(e.target.value)}
-                    className="w-full bg-white border border-zinc-200 rounded-2xl px-3 py-2 text-xs text-zinc-900 focus:outline-none focus:border-zinc-400 transition-all"
-                  >
-                    {LEAD_SOURCES.map(s => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
+                  <div className="space-y-1">
+                    <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider block">Lead Source</label>
+                    <select 
+                      value={source}
+                      onChange={(e) => setSource(e.target.value)}
+                      className="w-full bg-[#fafaf8] border border-[#e8e7e4] rounded-xl px-3 py-2 text-xs font-bold text-zinc-900 focus:outline-none focus:border-[#d4ad4d] transition-all cursor-pointer"
+                    >
+                      {LEAD_SOURCES.map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 {/* Notes */}
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Notes</label>
+                <div className="space-y-1 text-left">
+                  <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider block">Deal Notes</label>
                   <textarea 
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Enter deal notes..."
-                    className="w-full h-20 bg-white border border-zinc-200 rounded-2xl px-3 py-2 text-xs text-zinc-900 focus:outline-none focus:border-zinc-400 transition-all resize-none"
+                    placeholder="Enter special requirements or terms..."
+                    className="w-full h-16 bg-[#fafaf8] border border-[#e8e7e4] rounded-xl px-3 py-2 text-xs font-medium text-zinc-800 focus:outline-none focus:border-[#d4ad4d] transition-all resize-none"
                   />
                 </div>
-              </div>
 
-              <div className="p-6 border-t border-zinc-200 bg-zinc-50 flex items-center justify-end gap-3">
-                <button 
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 rounded-2xl text-xs font-semibold text-zinc-500 hover:text-zinc-950 transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  className="px-5 py-2 rounded-2xl bg-zinc-900 text-white text-xs font-semibold hover:bg-zinc-900 transition-all shadow-2xs cursor-pointer"
-                >
-                  Create Deal
-                </button>
-              </div>
-            </form>
+                <div className="pt-2 flex items-center justify-end gap-2 border-t border-[#f5f5f3]">
+                  <button 
+                    type="button"
+                    onClick={() => setIsAddModalOpen(false)}
+                    className="px-4 py-2 rounded-xl border border-[#e8e7e4] text-xs font-bold text-zinc-600 hover:bg-zinc-50 transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit"
+                    className="px-5 py-2 rounded-xl bg-[#d4ad4d] text-white text-xs font-extrabold hover:bg-[#b8922e] transition-all shadow-2xs cursor-pointer"
+                  >
+                    Create Deal
+                  </button>
+                </div>
+              </form>
+            </div>
+
           </div>
         </div>
       )}

@@ -4,10 +4,54 @@ import type { Profile } from '@/lib/auth';
 
 export async function createLeadAction(prevState: any, formData: FormData) {
   const profile = await useProfile();
+  
+  const phoneRaw = String(formData.get('phone') || '').trim();
+  const cleanPhone = phoneRaw.replace(/[^0-9]/g, '').slice(-10);
+
+  // Check duplicate mobile number in active CRM leads
+  if (cleanPhone.length >= 7) {
+    const { data: existingLeads } = await supabase
+      .from('leads')
+      .select('id, client_name, phone, assigned_to')
+      .eq('is_active', true);
+
+    const matched = existingLeads?.find(l => {
+      const p = String(l.phone || '').replace(/[^0-9]/g, '').slice(-10);
+      return p && p === cleanPhone;
+    });
+
+    if (matched) {
+      let assigneeName = 'Unassigned';
+      if (matched.assigned_to) {
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', matched.assigned_to)
+          .single();
+        if (prof?.full_name) assigneeName = prof.full_name;
+      }
+
+      return {
+        success: false,
+        duplicate: true,
+        error: `DUPLICATE_LEAD`,
+        existingLead: {
+          id: matched.id,
+          client_name: matched.client_name,
+          phone: matched.phone,
+          assigneeName
+        },
+        data: null
+      };
+    }
+  }
+
+  const assignedTo = String(formData.get('assigned_to') || '').trim() || profile?.id || null;
+
   const data: Record<string, unknown> = {
     client_name: formData.get('client_name'),
-    phone: formData.get('phone'),
-    email: formData.get('email'),
+    phone: phoneRaw,
+    email: formData.get('email') || null,
     lead_source_id: formData.get('lead_source_id'),
     budget_min: formData.get('budget_min') || null,
     budget_max: formData.get('budget_max') || null,
@@ -18,7 +62,7 @@ export async function createLeadAction(prevState: any, formData: FormData) {
     transaction_type: formData.get('transaction_type'),
     required_area: formData.get('required_area') || null,
     purpose: formData.get('purpose'),
-    assigned_to: profile?.id,
+    assigned_to: assignedTo,
     stage_id: formData.get('stage_id') || 'New inquiry',
     next_followup_date: formData.get('next_followup_date') || null,
     status: formData.get('status') || 'Hot',
@@ -35,7 +79,7 @@ export async function createLeadAction(prevState: any, formData: FormData) {
 
   if (error) {
     console.error("Insert lead error:", error);
-    return { error: error.message };
+    return { error: error.message, success: false, duplicate: false, existingLead: null, data: null };
   }
 
   // Trigger Apps Script Integration if configured
@@ -89,7 +133,7 @@ export async function updateLeadAction(prevState: any, formData: FormData) {
     transaction_type: formData.get('transaction_type'),
     required_area: formData.get('required_area') || null,
     purpose: formData.get('purpose'),
-    assigned_to: profile?.id,
+    assigned_to: formData.get('assigned_to') || profile?.id || null,
     stage_id: formData.get('stage_id'),
     status: formData.get('status'),
     next_followup_date: formData.get('next_followup_date') || null,

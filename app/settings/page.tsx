@@ -24,16 +24,21 @@ import {
   Building2,
   Users,
   UserPlus,
-  Trash2
+  Trash2,
+  KeyRound,
+  SlidersHorizontal,
+  X,
+  Sparkles
 } from 'lucide-react';
 
-type SettingSection = 'profile' | 'notifications' | 'security' | 'users';
+type SettingSection = 'profile' | 'users' | 'notifications' | 'integrations' | 'security';
 
 const sections: { id: SettingSection; label: string; icon: React.ElementType; description: string; superAdminOnly?: boolean }[] = [
-  { id: 'profile', label: 'Profile', icon: User, description: 'Manage your identity and personal details.' },
-  { id: 'users', label: 'User Management', icon: Users, description: 'Manage team members and their roles.', superAdminOnly: true },
-  { id: 'notifications', label: 'Notifications', icon: Bell, description: 'Configure alerts and notification preferences.' },
-  { id: 'security', label: 'Security', icon: Shield, description: 'Passwords, 2FA, and access control settings.' },
+  { id: 'profile', label: 'Personal Profile', icon: User, description: 'Manage your identity and personal details.' },
+  { id: 'users', label: 'Team & Permissions', icon: Users, description: 'Manage team members and granular module access control.' },
+  { id: 'notifications', label: 'Notifications & Alerts', icon: Bell, description: 'Configure email digests and push alerts.' },
+  { id: 'integrations', label: 'Integrations & Webhooks', icon: Globe, description: 'Manage Google Apps Script and lead webhooks.' },
+  { id: 'security', label: 'Security & Passwords', icon: Shield, description: 'Passwords, 2FA, and session access control.' },
 ];
 
 const notifOptions = [
@@ -42,7 +47,18 @@ const notifOptions = [
   { id: 'site_visit', label: 'Site Visit Reminders', description: '1-hour reminder before scheduled property tours.', defaultOn: true },
   { id: 'report_ready', label: 'Monthly Reports', description: 'Email digest of your monthly performance report.', defaultOn: false },
   { id: 'team_activity', label: 'Team Activity Feed', description: 'Notifications about your team\'s CRM activity.', defaultOn: false },
-  { id: 'marketing', label: 'Platform Updates', description: 'Product updates, new features, and changelogs.', defaultOn: false },
+  { id: 'platform', label: 'Platform Updates', description: 'Product updates, new features, and changelogs.', defaultOn: false },
+];
+
+const MODULE_PERMISSIONS = [
+  { key: 'leads', label: 'Leads Management', description: 'View and manage client leads database' },
+  { key: 'leads_delete', label: 'Delete Lead Contacts', description: 'Permanently purge lead contact records' },
+  { key: 'properties', label: 'Property Inventory', description: 'View and edit property listings' },
+  { key: 'pipeline', label: 'Sales Pipeline', description: 'Access deal stages & Kanban board' },
+  { key: 'matchmaking', label: 'Matchmaker AI', description: 'Property-lead fit matching engine' },
+  { key: 'calendar', label: 'Site Visit Calendar', description: 'Schedule and manage site tours' },
+  { key: 'reporting', label: 'Analytics & Reporting', description: 'View performance digests and charts' },
+  { key: 'export', label: 'Export Data (CSV)', description: 'Download CSV and Excel reports' },
 ];
 
 export default function SettingsPage() {
@@ -50,25 +66,31 @@ export default function SettingsPage() {
   const perms = getPermissions(profile?.role);
   const [activeSection, setActiveSection] = useState<SettingSection>('profile');
 
-  // User management state (SuperAdmin only)
+  // Team & Permissions State
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [userPermissions, setUserPermissions] = useState<Record<string, boolean>>({});
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [savingPerms, setSavingPerms] = useState(false);
+  const [permsSaved, setPermsSaved] = useState(false);
+
+  // Add User Modal State
   const [showAddUser, setShowAddUser] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserName, setNewUserName] = useState('');
   const [newUserRole, setNewUserRole] = useState('SalesPerson');
   const [savingUser, setSavingUser] = useState(false);
 
-  // Profile form state
-  const [fullName, setFullName] = useState('Rahul Sharma');
-  const [email, setEmail] = useState('rahul@luxerealty.in');
+  // Profile Form State
+  const [fullName, setFullName] = useState(profile?.full_name || 'Rahul Sharma');
+  const [email, setEmail] = useState(profile?.email || 'rahul@luxerealty.in');
   const [phone, setPhone] = useState('+91 98200 12345');
-  const [role, setRole] = useState('Senior Agent');
+  const [role, setRole] = useState(profile?.role || 'Senior Agent');
   const [agency, setAgency] = useState('Luxe Realty India');
-  const [bio, setBio] = useState('Luxury real estate specialist with 8+ years of experience in high-value residential and commercial properties across Pune and Maharashtra.');
+  const [bio, setBio] = useState('Luxury real estate specialist with 8+ years of experience in high-value residential and commercial properties across Pune.');
   const [profileSaved, setProfileSaved] = useState(false);
 
-  // Security state
+  // Security State
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -79,34 +101,39 @@ export default function SettingsPage() {
   const [passwordMessage, setPasswordMessage] = useState<{ text: string; type: 'ok' | 'err' } | null>(null);
   const [twoFAEnabled, setTwoFAEnabled] = useState(false);
 
-  // Notification toggles
+  // Notification Toggles State
   const [notifStates, setNotifStates] = useState<Record<string, boolean>>(
     Object.fromEntries(notifOptions.map(n => [n.id, n.defaultOn]))
   );
 
-  // Integrations state
+  // Integrations State
   const [appsScriptUrl, setAppsScriptUrl] = useState('');
   const [integrationsSaved, setIntegrationsSaved] = useState(false);
-  const [loadingSettings, setLoadingSettings] = useState(false);
 
+  // Load Integration Settings
   useEffect(() => {
     async function loadSettings() {
-      setLoadingSettings(true);
       try {
         const url = await fetchSetting('apps_script_url');
         setAppsScriptUrl(url || '');
       } catch (error) {
         console.error('Error loading settings:', error);
-      } finally {
-        setLoadingSettings(false);
       }
     }
     loadSettings();
   }, []);
 
-  // Load team members for SuperAdmin
+  // Sync profile props
   useEffect(() => {
-    if (!perms.canManageUsers) return;
+    if (profile) {
+      if (profile.full_name) setFullName(profile.full_name);
+      if (profile.email) setEmail(profile.email);
+      if (profile.role) setRole(profile.role);
+    }
+  }, [profile]);
+
+  // Fetch Team Roster
+  useEffect(() => {
     async function loadUsers() {
       setLoadingUsers(true);
       try {
@@ -114,7 +141,10 @@ export default function SettingsPage() {
           .from('profiles')
           .select('id, full_name, email, role, created_at')
           .order('created_at', { ascending: false });
-        if (data) setTeamMembers(data);
+        if (data && data.length > 0) {
+          setTeamMembers(data);
+          setSelectedUser(data[0]);
+        }
       } catch (err) {
         console.error('Error loading users:', err);
       } finally {
@@ -122,7 +152,42 @@ export default function SettingsPage() {
       }
     }
     loadUsers();
-  }, [perms.canManageUsers]);
+  }, []);
+
+  // Fetch User Permissions when selectedUser changes
+  useEffect(() => {
+    if (!selectedUser) return;
+    async function loadPerms() {
+      try {
+        const { data } = await supabase
+          .from('user_permissions')
+          .select('module, enabled')
+          .eq('user_id', selectedUser.id);
+        
+        const rolePerms = getPermissions(selectedUser.role);
+        const map: Record<string, boolean> = {
+          leads: rolePerms.canViewAllLeads || selectedUser.role === 'SuperAdmin',
+          leads_delete: rolePerms.canDeleteLeads || selectedUser.role === 'SuperAdmin',
+          properties: rolePerms.canCreateProperties || selectedUser.role === 'SuperAdmin',
+          pipeline: true,
+          matchmaking: true,
+          calendar: perms.canViewAllCalendar || selectedUser.role === 'SuperAdmin',
+          reporting: perms.canViewReporting || selectedUser.role === 'SuperAdmin',
+          export: perms.canExportData || selectedUser.role === 'SuperAdmin'
+        };
+
+        if (data && data.length > 0) {
+          data.forEach(p => {
+            map[p.module] = p.enabled;
+          });
+        }
+        setUserPermissions(map);
+      } catch (err) {
+        console.error('Error loading user permissions:', err);
+      }
+    }
+    loadPerms();
+  }, [selectedUser, perms.canViewAllCalendar, perms.canViewReporting, perms.canExportData]);
 
   const handleUpdateUserRole = async (userId: string, newRole: string) => {
     const { error } = await supabase
@@ -131,6 +196,40 @@ export default function SettingsPage() {
       .eq('id', userId);
     if (!error) {
       setTeamMembers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
+      if (selectedUser?.id === userId) {
+        setSelectedUser((prev: any) => ({ ...prev, role: newRole }));
+      }
+    }
+  };
+
+  const handleToggleModulePermission = (key: string) => {
+    setUserPermissions(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  };
+
+  const handleSaveUserPermissions = async () => {
+    if (!selectedUser) return;
+    setSavingPerms(true);
+    try {
+      // Save each module permission override
+      for (const [mod, enabled] of Object.entries(userPermissions)) {
+        await supabase
+          .from('user_permissions')
+          .upsert({
+            user_id: selectedUser.id,
+            module: mod,
+            enabled,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'user_id,module' });
+      }
+      setPermsSaved(true);
+      setTimeout(() => setPermsSaved(false), 2000);
+    } catch (err) {
+      console.error('Error saving user permissions:', err);
+    } finally {
+      setSavingPerms(false);
     }
   };
 
@@ -138,7 +237,6 @@ export default function SettingsPage() {
     if (!newUserEmail || !newUserName) return;
     setSavingUser(true);
     try {
-      // Insert a profile record (user will need to sign up separately via Supabase Auth)
       const { data, error } = await supabase
         .from('profiles')
         .insert({
@@ -151,12 +249,12 @@ export default function SettingsPage() {
         .single();
       if (data) {
         setTeamMembers(prev => [data, ...prev]);
+        setSelectedUser(data);
         setNewUserEmail('');
         setNewUserName('');
         setNewUserRole('SalesPerson');
         setShowAddUser(false);
       }
-      if (error) console.error('Error adding user:', error);
     } catch (err) {
       console.error('Error adding user:', err);
     } finally {
@@ -165,13 +263,17 @@ export default function SettingsPage() {
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (!confirm('Are you sure you want to remove this user?')) return;
+    if (!confirm('Are you sure you want to remove this team member?')) return;
     const { error } = await supabase
       .from('profiles')
       .delete()
       .eq('id', userId);
     if (!error) {
-      setTeamMembers(prev => prev.filter(u => u.id !== userId));
+      const updated = teamMembers.filter(u => u.id !== userId);
+      setTeamMembers(updated);
+      if (selectedUser?.id === userId) {
+        setSelectedUser(updated[0] || null);
+      }
     }
   };
 
@@ -196,8 +298,7 @@ export default function SettingsPage() {
     }
     setPasswordUpdating(true);
     try {
-      const { data, error } = await supabase.auth.updateUser({ password: newPassword });
-      console.log('Password update response:', { data, error });
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) {
         setPasswordMessage({ text: `Error: ${error.message}`, type: 'err' });
       } else {
@@ -207,7 +308,6 @@ export default function SettingsPage() {
         setConfirmPassword('');
       }
     } catch (err: any) {
-      console.error('Password update error:', err);
       setPasswordMessage({ text: `Error: ${err?.message || 'An unexpected error occurred.'}`, type: 'err' });
     } finally {
       setPasswordUpdating(false);
@@ -220,496 +320,484 @@ export default function SettingsPage() {
       setIntegrationsSaved(true);
       setTimeout(() => setIntegrationsSaved(false), 2000);
     } catch (error) {
-      console.error('Error saving integrations:', error);
       alert('Failed to save integration settings.');
     }
   };
 
-  const toggleNotif = (id: string) => {
-    setNotifStates(prev => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const inputClass = "w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3.5 py-2.5 text-xs text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400/20 transition-all";
-  const labelClass = "text-[10px] font-bold text-zinc-500 uppercase tracking-wider block mb-1.5";
+  const inputClass = "w-full bg-white border border-[#e8e7e4] rounded-xl px-3.5 py-2 text-xs font-semibold text-zinc-800 focus:outline-none focus:border-[#d4ad4d] transition-all";
+  const labelClass = "text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider block mb-1";
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12 text-zinc-900">
+    <div className="w-full space-y-6 pb-20 text-zinc-900 text-left">
+      
+      {/* ── UNIFIED PORCELAIN CARD FRAME (Direction C Signature) ── */}
+      <div className="bg-white border border-[#e8e7e4] rounded-[20px] shadow-xs overflow-hidden">
+        
+        {/* Header Bar */}
+        <div className="p-6 md:px-8 border-b border-[#ebebeb] flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-[19px] font-extrabold text-zinc-900 tracking-tight" style={{ letterSpacing: '-0.4px' }}>
+                System Settings & Administration
+              </h1>
+              <span className="px-2 py-0.5 rounded text-[9.5px] font-extrabold bg-[#f4ebd0] text-[#967420] border border-[#e8d5a3] uppercase tracking-wider">
+                Luxe ERP
+              </span>
+            </div>
+            <p className="text-[11px] text-zinc-400 font-medium mt-0.5">
+              Manage personal identity, team roles, module permissions & platform security · Luxe Realty Pune
+            </p>
+          </div>
 
+          <button
+            type="button"
+            onClick={() => {
+              setActiveSection('users');
+              setShowAddUser(true);
+            }}
+            className="dc-btn gold font-extrabold text-[11px] px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-xs cursor-pointer"
+          >
+            <UserPlus className="h-4 w-4" />
+            + Add Team Member
+          </button>
+        </div>
 
-
-      {/* Settings Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-
-        {/* Left Sidebar Nav */}
-        <div className="lg:col-span-3">
-          <nav className="bg-white border border-zinc-200 rounded-2xl shadow-sm p-2 space-y-1">
-            {sections.filter(s => !s.superAdminOnly || perms.canManageUsers).map((s) => {
+        {/* ── INNER SPLIT WORKSPACE ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[560px]">
+          
+          {/* Left Vertical Navigation Rail (3 cols) */}
+          <div className="lg:col-span-3 border-r border-[#ebebeb] py-4 bg-white space-y-1">
+            {sections.map((s) => {
               const Icon = s.icon;
               const isActive = activeSection === s.id;
               return (
                 <button
                   key={s.id}
+                  type="button"
                   onClick={() => setActiveSection(s.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${
+                  className={`w-full flex items-center gap-3 px-6 py-3 text-left transition-all border-r-2 ${
                     isActive
-                      ? 'bg-zinc-50 text-zinc-700 border border-zinc-100'
-                      : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
+                      ? 'border-[#d4ad4d] bg-[#fafaf8] text-zinc-900 font-extrabold'
+                      : 'border-transparent text-zinc-500 hover:text-zinc-800 hover:bg-[#fafaf8]'
                   }`}
                 >
-                  <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-zinc-600' : 'text-zinc-400'}`} />
-                  <div className="flex-1 text-left">
-                    <p className="text-xs font-semibold leading-none">{s.label}</p>
-                  </div>
-                  <ChevronRight className={`h-3.5 w-3.5 ${isActive ? 'text-zinc-500' : 'text-zinc-300'}`} />
+                  <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${isActive ? 'bg-[#d4ad4d] ring-4 ring-[#d4ad4d]/20' : 'bg-[#e0e0de]'}`} />
+                  <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-[#b8922e]' : 'text-zinc-400'}`} />
+                  <span className="text-[11.5px]">{s.label}</span>
                 </button>
               );
             })}
-          </nav>
-        </div>
+          </div>
 
-        {/* Right Content Panel */}
-        <div className="lg:col-span-9 space-y-5">
+          {/* Right Section Content Panel (9 cols) */}
+          <div className="lg:col-span-9 p-6 md:p-8 bg-[#fafaf8]/40">
+            
+            {/* ── PERSONAL PROFILE TAB ── */}
+            {activeSection === 'profile' && (
+              <div className="space-y-6 max-w-2xl">
+                <div className="border-b border-[#ebebeb] pb-4">
+                  <h2 className="text-[14px] font-extrabold text-zinc-900">Personal Identity & Profile</h2>
+                  <p className="text-[10px] text-zinc-400 font-medium mt-0.5">Manage your personal credentials, contact email, title, and bio</p>
+                </div>
 
-          {/* ── PROFILE SECTION ── */}
-          {activeSection === 'profile' && (
-            <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl overflow-hidden">
-              <div className="px-6 py-5 border-b border-zinc-100">
-                <h2 className="text-sm font-bold text-zinc-800">Profile Information</h2>
-                <p className="text-[11px] text-zinc-500 mt-0.5">Update your personal details and agent profile.</p>
-              </div>
-
-              <div className="p-6 space-y-6">
-                {/* Avatar */}
                 <div className="flex items-center gap-5">
-                  <div className="relative">
-                    <div className="h-16 w-16 rounded-2xl bg-zinc-50 border-2 border-zinc-100 flex items-center justify-center font-black text-2xl text-zinc-600">
-                      D
-                    </div>
-                    <button className="absolute -bottom-1 -right-1 h-6 w-6 rounded-lg bg-white border border-zinc-200 shadow-sm flex items-center justify-center hover:bg-zinc-50 transition-colors">
-                      <Camera className="h-3 w-3 text-zinc-500" />
-                    </button>
+                  <div className="h-16 w-16 rounded-2xl bg-[#f4ebd0] border-2 border-[#e8d5a3] flex items-center justify-center font-black text-xl text-[#967420] shadow-2xs">
+                    {fullName.slice(0, 2).toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-zinc-800">{fullName}</p>
-                    <p className="text-xs text-zinc-500">{role} • {agency}</p>
-                    <button className="text-[10px] font-bold text-zinc-600 hover:text-zinc-700 mt-1 transition-colors">Change photo</button>
+                    <h3 className="text-[14px] font-extrabold text-zinc-900">{fullName}</h3>
+                    <p className="text-[11px] text-zinc-400 font-medium">{role} · {agency}</p>
+                    <span className="inline-block px-2 py-0.5 rounded text-[9px] font-extrabold bg-[#f4ebd0] text-[#967420] border border-[#e8d5a3] uppercase tracking-wider mt-1">
+                      {profile?.role || 'SalesPerson'}
+                    </span>
                   </div>
                 </div>
 
-                {/* Form Fields */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className={labelClass}>Full Name</label>
-                    <input
-                      type="text"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className={inputClass}
-                    />
+                    <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputClass} />
                   </div>
                   <div>
-                    <label className={labelClass}>Role / Title</label>
-                    <input
-                      type="text"
-                      value={role}
-                      onChange={(e) => setRole(e.target.value)}
-                      className={inputClass}
-                    />
+                    <label className={labelClass}>Title / Role</label>
+                    <input type="text" value={role} onChange={(e) => setRole(e.target.value)} className={inputClass} />
                   </div>
                   <div>
                     <label className={labelClass}>Email Address</label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-400" />
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className={`${inputClass} pl-9`}
-                      />
-                    </div>
+                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
                   </div>
                   <div>
                     <label className={labelClass}>Phone Number</label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-400" />
-                      <input
-                        type="tel"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        className={`${inputClass} pl-9`}
-                      />
-                    </div>
+                    <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className={labelClass}>Agency / Brokerage</label>
-                    <div className="relative">
-                      <Building2 className="absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-400" />
-                      <input
-                        type="text"
-                        value={agency}
-                        onChange={(e) => setAgency(e.target.value)}
-                        className={`${inputClass} pl-9`}
-                      />
-                    </div>
+                    <label className={labelClass}>Brokerage / Agency</label>
+                    <input type="text" value={agency} onChange={(e) => setAgency(e.target.value)} className={inputClass} />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className={labelClass}>Bio / About</label>
-                    <textarea
-                      value={bio}
-                      onChange={(e) => setBio(e.target.value)}
-                      rows={3}
-                      className={`${inputClass} resize-none h-24`}
+                    <label className={labelClass}>Bio / Profile Note</label>
+                    <textarea rows={3} value={bio} onChange={(e) => setBio(e.target.value)} className={`${inputClass} resize-none h-20`} />
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="button"
+                    onClick={handleSaveProfile}
+                    className="dc-btn gold font-extrabold text-[11px] px-5 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  >
+                    {profileSaved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
+                    {profileSaved ? 'Profile Saved!' : 'Save Profile'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ── TEAM & GRANULAR PERMISSIONS TAB (Merged Users Page!) ── */}
+            {activeSection === 'users' && (
+              <div className="space-y-6">
+                
+                <div className="border-b border-[#ebebeb] pb-4 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-[14px] font-extrabold text-zinc-900">Team Administration & Granular Permissions</h2>
+                    <p className="text-[10px] text-zinc-400 font-medium mt-0.5">Select a team member to configure individual module access overrides</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddUser(true)}
+                    className="dc-btn gold font-extrabold text-[10.5px] px-3.5 py-1.5 rounded-xl flex items-center gap-1 cursor-pointer"
+                  >
+                    <UserPlus className="h-3.5 w-3.5" />
+                    + New User
+                  </button>
+                </div>
+
+                {/* Split Roster & Permission Matrix Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                  
+                  {/* Left Column: Team Roster List (4 cols) */}
+                  <div className="lg:col-span-4 space-y-2.5">
+                    <div className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest px-1">
+                      Team Roster ({teamMembers.length})
+                    </div>
+                    <div className="space-y-2 max-h-[460px] overflow-y-auto pr-1">
+                      {teamMembers.map((member) => {
+                        const isSelected = selectedUser?.id === member.id;
+                        return (
+                          <div
+                            key={member.id}
+                            onClick={() => setSelectedUser(member)}
+                            className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                              isSelected
+                                ? 'bg-[#fffdf5] border-[#d4ad4d] shadow-2xs'
+                                : 'bg-white border-[#e8e7e4] hover:border-zinc-300'
+                            }`}
+                          >
+                            <div className="space-y-0.5 text-left">
+                              <p className={`text-[11.5px] font-extrabold ${isSelected ? 'text-[#b8922e]' : 'text-zinc-900'}`}>
+                                {member.full_name || 'Unnamed User'}
+                              </p>
+                              <p className="text-[9.5px] text-zinc-400 font-medium truncate max-w-[140px]">
+                                {member.email}
+                              </p>
+                            </div>
+                            <div className="flex flex-col items-end gap-1">
+                              <span className={`px-2 py-0.5 rounded text-[8.5px] font-extrabold uppercase border ${
+                                member.role === 'SuperAdmin' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                member.role === 'Admin' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              }`}>
+                                {member.role || 'SalesPerson'}
+                              </span>
+                              {member.id !== profile?.id && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteUser(member.id);
+                                  }}
+                                  className="text-zinc-300 hover:text-rose-600 transition-colors p-0.5"
+                                  title="Remove member"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Right Column: Selected User Permission Inspector Matrix (8 cols) */}
+                  <div className="lg:col-span-8 bg-white border border-[#e8e7e4] rounded-2xl p-5 shadow-xs space-y-5">
+                    {selectedUser ? (
+                      <>
+                        <div className="flex items-center justify-between border-b border-[#f5f5f3] pb-4">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-[13px] font-extrabold text-zinc-900">
+                                Access Permissions · {selectedUser.full_name}
+                              </h3>
+                              <select
+                                value={selectedUser.role || 'SalesPerson'}
+                                onChange={(e) => handleUpdateUserRole(selectedUser.id, e.target.value)}
+                                className="px-2 py-0.5 rounded-lg border text-[9.5px] font-extrabold border-[#e8e7e4] bg-[#fafaf8] text-zinc-800 cursor-pointer focus:outline-none"
+                              >
+                                <option value="SalesPerson">SalesPerson</option>
+                                <option value="Admin">Admin</option>
+                                <option value="SuperAdmin">SuperAdmin</option>
+                              </select>
+                            </div>
+                            <p className="text-[10px] text-zinc-400 font-medium mt-0.5">
+                              {selectedUser.email} · Override default role permissions per module
+                            </p>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={handleSaveUserPermissions}
+                            disabled={savingPerms}
+                            className="dc-btn gold font-extrabold text-[10.5px] px-3.5 py-1.5 rounded-xl flex items-center gap-1 cursor-pointer"
+                          >
+                            {permsSaved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
+                            {permsSaved ? 'Saved!' : savingPerms ? 'Saving...' : 'Save Matrix'}
+                          </button>
+                        </div>
+
+                        {/* Granular Module Permission Matrix Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {MODULE_PERMISSIONS.map((mod) => {
+                            const isChecked = !!userPermissions[mod.key];
+                            return (
+                              <div key={mod.key} className="p-3 border border-[#ebebeb] rounded-xl flex items-center justify-between bg-white hover:border-[#d4ad4d]/40 transition-all">
+                                <div className="space-y-0.5 pr-2">
+                                  <div className="text-[11px] font-extrabold text-zinc-900">{mod.label}</div>
+                                  <div className="text-[9px] text-zinc-400 font-medium leading-tight">{mod.description}</div>
+                                </div>
+                                
+                                {/* Gold Switch Toggle */}
+                                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    onChange={() => handleToggleModulePermission(mod.key)}
+                                    className="sr-only peer"
+                                  />
+                                  <div className="w-8 h-4 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-[#d4ad4d]" />
+                                </label>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="py-16 text-center text-zinc-400">
+                        <Users className="h-8 w-8 mx-auto mb-2 text-zinc-300" />
+                        <p className="text-xs font-bold">Select a team member to view permissions</p>
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+
+              </div>
+            )}
+
+            {/* ── NOTIFICATIONS TAB ── */}
+            {activeSection === 'notifications' && (
+              <div className="space-y-6 max-w-2xl">
+                <div className="border-b border-[#ebebeb] pb-4">
+                  <h2 className="text-[14px] font-extrabold text-zinc-900">Notification Preferences & Alerts</h2>
+                  <p className="text-[10px] text-zinc-400 font-medium mt-0.5">Select which activity updates and reminders trigger real-time alerts</p>
+                </div>
+
+                <div className="space-y-3">
+                  {notifOptions.map((opt) => (
+                    <div key={opt.id} className="p-4 bg-white border border-[#e8e7e4] rounded-xl flex items-center justify-between">
+                      <div>
+                        <p className="text-[11.5px] font-extrabold text-zinc-900">{opt.label}</p>
+                        <p className="text-[10px] text-zinc-400 font-medium mt-0.5">{opt.description}</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={!!notifStates[opt.id]}
+                          onChange={() => setNotifStates(prev => ({ ...prev, [opt.id]: !prev[opt.id] }))}
+                          className="sr-only peer"
+                        />
+                        <div className="w-8 h-4 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-[#d4ad4d]" />
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── INTEGRATIONS TAB ── */}
+            {activeSection === 'integrations' && (
+              <div className="space-y-6 max-w-2xl">
+                <div className="border-b border-[#ebebeb] pb-4">
+                  <h2 className="text-[14px] font-extrabold text-zinc-900">Google Apps Script & Lead Webhook Sync</h2>
+                  <p className="text-[10px] text-zinc-400 font-medium mt-0.5">Configure endpoint URLs for syncing Facebook/Website leads directly into Luxe ERP</p>
+                </div>
+
+                <div className="space-y-3">
+                  <label className={labelClass}>Google Apps Script Webhook Deployment URL</label>
+                  <input
+                    type="url"
+                    placeholder="https://script.google.com/macros/s/.../exec"
+                    value={appsScriptUrl}
+                    onChange={(e) => setAppsScriptUrl(e.target.value)}
+                    className={inputClass}
+                  />
+                  <p className="text-[10px] text-zinc-400 font-medium">
+                    This Webhook automatically ingests incoming lead submissions into Supabase and assigns them to active sales agents.
+                  </p>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="button"
+                    onClick={handleSaveIntegrations}
+                    className="dc-btn gold font-extrabold text-[11px] px-5 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  >
+                    {integrationsSaved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
+                    {integrationsSaved ? 'Endpoint Saved!' : 'Save Integration'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ── SECURITY TAB ── */}
+            {activeSection === 'security' && (
+              <div className="space-y-6 max-w-2xl">
+                <div className="border-b border-[#ebebeb] pb-4">
+                  <h2 className="text-[14px] font-extrabold text-zinc-900">Security & Credentials</h2>
+                  <p className="text-[10px] text-zinc-400 font-medium mt-0.5">Update password and manage 2FA settings</p>
+                </div>
+
+                {passwordMessage && (
+                  <div className={`p-3 rounded-xl text-xs font-bold ${passwordMessage.type === 'ok' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}`}>
+                    {passwordMessage.text}
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  <div>
+                    <label className={labelClass}>New Password</label>
+                    <input
+                      type="password"
+                      placeholder="At least 6 characters"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Confirm Password</label>
+                    <input
+                      type="password"
+                      placeholder="Re-enter password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className={inputClass}
                     />
                   </div>
                 </div>
 
-                {/* Save Button */}
-                <div className="flex justify-end">
+                <div className="flex justify-end pt-2">
                   <button
-                    onClick={handleSaveProfile}
-                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                      profileSaved
-                        ? 'bg-zinc-50 text-zinc-600 border border-zinc-200'
-                        : 'bg-zinc-600 text-white hover:bg-zinc-700 shadow-sm'
-                    }`}
+                    type="button"
+                    onClick={handleUpdatePassword}
+                    disabled={passwordUpdating}
+                    className="dc-btn gold font-extrabold text-[11px] px-5 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
-                    {profileSaved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
-                    {profileSaved ? 'Saved!' : 'Save Changes'}
+                    <Save className="h-3.5 w-3.5" />
+                    {passwordUpdating ? 'Updating...' : 'Update Password'}
                   </button>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* ── NOTIFICATIONS SECTION ── */}
-          {activeSection === 'notifications' && (
-            <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl overflow-hidden">
-              <div className="px-6 py-5 border-b border-zinc-100">
-                <h2 className="text-sm font-bold text-zinc-800">Notification Preferences</h2>
-                <p className="text-[11px] text-zinc-500 mt-0.5">Choose which alerts you receive and how you receive them.</p>
-              </div>
-              <div className="divide-y divide-zinc-100">
-                {notifOptions.map((opt) => (
-                  <div key={opt.id} className="flex items-center justify-between px-6 py-4 hover:bg-zinc-50 transition-colors">
-                    <div>
-                      <p className="text-xs font-semibold text-zinc-800">{opt.label}</p>
-                      <p className="text-[10px] text-zinc-500 mt-0.5">{opt.description}</p>
-                    </div>
-                    <button
-                      onClick={() => toggleNotif(opt.id)}
-                      className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 transition-colors cursor-pointer ${
-                        notifStates[opt.id]
-                          ? 'bg-zinc-500 border-zinc-500'
-                          : 'bg-zinc-200 border-zinc-200'
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transform transition-transform mt-px ${
-                          notifStates[opt.id] ? 'translate-x-4' : 'translate-x-0.5'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ── SECURITY SECTION ── */}
-          {activeSection === 'security' && (
-            <div className="space-y-5">
-              {/* Change Password */}
-              <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl overflow-hidden">
-                <div className="px-6 py-5 border-b border-zinc-100">
-                  <h2 className="text-sm font-bold text-zinc-800">Change Password</h2>
-                  <p className="text-[11px] text-zinc-500 mt-0.5">Keep your account secure with a strong password.</p>
-                </div>
-                <div className="p-6 space-y-4">
-                  {passwordMessage && (
-                    <div className={`p-3 rounded-xl text-xs font-medium ${passwordMessage.type === 'ok' ? 'bg-emerald-50 border border-emerald-200 text-emerald-700' : 'bg-rose-50 border border-rose-200 text-rose-700'}`}>
-                      {passwordMessage.text}
-                    </div>
-                  )}
-                  <div>
-                    <label className={labelClass}>Current Password</label>
-                    <div className="relative">
-                      <input
-                        type={showCurrent ? 'text' : 'password'}
-                        placeholder="••••••••"
-                        value={currentPassword}
-                        onChange={(e) => setCurrentPassword(e.target.value)}
-                        className={`${inputClass} pr-10`}
-                      />
-                      <button
-                        onClick={() => setShowCurrent(!showCurrent)}
-                        className="absolute right-3 top-2.5 text-zinc-400 hover:text-zinc-600 transition-colors"
-                      >
-                        {showCurrent ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                      </button>
-                    </div>
-                  </div>
-                  <div>
-                    <label className={labelClass}>New Password</label>
-                    <div className="relative">
-                      <input
-                        type={showNew ? 'text' : 'password'}
-                        placeholder="Min. 6 characters"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        className={`${inputClass} pr-10`}
-                      />
-                      <button
-                        onClick={() => setShowNew(!showNew)}
-                        className="absolute right-3 top-2.5 text-zinc-400 hover:text-zinc-600 transition-colors"
-                      >
-                        {showNew ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                      </button>
-                    </div>
-                  </div>
-                  <div>
-                    <label className={labelClass}>Confirm New Password</label>
-                    <div className="relative">
-                      <input
-                        type={showConfirm ? 'text' : 'password'}
-                        placeholder="Repeat new password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className={`${inputClass} pr-10`}
-                      />
-                      <button
-                        onClick={() => setShowConfirm(!showConfirm)}
-                        className="absolute right-3 top-2.5 text-zinc-400 hover:text-zinc-600 transition-colors"
-                      >
-                        {showConfirm ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                      </button>
-                    </div>
-                  </div>
-                  <div className="flex justify-end">
-                    <button
-                      onClick={handleUpdatePassword}
-                      disabled={passwordUpdating}
-                      className="px-5 py-2.5 rounded-xl bg-zinc-600 text-white text-xs font-bold hover:bg-zinc-700 shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
-                    >
-                      <Save className="h-3.5 w-3.5" />
-                      {passwordUpdating ? 'Updating...' : 'Update Password'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Two-Factor Auth */}
-              <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl p-6 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-zinc-800">Two-Factor Authentication (2FA)</p>
-                  <p className="text-[10px] text-zinc-500 mt-0.5">Add a layer of security using an authenticator app.</p>
-                  <span className={`inline-block mt-1.5 text-[9px] font-bold px-2 py-0.5 rounded border ${
-                    twoFAEnabled ? 'bg-zinc-50 text-zinc-600 border-zinc-100' : 'bg-zinc-50 text-zinc-500 border-zinc-200'
-                  }`}>
-                    {twoFAEnabled ? 'ENABLED' : 'DISABLED'}
-                  </span>
-                </div>
-                <button
-                  onClick={() => setTwoFAEnabled(!twoFAEnabled)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                    twoFAEnabled
-                      ? 'bg-red-50 text-red-500 border border-red-100 hover:bg-red-100'
-                      : 'bg-zinc-50 text-zinc-600 border border-zinc-100 hover:bg-zinc-100'
-                  }`}
-                >
-                  {twoFAEnabled ? 'Disable 2FA' : 'Enable 2FA'}
-                </button>
-              </div>
-
-              {/* Active Sessions */}
-              <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl overflow-hidden">
-                <div className="px-6 py-5 border-b border-zinc-100">
-                  <h2 className="text-sm font-bold text-zinc-800">Active Sessions</h2>
-                  <p className="text-[11px] text-zinc-500 mt-0.5">Devices currently signed into your account.</p>
-                </div>
-                <div className="divide-y divide-zinc-100">
-                  <div className="flex items-center justify-between px-6 py-4">
-                    <div>
-                      <p className="text-xs font-semibold text-zinc-800">Current Web Session <span className="ml-1 text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-md">ACTIVE</span></p>
-                      <p className="text-[10px] text-zinc-500 mt-0.5">Primary Web Dashboard · Active Now</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ── USER MANAGEMENT SECTION (SuperAdmin only) ── */}
-          {activeSection === 'users' && perms.canManageUsers && (
-            <div className="space-y-5">
-              <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl overflow-hidden">
-                <div className="px-6 py-5 border-b border-zinc-100 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-sm font-bold text-zinc-800">Team Members</h2>
-                    <p className="text-[11px] text-zinc-500 mt-0.5">Manage users and assign access levels.</p>
-                  </div>
-                  <button
-                    onClick={() => setShowAddUser(!showAddUser)}
-                    className="flex items-center gap-1.5 px-3 py-2 bg-zinc-900 text-white rounded-xl text-xs font-bold hover:bg-zinc-800 transition-all"
-                  >
-                    <UserPlus className="h-3.5 w-3.5" />
-                    Add User
-                  </button>
-                </div>
-
-                {/* Add User Form */}
-                {showAddUser && (
-                  <div className="p-6 border-b border-zinc-100 bg-zinc-50/50">
-                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Full Name</label>
-                        <input
-                          type="text"
-                          placeholder="John Doe"
-                          value={newUserName}
-                          onChange={(e) => setNewUserName(e.target.value)}
-                          className="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400/20 transition-all"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Email</label>
-                        <input
-                          type="email"
-                          placeholder="user@luxerealty.in"
-                          value={newUserEmail}
-                          onChange={(e) => setNewUserEmail(e.target.value)}
-                          className="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400/20 transition-all"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Role</label>
-                        <select
-                          value={newUserRole}
-                          onChange={(e) => setNewUserRole(e.target.value)}
-                          className="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-800 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400/20 transition-all cursor-pointer"
-                        >
-                          <option value="SalesPerson">SalesPerson</option>
-                          <option value="Admin">Admin</option>
-                          <option value="SuperAdmin">SuperAdmin</option>
-                        </select>
-                      </div>
-                      <div className="flex items-end">
-                        <button
-                          onClick={handleAddUser}
-                          disabled={savingUser || !newUserEmail || !newUserName}
-                          className="w-full px-4 py-2 bg-zinc-900 text-white rounded-xl text-xs font-bold hover:bg-zinc-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {savingUser ? 'Adding...' : 'Add'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Users Table */}
-                {loadingUsers ? (
-                  <div className="p-6 space-y-3">
-                    {[1,2,3].map(i => (
-                      <div key={i} className="h-12 bg-zinc-50 rounded-xl animate-pulse" />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="divide-y divide-zinc-100">
-                    {teamMembers.length === 0 ? (
-                      <div className="p-8 text-center">
-                        <Users className="h-8 w-8 text-zinc-300 mx-auto mb-2" />
-                        <p className="text-xs text-zinc-500">No team members found.</p>
-                      </div>
-                    ) : (
-                      teamMembers.map((member) => (
-                        <div key={member.id} className="flex items-center justify-between px-6 py-4 hover:bg-zinc-50 transition-colors">
-                          <div className="flex items-center gap-3">
-                            <div className="h-9 w-9 rounded-xl bg-zinc-100 border border-zinc-200 flex items-center justify-center text-xs font-bold text-zinc-600">
-                              {member.full_name?.charAt(0)?.toUpperCase() || 'U'}
-                            </div>
-                            <div>
-                              <p className="text-xs font-semibold text-zinc-800">{member.full_name || 'Unnamed'}</p>
-                              <p className="text-[10px] text-zinc-500">{member.email || 'No email'}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <select
-                              value={member.role || 'SalesPerson'}
-                              onChange={(e) => handleUpdateUserRole(member.id, e.target.value)}
-                              className={`rounded-lg border px-2.5 py-1 text-[10px] font-bold cursor-pointer outline-none transition-all ${
-                                member.role === 'SuperAdmin' 
-                                  ? 'bg-violet-50 text-violet-700 border-violet-200' 
-                                  : member.role === 'Admin' 
-                                    ? 'bg-blue-50 text-blue-700 border-blue-200' 
-                                    : 'bg-zinc-50 text-zinc-600 border-zinc-200'
-                              }`}
-                            >
-                              <option value="SalesPerson">SalesPerson</option>
-                              <option value="Admin">Admin</option>
-                              <option value="SuperAdmin">SuperAdmin</option>
-                            </select>
-                            {member.id !== profile?.id && (
-                              <button
-                                onClick={() => handleDeleteUser(member.id)}
-                                className="p-1.5 rounded-lg text-zinc-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                                title="Remove user"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Role Permissions Legend */}
-              <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl overflow-hidden">
-                <div className="px-6 py-5 border-b border-zinc-100">
-                  <h2 className="text-sm font-bold text-zinc-800">Role Permissions</h2>
-                  <p className="text-[11px] text-zinc-500 mt-0.5">Overview of what each role can access.</p>
-                </div>
-                <div className="p-6">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                      <thead>
-                        <tr className="border-b border-zinc-100">
-                          <th className="pb-2 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Permission</th>
-                          <th className="pb-2 text-[10px] font-bold text-violet-600 uppercase tracking-wider text-center">SuperAdmin</th>
-                          <th className="pb-2 text-[10px] font-bold text-blue-600 uppercase tracking-wider text-center">Admin</th>
-                          <th className="pb-2 text-[10px] font-bold text-zinc-600 uppercase tracking-wider text-center">SalesPerson</th>
-                        </tr>
-                      </thead>
-                      <tbody className="text-xs">
-                        {[
-                          { label: 'View all leads', sa: true, a: true, sp: false },
-                          { label: 'Create/edit leads', sa: true, a: true, sp: true },
-                          { label: 'Delete leads', sa: true, a: true, sp: false },
-                          { label: 'Create/edit properties', sa: true, a: true, sp: false },
-                          { label: 'View reporting', sa: true, a: true, sp: false },
-                          { label: 'Manage settings', sa: true, a: true, sp: false },
-                          { label: 'Manage users', sa: true, a: false, sp: false },
-                          { label: 'Export data', sa: true, a: true, sp: false },
-                          { label: 'Bulk delete', sa: true, a: true, sp: false },
-                        ].map((row) => (
-                          <tr key={row.label} className="border-b border-zinc-50">
-                            <td className="py-2 font-medium text-zinc-700">{row.label}</td>
-                            <td className="py-2 text-center">{row.sa ? '✓' : '—'}</td>
-                            <td className="py-2 text-center">{row.a ? '✓' : '—'}</td>
-                            <td className="py-2 text-center">{row.sp ? '✓' : '—'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          </div>
 
         </div>
+
       </div>
+
+      {/* ── ADD USER MODAL POPUP ── */}
+      {showAddUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/40 backdrop-blur-xs">
+          <div className="relative w-full max-w-md bg-white border border-[#e8e7e4] rounded-2xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-200 text-left">
+            <div className="p-5 border-b border-[#ebebeb] flex items-center justify-between bg-[#fafaf8]">
+              <div>
+                <h3 className="text-[14px] font-extrabold text-zinc-900">Add New Team Member</h3>
+                <p className="text-[10px] text-zinc-400 font-medium">Create a new profile record for ERP access</p>
+              </div>
+              <button type="button" onClick={() => setShowAddUser(false)} className="p-1.5 hover:bg-zinc-200/50 rounded-lg transition-colors text-zinc-400">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <div className="space-y-1">
+                <label className={labelClass}>Full Name *</label>
+                <input
+                  type="text"
+                  placeholder="E.g. Siddharth Verma"
+                  value={newUserName}
+                  onChange={(e) => setNewUserName(e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className={labelClass}>Email Address *</label>
+                <input
+                  type="email"
+                  placeholder="siddharth@luxerealty.in"
+                  value={newUserEmail}
+                  onChange={(e) => setNewUserEmail(e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className={labelClass}>System Access Role *</label>
+                <select
+                  value={newUserRole}
+                  onChange={(e) => setNewUserRole(e.target.value)}
+                  className={inputClass}
+                >
+                  <option value="SalesPerson">SalesPerson</option>
+                  <option value="Admin">Admin</option>
+                  <option value="SuperAdmin">SuperAdmin</option>
+                </select>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-[#ebebeb]">
+                <button
+                  type="button"
+                  onClick={() => setShowAddUser(false)}
+                  className="px-4 py-2 rounded-xl border border-[#e8e7e4] text-xs font-bold text-zinc-600 hover:bg-zinc-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAddUser}
+                  disabled={savingUser || !newUserEmail || !newUserName}
+                  className="px-4 py-2 rounded-xl bg-[#d4ad4d] text-white text-xs font-extrabold hover:bg-[#b8922e] transition-all shadow-2xs disabled:opacity-50"
+                >
+                  {savingUser ? 'Adding...' : 'Create Team Member'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

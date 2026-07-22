@@ -34,6 +34,8 @@ import Link from 'next/link';
 import { Table, TableCard } from '@/components/application/table/table';
 import { CheckboxBase } from '@/components/base/checkbox/checkbox';
 import { cx } from '@/utils/cx';
+import { AvatarCell } from '@/components/ui/AvatarCell';
+import { InlineStatsBar } from '@/components/ui/InlineStatsBar';
 import { QRCodeModal } from '@/components/QRCodeModal';
 import {
   DropdownMenu,
@@ -641,137 +643,126 @@ export default function LeadsPage() {
 
   const statusTabs = ['All', 'Hot', 'Warm', 'No answer', 'Not reachable', 'Switched off', 'Closed'];
 
-  return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-20 px-4">
-      {/* Page Header Area */}
-      <div className="flex flex-col gap-6">
-        {/* Leads KPI Board */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-zinc-50/50 p-4 rounded-2xl border border-zinc-200/60">
-          <div className="p-4 bg-white border border-zinc-200 rounded-xl flex items-center gap-3 shadow-3xs text-left">
-            <div className="p-2 bg-zinc-50 border border-zinc-100 rounded-lg text-zinc-600">
-              <Users className="h-4.5 w-4.5" />
-            </div>
-            <div>
-              <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Total Leads</p>
-              <p className="text-base font-black text-zinc-900 mt-0.5">{displayLeads.length}</p>
-            </div>
-          </div>
-          <div className="p-4 bg-white border border-zinc-200 rounded-xl flex items-center gap-3 shadow-3xs text-left">
-            <div className="p-2 bg-emerald-50 border border-emerald-100 rounded-lg text-emerald-600">
-              <CheckCircle className="h-4.5 w-4.5" />
-            </div>
-            <div>
-              <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Active Leads</p>
-              <p className="text-base font-black text-zinc-900 mt-0.5">{displayLeads.filter(l => l.is_active !== false).length}</p>
-            </div>
-          </div>
-          <div className="p-4 bg-white border border-zinc-200 rounded-xl flex items-center gap-3 shadow-3xs text-left">
-            <div className="p-2 bg-rose-50 border border-rose-100 rounded-lg text-rose-600">
-              <Sparkles className="h-4.5 w-4.5" />
-            </div>
-            <div>
-              <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Hot Prospects</p>
-              <p className="text-base font-black text-zinc-900 mt-0.5">{displayLeads.filter(l => l.status === 'Hot').length}</p>
-            </div>
-          </div>
-          <div className="p-4 bg-white border border-zinc-200 rounded-xl flex items-center gap-3 shadow-3xs text-left">
-            <div className="p-2 bg-zinc-50 border border-zinc-100 rounded-lg text-zinc-600">
-              <Briefcase className="h-4.5 w-4.5" />
-            </div>
-            <div>
-              <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Closed Deals</p>
-              <p className="text-base font-black text-zinc-900 mt-0.5">{displayLeads.filter(l => l.status === 'Closed').length}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+  const inlineStats = useMemo(() => [
+    { label: 'Total Leads', count: displayLeads.length, colorClass: 'bg-zinc-400' },
+    { label: 'Active Leads', count: displayLeads.filter(l => l.is_active !== false).length, colorClass: 'bg-emerald-500' },
+    { label: 'Hot Prospects', count: displayLeads.filter(l => l.status === 'Hot').length, colorClass: 'bg-rose-500' },
+    { label: 'Warm Leads', count: displayLeads.filter(l => l.status === 'Warm').length, colorClass: 'bg-amber-500' },
+    { label: 'Closed Deals', count: displayLeads.filter(l => l.status === 'Closed').length, colorClass: 'bg-zinc-650' }
+  ], [displayLeads]);
 
-      {/* Leads Tabular View */}
-      {loading ? (
-        <div className="space-y-4">
-          {[1,2,3,4,5].map(i => (
-            <div key={i} className="h-16 bg-white border border-zinc-100 rounded-2xl animate-pulse" />
-          ))}
+  return (
+    <div className="w-full pb-20 text-zinc-900 text-left">
+      {/* Unified Direction C Frame — header + stats + toolbar + table all in one card */}
+      <div className="overflow-hidden bg-white border border-[#e8e7e4] rounded-2xl shadow-sm">
+
+        {/* Editorial Header — inside the card */}
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 px-6 py-5 border-b border-[#ebebeb]">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-[20px] font-extrabold tracking-tight text-zinc-900" style={{ letterSpacing: '-0.4px' }}>Leads Database</h1>
+              <span className="bg-zinc-900 text-white text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
+                {sortedLeads.length}
+              </span>
+            </div>
+            <p className="text-[11px] text-zinc-400 font-medium mt-0.5">All client enquiries · Luxe Realty Pune</p>
+          </div>
+          {/* Header actions: Export + New Lead */}
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => exportCsv()}
+              className="dc-btn font-semibold flex items-center gap-1.5"
+            >
+              <Download01 className="h-3.5 w-3.5" />
+              Export
+            </button>
+            <Link href="/leads/create">
+              <button className="dc-btn gold font-bold flex items-center gap-1.5">
+                <Plus className="h-3.5 w-3.5" />
+                New Lead
+              </button>
+            </Link>
+          </div>
         </div>
-      ) : (
-        <TableCard.Root className="overflow-hidden bg-white ring-1 ring-zinc-200 shadow-xs rounded-xl">
-          <TableCard.Header 
-            title="All leads"
-            badge={sortedLeads.length}
-            contentTrailing={
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="relative group shrink-0">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400 group-focus-within:text-zinc-500 transition-colors" />
-                  <input 
-                    type="text" 
-                    placeholder="Search leads..." 
-                    className="pl-9 pr-3 py-1.5 bg-white border border-zinc-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 w-48 transition-all shrink-0"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-                <select
-                  aria-label="Filter by status"
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 shadow-sm outline-none transition-all hover:border-zinc-300 focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20 cursor-pointer shrink-0"
+
+        {/* Inline Stats Bar — glued directly under header */}
+        <InlineStatsBar stats={inlineStats} />
+
+        {/* Loading skeleton or table */}
+        {loading ? (
+          <div className="p-6 space-y-3">
+            {[1,2,3,4,5].map(i => (
+              <div key={i} className="h-12 bg-zinc-50 rounded-xl animate-pulse" />
+            ))}
+          </div>
+        ) : (
+          <>
+          {/* Porcelain Unified Toolbar */}
+          <div className="dc-toolbar">
+            {/* Search Input */}
+            <div className="dc-search-container">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+              <input 
+                type="text" 
+                placeholder="Search leads..." 
+                className="dc-search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+
+            {/* Status Dropdown Filter */}
+            <select
+              aria-label="Filter by status"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="dc-btn font-semibold cursor-pointer"
+            >
+              <option value="all">All statuses</option>
+              <option value="today">Today</option>
+              {statusTabs.slice(1).map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+
+            {/* Drill Down Toggle */}
+            <button 
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              className={`dc-btn font-bold cursor-pointer ${
+                showAdvancedFilters ? 'bg-zinc-900! text-white! border-zinc-900!' : ''
+              }`}
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              Drill Down
+              {(filterLocations.length > 0 || filterPropertyType || filterConfiguration || filterSource || filterTransactionType || filterBudgetMin || filterBudgetMax || filterStage) && (
+                <span className="ml-1 h-4 w-4 rounded-full bg-zinc-700 text-white text-[9px] font-bold flex items-center justify-center">
+                  {[filterLocations.length > 0, filterPropertyType, filterConfiguration, filterSource, filterTransactionType, filterBudgetMin || filterBudgetMax, filterStage].filter(Boolean).length}
+                </span>
+              )}
+            </button>
+
+            <div className="dc-divider"></div>
+
+            {/* Active/Inactive Segment Control */}
+            <div className="dc-seg">
+              {(['Active', 'Inactive', 'All'] as const).map((state) => (
+                <button
+                  key={state}
+                  onClick={() => setActiveState(state)}
+                  className={`dc-seg-btn ${activeState === state ? 'on' : ''}`}
                 >
-                  <option value="all">All statuses</option>
-                  <option value="today">Today</option>
-                  {statusTabs.slice(1).map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-                <button 
-                  onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0 ${
-                    showAdvancedFilters 
-                      ? 'bg-zinc-900 text-white border-zinc-900 hover:bg-zinc-800' 
-                      : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
-                  }`}
-                >
-                  <SlidersHorizontal className="h-3.5 w-3.5" />
-                  Drill Down
-                  {(filterLocations.length > 0 || filterPropertyType || filterConfiguration || filterSource || filterTransactionType || filterBudgetMin || filterBudgetMax || filterStage) && (
-                    <span className="ml-1 h-4 w-4 rounded-full bg-zinc-700 text-white text-[9px] font-bold flex items-center justify-center">
-                      {[filterLocations.length > 0, filterPropertyType, filterConfiguration, filterSource, filterTransactionType, filterBudgetMin || filterBudgetMax, filterStage].filter(Boolean).length}
-                    </span>
-                  )}
+                  {state}
                 </button>
-                <div className="flex items-center gap-0.5 p-0.5 bg-zinc-100 rounded-lg shrink-0">
-                  {(['Active', 'Inactive', 'All'] as const).map((state) => (
-                    <button
-                      key={state}
-                      onClick={() => setActiveState(state)}
-                      className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all ${
-                        activeState === state 
-                          ? state === 'Active' ? 'bg-emerald-500 text-white' 
-                            : state === 'Inactive' ? 'bg-zinc-500 text-white'
-                            : 'bg-white text-zinc-900 shadow-sm'
-                          : 'text-zinc-500 hover:text-zinc-700'
-                      }`}
-                    >
-                      {state}
-                    </button>
-                  ))}
-                </div>
-                <button 
-                  onClick={() => exportCsv()}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-zinc-200 text-zinc-700 rounded-lg text-xs font-bold hover:bg-zinc-50 transition-all shadow-xs cursor-pointer shrink-0"
-                >
-                  <Download01 className="h-3.5 w-3.5" />
-                  Export
-                </button>
-              </div>
-            }
-          />
+              ))}
+            </div>
+          </div>
 
           {/* Drill Down Advanced Filters Panel */}
           {showAdvancedFilters && (
-            <div className="border-b border-zinc-200 bg-zinc-50/70 px-4 py-4">
+            <div className="border-b border-[#e8e7e4] bg-[#fcfcfa] px-6 py-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-bold text-zinc-700 uppercase tracking-wider flex items-center gap-1.5">
-                  <SlidersHorizontal className="h-3.5 w-3.5 text-zinc-500" />
+                <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <SlidersHorizontal className="h-3.5 w-3.5 text-zinc-400" />
                   Drill Down Filters
                 </h3>
                 <button
@@ -792,11 +783,11 @@ export default function LeadsPage() {
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                 <div className="space-y-1 relative">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Location</label>
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Location</label>
                   <button
                     type="button"
                     onClick={() => setLocationDropdownOpen(!locationDropdownOpen)}
-                    className="w-full flex items-center justify-between rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-left outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all min-h-[30px]"
+                    className="w-full flex items-center justify-between rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-left outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all min-h-[30px]"
                   >
                     {filterLocations.length === 0 
                       ? <span className="text-zinc-400">All locations</span>
@@ -839,11 +830,11 @@ export default function LeadsPage() {
                   )}
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Property Type</label>
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Property Type</label>
                   <select
                     value={filterPropertyType}
                     onChange={(e) => setFilterPropertyType(e.target.value)}
-                    className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all cursor-pointer"
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-semibold outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all cursor-pointer"
                   >
                     <option value="">All types</option>
                     <option value="Apartment">Apartment</option>
@@ -855,11 +846,11 @@ export default function LeadsPage() {
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Configuration</label>
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Configuration</label>
                   <select
                     value={filterConfiguration}
                     onChange={(e) => setFilterConfiguration(e.target.value)}
-                    className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all cursor-pointer"
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-semibold outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all cursor-pointer"
                   >
                     <option value="">Any config</option>
                     <option value="1 BHK">1 BHK</option>
@@ -871,11 +862,11 @@ export default function LeadsPage() {
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Lead Source</label>
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Lead Source</label>
                   <select
                     value={filterSource}
                     onChange={(e) => setFilterSource(e.target.value)}
-                    className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all cursor-pointer"
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-semibold outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all cursor-pointer"
                   >
                     <option value="">All sources</option>
                     <option value="Website">Website</option>
@@ -887,11 +878,11 @@ export default function LeadsPage() {
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Transaction</label>
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Transaction</label>
                   <select
                     value={filterTransactionType}
                     onChange={(e) => setFilterTransactionType(e.target.value)}
-                    className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all cursor-pointer"
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-semibold outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all cursor-pointer"
                   >
                     <option value="">All types</option>
                     <option value="Outright">Outright (Buy)</option>
@@ -899,11 +890,11 @@ export default function LeadsPage() {
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Stage</label>
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Stage</label>
                   <select
                     value={filterStage}
                     onChange={(e) => setFilterStage(e.target.value)}
-                    className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all cursor-pointer"
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-semibold outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all cursor-pointer"
                   >
                     <option value="">All stages</option>
                     <option value="New inquiry">New inquiry</option>
@@ -913,69 +904,68 @@ export default function LeadsPage() {
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Budget Min (₹)</label>
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Budget Min (₹)</label>
                   <input
                     type="number"
                     placeholder="e.g. 5000000"
                     value={filterBudgetMin}
                     onChange={(e) => setFilterBudgetMin(e.target.value)}
-                    className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all"
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-semibold outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Budget Max (₹)</label>
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Budget Max (₹)</label>
                   <input
                     type="number"
                     placeholder="e.g. 50000000"
                     value={filterBudgetMax}
                     onChange={(e) => setFilterBudgetMax(e.target.value)}
-                    className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all"
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-semibold outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all"
                   />
                 </div>
               </div>
             </div>
           )}
 
-          {/* Old Bulk Action Bar removed */}
-
-          <div className="w-full">
-            <Table size="sm" aria-label="Leads">
-              <Table.Header>
-                <Table.Head className="w-10 text-center">
-                  <button
-                    type="button"
-                    aria-label="Select all leads"
-                    onClick={() => toggleVisibleSelection(!allVisibleSelected)}
-                    className="inline-flex items-center justify-center rounded outline-none"
-                  >
-                    <CheckboxBase 
-                      size="sm" 
-                      isSelected={allVisibleSelected} 
-                      isIndeterminate={!allVisibleSelected && someVisibleSelected} 
-                      className={cx("transition-colors", !allVisibleSelected && !someVisibleSelected && "bg-white! ring-zinc-300!")}
-                    />
-                  </button>
-                </Table.Head>
-                <Table.Head isRowHeader className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left py-2 px-3">Name</Table.Head>
-                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left py-2 px-3">Email</Table.Head>
-                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left py-2 px-3">Phone</Table.Head>
-                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left py-2 px-3">Source</Table.Head>
-                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left py-2 px-3">Config</Table.Head>
-                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left py-2 px-3">Location</Table.Head>
-                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left py-2 px-3 min-w-[160px]">Assigned To</Table.Head>
-                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-left py-2 px-3">Status</Table.Head>
-                <Table.Head className="text-xs font-semibold uppercase tracking-wide text-zinc-500 text-center py-2 px-3">Active</Table.Head>
-                <Table.Head className="w-24 text-xs font-semibold uppercase tracking-wide text-zinc-500 text-center py-2 px-3">Actions</Table.Head>
-              </Table.Header>
-              <Table.Body>
+          {/* Notion Style Table Container */}
+          <div className="dc-table-container">
+            <table className="dc-table">
+              <thead>
+                <tr>
+                  <th style={{ width: '40px' }} className="text-center">
+                    <button
+                      type="button"
+                      aria-label="Select all leads"
+                      onClick={() => toggleVisibleSelection(!allVisibleSelected)}
+                      className="inline-flex items-center justify-center rounded outline-none"
+                    >
+                      <CheckboxBase 
+                        size="sm" 
+                        isSelected={allVisibleSelected} 
+                        isIndeterminate={!allVisibleSelected && someVisibleSelected} 
+                        className={cx("transition-colors", !allVisibleSelected && !someVisibleSelected && "bg-white! ring-zinc-300!")}
+                      />
+                    </button>
+                  </th>
+                  <th>Name & Contact</th>
+                  <th>Source</th>
+                  <th>Config</th>
+                  <th>Location</th>
+                  <th>Assigned To</th>
+                  <th>Status</th>
+                  <th>Stage</th>
+                  <th style={{ width: '80px' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
                 {sortedLeads.map((lead) => (
-                  <Table.Row 
+                  <tr 
                     key={lead.id} 
                     onClick={() => handleOpenLead(lead)} 
-                    className="cursor-pointer hover:bg-zinc-50/70 transition-colors group/row"
+                    className="cursor-pointer group/row"
                   >
                     {/* Checkbox */}
-                    <Table.Cell className="w-10 text-center" onClick={(e) => e.stopPropagation()}>
+                    <td className="text-center" onClick={(e) => e.stopPropagation()}>
                       <button
                         type="button"
                         aria-label={`Select ${lead.client_name}`}
@@ -988,90 +978,76 @@ export default function LeadsPage() {
                           className={cx("transition-colors", !selectedLeadIds.has(lead.id) && "bg-white! ring-zinc-300!")}
                         />
                       </button>
-                    </Table.Cell>
+                    </td>
 
-                    {/* Name */}
-                    <Table.Cell className="text-left py-2 px-3">
-                      <div className="flex items-center gap-2">
-                        <div className="relative h-6 w-6 rounded-md overflow-hidden bg-zinc-100 flex items-center justify-center">
-                          <img src="/lead-avatar.png" alt="" className="h-full w-full object-cover" />
-                          <span className={`absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full border-2 border-white ${
-                            lead.status === 'Hot' ? 'bg-rose-500' :
-                            lead.status === 'Warm' ? 'bg-amber-500' :
-                            lead.status === 'Closed' ? 'bg-zinc-400' :
-                            'bg-zinc-300'
-                          }`} />
-                        </div>
-                        <span className="text-xs font-bold text-zinc-900 truncate max-w-[140px]">{lead.client_name}</span>
-                      </div>
-                    </Table.Cell>
-
-                    {/* Email */}
-                    <Table.Cell className="text-left py-2 px-3">
-                      <span className="text-xs text-zinc-600 truncate max-w-[180px] block">{lead.email || '—'}</span>
-                    </Table.Cell>
-
-                    {/* Phone */}
-                    <Table.Cell className="text-left py-2 px-3">
-                      <span className="text-xs font-medium text-zinc-700">{lead.phone || '—'}</span>
-                    </Table.Cell>
+                    {/* Name & Contact combined using AvatarCell */}
+                    <td>
+                      <AvatarCell 
+                        name={lead.client_name || 'No Name'} 
+                        subtext={lead.phone || lead.email || 'No contact details'} 
+                      />
+                    </td>
 
                     {/* Source */}
-                    <Table.Cell className="text-left py-2 px-3">
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-semibold border ${getSourceStyle(lead.lead_source_id)}`}>
+                    <td>
+                      <span className={`dc-badge ${getSourceStyle(lead.lead_source_id)}`}>
                         {lead.lead_source_id || '—'}
                       </span>
-                    </Table.Cell>
+                    </td>
 
                     {/* Config */}
-                    <Table.Cell className="text-left py-2 px-3">
-                      <span className="text-xs font-medium text-zinc-700">{lead.configuration || '—'}</span>
-                    </Table.Cell>
+                    <td className="font-semibold text-zinc-900 text-xs">
+                      {lead.configuration || '—'}
+                    </td>
 
                     {/* Location */}
-                    <Table.Cell className="text-left py-2 px-3">
-                      <span className="text-xs text-zinc-600 truncate max-w-[140px] block">{lead.preferred_location || '—'}</span>
-                    </Table.Cell>
+                    <td className="text-zinc-500 font-medium text-xs max-w-[150px] truncate">
+                      {lead.preferred_location || '—'}
+                    </td>
 
                     {/* Assigned To */}
-                    <Table.Cell className="text-left py-2 px-3 min-w-[160px]" onClick={(e) => e.stopPropagation()}>
+                    <td onClick={(e) => e.stopPropagation()}>
                       {perms.canViewAllLeads ? (
-                        <select
-                          value={lead.assigned_to || ""}
-                          onChange={async (e) => {
-                            const newAssignee = e.target.value;
-                            setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, assigned_to: newAssignee || undefined } : l));
-                            try {
-                              await supabase
-                                .from('leads')
-                                .update({ assigned_to: newAssignee || null })
-                                .eq('id', lead.id);
-                            } catch (err) {
-                              console.error('Error updating assignee:', err);
-                            }
-                          }}
-                          className="w-32 bg-white border border-zinc-200 rounded-lg px-2 py-1 text-xs text-zinc-750 focus:outline-none focus:border-zinc-400"
-                        >
-                          <option value="">Unassigned</option>
-                          {salesExecutives.map(exec => (
-                            <option key={exec.id} value={exec.id}>{exec.full_name}</option>
-                          ))}
-                        </select>
+                        <div className="relative">
+                          <select
+                            aria-label="Assign executive"
+                            value={lead.assigned_to || ""}
+                            onChange={async (e) => {
+                              const newAssignee = e.target.value;
+                              setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, assigned_to: newAssignee || undefined } : l));
+                              try {
+                                await supabase
+                                  .from('leads')
+                                  .update({ assigned_to: newAssignee || null })
+                                  .eq('id', lead.id);
+                              } catch (err) {
+                                console.error('Error updating assignee:', err);
+                              }
+                            }}
+                            className="bg-transparent hover:bg-zinc-50 border border-transparent hover:border-zinc-200 rounded-md px-1.5 py-0.5 text-xs text-zinc-700 font-semibold transition-all focus:outline-none focus:border-[#d4ad4d] cursor-pointer"
+                          >
+                            <option value="">Unassigned</option>
+                            {salesExecutives.map(exec => (
+                              <option key={exec.id} value={exec.id}>{exec.full_name}</option>
+                            ))}
+                          </select>
+                        </div>
                       ) : (
-                        <span className="px-2.5 py-1 rounded-full bg-zinc-50 border border-zinc-200 text-[10px] font-semibold text-zinc-650 inline-block w-32 truncate text-center">
+                        <span className="px-1.5 py-0.5 rounded bg-zinc-50 border border-zinc-200 text-[10px] font-semibold text-zinc-600 inline-block w-36 truncate text-center">
                           {salesExecutives.find(x => x.id === lead.assigned_to)?.full_name || 'Unassigned'}
                         </span>
                       )}
-                    </Table.Cell>
+                    </td>
 
-                    {/* Status */}
-                    <Table.Cell className="text-left py-2 px-3" onClick={(e) => e.stopPropagation()}>
-                      <div className="relative w-28">
+                    {/* Status Dropdown */}
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <div className="relative group/status">
                         <select
+                          aria-label="Lead status"
                           value={lead.status || "Hot"}
                           onChange={(e) => handleRowStatusChange(lead.id, e.target.value)}
                           className={cx(
-                            "w-full cursor-pointer rounded-lg border pl-2 pr-6 py-1 text-[11px] font-semibold shadow-sm outline-none transition-all focus:ring-2 focus:ring-zinc-500/20 appearance-none text-left",
+                            "cursor-pointer rounded-md border border-transparent px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider outline-none transition-all focus:ring-1 focus:ring-[#d4ad4d]/40 appearance-none text-left",
                             getStatusStyle(lead.status || "Hot")
                           )}
                         >
@@ -1079,39 +1055,42 @@ export default function LeadsPage() {
                             <option key={s} value={s}>{s}</option>
                           ))}
                         </select>
-                        <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 pointer-events-none opacity-60" />
                       </div>
-                    </Table.Cell>
+                    </td>
 
-                    {/* Active Toggle */}
-                    <Table.Cell className="text-center py-2 px-3" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => handleToggleLeadActive(lead.id, lead.is_active !== false)}
-                        className={cx(
-                          "px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border cursor-pointer transition-all",
-                          lead.is_active !== false
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100/70"
-                            : "bg-zinc-50 text-zinc-500 border-zinc-200 hover:bg-zinc-100"
-                        )}
-                        title={lead.is_active !== false ? "Click to Deactivate" : "Click to Activate"}
-                      >
-                        {lead.is_active !== false ? "Active" : "Inactive"}
-                      </button>
-                    </Table.Cell>
+                    {/* Stage — plain text label, becomes select on hover/click */}
+                    <td onClick={(e) => e.stopPropagation()} className="group/stage">
+                      <div className="relative">
+                        {/* Visible label */}
+                        <span className="text-[9.5px] font-semibold text-zinc-400 group-hover/stage:opacity-0 transition-opacity pointer-events-none absolute inset-0 flex items-center">
+                          {lead.stage_id || 'New inquiry'}
+                        </span>
+                        {/* Hover-reveal select */}
+                        <select
+                          aria-label="Lead stage"
+                          value={lead.stage_id || "New inquiry"}
+                          onChange={(e) => handleRowStageChange(lead.id, e.target.value)}
+                          className="opacity-0 group-hover/stage:opacity-100 bg-white border border-zinc-200 rounded-md px-1.5 py-0.5 text-[10px] font-semibold text-zinc-700 transition-all focus:outline-none focus:border-[#d4ad4d] cursor-pointer w-full"
+                        >
+                          {['New inquiry', 'Site visit', 'Follow up', 'Closure'].map((stg) => (
+                            <option key={stg} value={stg}>{stg}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </td>
 
-                    {/* Actions */}
-                    <Table.Cell className="text-center py-2 px-3" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-center gap-1">
+                    {/* Actions — gold View → text + icon share */}
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleOpenLead(lead)}
-                          className="rounded-lg px-3 py-1.5 border border-zinc-200 bg-white text-zinc-700 text-xs font-bold hover:bg-zinc-50 transition-colors shadow-xs cursor-pointer"
-                          title="View Details"
+                          className="text-[10.5px] font-bold text-[#d4ad4d] hover:text-[#b8922e] transition-colors whitespace-nowrap"
                         >
-                          View
+                          View →
                         </button>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <button className="rounded-lg p-1.5 text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 transition-colors border border-zinc-200 bg-white shadow-xs">
+                            <button className="p-1 rounded text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors">
                               <Share2 className="h-3 w-3" />
                             </button>
                           </DropdownMenuTrigger>
@@ -1131,211 +1110,217 @@ export default function LeadsPage() {
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
-                    </Table.Cell>
-                  </Table.Row>
+                    </td>
+                  </tr>
                 ))}
-              </Table.Body>
-            </Table>
+              </tbody>
+            </table>
           </div>
           {sortedLeads.length === 0 && (
             <div className="px-6 py-12 text-center text-xs font-semibold text-zinc-400">
               No leads found matching query or filters.
             </div>
           )}
-        </TableCard.Root>
-      )}
+          </>
+        )}
+      </div>
 
       {/* Lead Details Slide-out Drawer */}
       {isDrawerOpen && selectedLead && (
         <div className="fixed inset-0 z-50 flex justify-end">
           <div className="absolute inset-0 bg-zinc-950/40 backdrop-blur-sm" onClick={() => setIsDrawerOpen(false)} />
-          <div className="relative w-full max-w-xl bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
-            {/* Drawer Header */}
-            <div className="p-6 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
-              <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-2xl overflow-hidden bg-zinc-100 flex items-center justify-center shadow-lg shadow-zinc-900/20">
-                  <img src="/lead-avatar.png" alt="" className="h-full w-full object-cover" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-zinc-900">{selectedLead.client_name}</h2>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-widest border transition-all ${getStatusStyle(selectedLead.status || 'Hot')}`}>
-                      {selectedLead.status || 'Hot'}
-                    </span>
-                    <button
-                      onClick={() => handleToggleLeadActive(selectedLead.id, selectedLead.is_active !== false)}
-                      className={cx(
-                        "px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-widest border transition-all cursor-pointer",
-                        selectedLead.is_active !== false
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100/70"
-                          : "bg-zinc-50 text-zinc-500 border-zinc-200 hover:bg-zinc-100"
-                      )}
-                      title={selectedLead.is_active !== false ? "Click to Deactivate" : "Click to Activate"}
-                    >
-                      {selectedLead.is_active !== false ? "Active" : "Inactive"}
-                    </button>
-                    <span className="text-[10px] text-zinc-400 font-medium">Added {new Date(selectedLead.created_at || '').toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+          <div className="relative w-full max-w-[420px] bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+            
+            {/* Gold band at top - Direction C signature */}
+            <div className="h-1" style={{background: 'linear-gradient(90deg, #d4ad4d, #e8c96e, #d4ad4d)'}} />
+            
+            {/* Hero identity block */}
+            <div className="px-5 py-4 border-b border-[#ebebeb]">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  {/* Color-coded avatar */}
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[13px] font-extrabold shrink-0"
+                    style={{background:'#fde8e8', color:'#c0392b'}}>
+                    {selectedLead.client_name?.slice(0,2).toUpperCase()}
+                  </div>
+                  <div>
+                    <h2 className="text-[15px] font-extrabold text-zinc-900 tracking-tight" style={{letterSpacing:'-0.3px'}}>
+                      {selectedLead.client_name}
+                    </h2>
+                    <div className="text-[10px] text-zinc-400 mt-0.5">
+                      {selectedLead.phone}{selectedLead.email ? ` · ${selectedLead.email}` : ''}
+                    </div>
                   </div>
                 </div>
+                <button onClick={() => setIsDrawerOpen(false)} className="p-1.5 hover:bg-zinc-100 rounded-lg transition-colors">
+                  <X className="h-4 w-4 text-zinc-400" />
+                </button>
               </div>
-              <button onClick={() => setIsDrawerOpen(false)} className="p-2 hover:bg-zinc-200 rounded-full transition-colors bg-white border border-zinc-100 shadow-sm">
-                <X className="h-5 w-5 text-zinc-400" />
+              {/* Status badges row */}
+              <div className="flex items-center gap-2 mt-3 flex-wrap">
+                <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider border ${getStatusStyle(selectedLead.status || 'Hot')}`}>
+                  {selectedLead.status || 'Hot'}
+                </span>
+                <button
+                  onClick={() => handleToggleLeadActive(selectedLead.id, selectedLead.is_active !== false)}
+                  className={cx(
+                    'px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider border cursor-pointer transition-all',
+                    selectedLead.is_active !== false
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100/70'
+                      : 'bg-zinc-50 text-zinc-500 border-zinc-200 hover:bg-zinc-100'
+                  )}
+                >
+                  {selectedLead.is_active !== false ? 'Active' : 'Inactive'}
+                </button>
+                <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-zinc-50 text-zinc-500 border border-zinc-200 uppercase tracking-wider">
+                  {selectedLead.stage_id || 'New Inquiry'}
+                </span>
+                <span className="text-[9.5px] text-zinc-300 font-medium ml-auto">
+                  {new Date(selectedLead.created_at || '').toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'})}
+                </span>
+              </div>
+            </div>
+            
+            {/* Quick action bar - 4 buttons */}
+            <div className="grid grid-cols-4 gap-0 border-b border-[#ebebeb]">
+              <a href={`tel:${selectedLead.phone}`}
+                className="flex flex-col items-center gap-1 py-3 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 transition-colors">
+                <Phone className="h-4 w-4" />
+                <span className="text-[9px] font-bold">Call</span>
+              </a>
+              <button onClick={() => shareWhatsApp(selectedLead)}
+                className="flex flex-col items-center gap-1 py-3 text-emerald-600 hover:bg-emerald-50 transition-colors">
+                <MessageSquare className="h-4 w-4" />
+                <span className="text-[9px] font-bold">WhatsApp</span>
+              </button>
+              <a href={`mailto:${selectedLead.email}`}
+                className="flex flex-col items-center gap-1 py-3 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 transition-colors">
+                <Mail className="h-4 w-4" />
+                <span className="text-[9px] font-bold">Email</span>
+              </a>
+              <button onClick={() => copyToClipboard(generateShareText(selectedLead), 'Copied!')}
+                className="flex flex-col items-center gap-1 py-3 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 transition-colors">
+                <Copy className="h-4 w-4" />
+                <span className="text-[9px] font-bold">Copy</span>
               </button>
             </div>
-
-            {/* Drawer Content Area */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-8">
-              {/* Contact Quick Actions */}
-              <div className="grid grid-cols-2 gap-3">
-                <a 
-                  href={`tel:${selectedLead.phone}`}
-                  className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-zinc-100 text-zinc-700 text-xs font-bold hover:bg-zinc-200 border border-zinc-200/80 transition-all"
-                >
-                  <Phone className="h-4 w-4 text-zinc-500" />
-                  Call Now
-                </a>
-                <a 
-                  href={`mailto:${selectedLead.email}`}
-                  className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800 transition-all shadow-md"
-                >
-                  <Mail className="h-4 w-4 text-zinc-400" />
-                  Send Email
-                </a>
-              </div>
-
-              {/* Quick Status Selection */}
-              <div className="space-y-3 bg-zinc-50 border border-zinc-200/60 p-4 rounded-2xl">
-                <h3 className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-[0.15em] flex items-center gap-1.5">
-                  <Tag className="h-3.5 w-3.5" />
-                  Quick Update Status
-                </h3>
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {['Hot', 'Warm', 'No answer', 'Not reachable', 'Switched off', 'Closed'].map((statusOption) => (
-                    <button
-                      key={statusOption}
-                      onClick={() => handleUpdateStatus(statusOption)}
-                      className={`px-3 py-1.5 rounded-xl text-[10px] font-bold border transition-all ${
-                        selectedLead.status === statusOption
-                          ? getStatusStyle(statusOption) + ' border-zinc-400'
-                          : 'bg-white text-zinc-500 hover:text-zinc-900 border-zinc-200 hover:bg-zinc-50'
-                      }`}
-                    >
-                      {statusOption}
+            
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto">
+              
+              {/* Inline status update */}
+              <div className="px-5 py-3 border-b border-[#f5f5f3]">
+                <div className="text-[9px] font-extrabold text-zinc-300 uppercase tracking-[0.12em] mb-2">Update Status</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {['Hot','Warm','No answer','Not reachable','Switched off','Closed'].map((s) => (
+                    <button key={s} type="button"
+                      onClick={() => handleUpdateStatus(s)}
+                      className={`px-3 py-1 rounded-full text-[9.5px] font-bold border transition-all ${
+                        selectedLead.status === s
+                          ? getStatusStyle(s)
+                          : 'bg-white text-zinc-400 border-zinc-200 hover:border-zinc-300 hover:text-zinc-700'
+                      }`}>
+                      {s}
                     </button>
                   ))}
                 </div>
               </div>
-
-              {/* Requirement Summary */}
-              <div className="space-y-4">
-                <h3 className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-[0.15em] flex items-center gap-2">
-                  <Briefcase className="h-3.5 w-3.5" />
-                  Client Requirement
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
-                    <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Budget Max</p>
-                    <p className="text-sm font-bold text-zinc-900">
-                      {selectedLead.budget_max ? formatBudgetAbbreviated(selectedLead.budget_max) : 'N/A'}
-                    </p>
-                  </div>
-                  <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
-                    <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Configuration</p>
-                    <p className="text-sm font-bold text-zinc-900">{selectedLead.configuration || 'Any'}</p>
-                  </div>
-                  <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
-                    <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Location Pref</p>
-                    <p className="text-sm font-bold text-zinc-900 flex items-center gap-1.5">
-                      <MapPin className="h-3.5 w-3.5 text-zinc-500" />
-                      {selectedLead.preferred_location || 'Flexible'}
-                    </p>
-                  </div>
-                  <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
-                    <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Property Type</p>
-                    <p className="text-sm font-bold text-zinc-900">{selectedLead.property_type || 'Residential'}</p>
-                  </div>
+              
+              {/* Classification - key-value */}
+              <div className="px-5 py-3 border-b border-[#f5f5f3]">
+                <div className="text-[9px] font-extrabold text-zinc-300 uppercase tracking-[0.12em] mb-3">Classification</div>
+                <div className="space-y-2">
+                  {[
+                    ['Source', selectedLead.lead_source_id || '—'],
+                    ['Category', selectedLead.category || '—'],
+                    ['Transaction', selectedLead.transaction_type || '—'],
+                    ['Stage', selectedLead.stage_id || 'New inquiry'],
+                    ['Assigned To', salesExecutives.find(x => x.id === selectedLead.assigned_to)?.full_name || 'Unassigned'],
+                  ].map(([k,v]) => (
+                    <div key={k} className="flex items-center justify-between">
+                      <span className="text-[10px] font-semibold text-zinc-400">{k}</span>
+                      <span className="text-[10px] font-bold text-zinc-700">{v}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-
-              {/* Engagement Timeline / Notes */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-[0.15em] flex items-center gap-2">
-                    <Clock className="h-3.5 w-3.5" />
-                    Interaction Notes
-                  </h3>
-                  <button 
-                    onClick={handleSaveNotes}
-                    className="text-[10px] font-bold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 transition-colors border border-zinc-200 px-3 py-1 rounded-lg flex items-center gap-1 disabled:opacity-50"
-                  >
-                    Save Notes
+              
+              {/* Requirements - key-value */}
+              <div className="px-5 py-3 border-b border-[#f5f5f3]">
+                <div className="text-[9px] font-extrabold text-zinc-300 uppercase tracking-[0.12em] mb-3">Requirements</div>
+                <div className="space-y-2">
+                  {[
+                    ['Type', selectedLead.property_type || '—'],
+                    ['Config', selectedLead.configuration || '—'],
+                    ['Locations', selectedLead.preferred_location || 'Flexible'],
+                    ['Max Budget', selectedLead.budget_max ? formatBudgetAbbreviated(selectedLead.budget_max) : '—'],
+                  ].map(([k,v]) => (
+                    <div key={k} className="flex items-start justify-between gap-2">
+                      <span className="text-[10px] font-semibold text-zinc-400 shrink-0">{k}</span>
+                      <span className={`text-[10px] font-bold text-right ${
+                        k === 'Max Budget' ? 'text-[#d4ad4d]' : 'text-zinc-700'
+                      }`}>{v}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Notes */}
+              <div className="px-5 py-3">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-[9px] font-extrabold text-zinc-300 uppercase tracking-[0.12em]">Interaction Notes</div>
+                  <button onClick={handleSaveNotes}
+                    className="text-[9.5px] font-bold text-zinc-500 hover:text-zinc-800 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 px-2.5 py-1 rounded-lg transition-colors">
+                    Save
                   </button>
                 </div>
-                
-                <textarea 
-                  className="w-full h-32 p-4 rounded-2xl border border-zinc-200 text-sm font-medium focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 outline-none transition-all resize-none bg-zinc-50/30"
-                  placeholder="Update lead progress, concerns, or next steps..."
+                <textarea
+                  className="w-full h-28 p-3 border border-[#e8e7e4] rounded-xl text-[11px] font-medium text-zinc-700 placeholder-zinc-300 bg-[#fafaf8] focus:outline-none focus:border-[#d4ad4d] focus:ring-2 focus:ring-[#d4ad4d]/15 resize-none transition-all"
+                  placeholder="Update progress, concerns, or next steps..."
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
                 />
               </div>
-
-              {/* Lead Source */}
-              <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-center justify-between">
-                <div>
-                  <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-0.5">Acquisition Channel</p>
-                  <p className="text-xs font-bold text-zinc-900">{selectedLead.lead_source_id || 'Direct Inquiry'}</p>
-                </div>
-                <div className="p-2 rounded-xl bg-white border border-zinc-100 shadow-sm">
-                  <Sparkles className="h-4 w-4 text-amber-500" />
-                </div>
-              </div>
             </div>
-
-            {/* Drawer Footer Actions */}
-            <div className="p-6 border-t border-zinc-100 bg-zinc-50/50 flex flex-wrap items-center gap-2">
-              <Link href={`/leads/edit?id=${selectedLead.id}`} className="flex-1 min-w-[120px]">
-                <button className="w-full py-3.5 rounded-xl bg-white border border-zinc-200 text-zinc-900 text-xs font-bold hover:bg-zinc-50 transition-all flex items-center justify-center gap-2">
-                  <Edit3 className="h-4 w-4" />
-                  Edit Profile
+            
+            {/* Footer */}
+            <div className="px-5 py-3 border-t border-[#ebebeb] flex items-center gap-2">
+              <Link href={`/leads/edit?id=${selectedLead.id}`} className="flex-1">
+                <button className="w-full py-2.5 rounded-xl border border-[#e8e7e4] bg-white text-zinc-700 text-[11px] font-bold hover:bg-zinc-50 transition-all flex items-center justify-center gap-1.5">
+                  <Edit3 className="h-3.5 w-3.5" />
+                  Edit Lead
                 </button>
               </Link>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex-1 min-w-[120px] py-3.5 rounded-xl bg-white border border-zinc-200 text-zinc-900 text-xs font-bold hover:bg-zinc-50 transition-all flex items-center justify-center gap-2 cursor-pointer">
-                    <Share2 className="h-4 w-4 text-zinc-500" />
-                    Share Lead
+                  <button className="py-2.5 px-4 rounded-xl border border-[#e8e7e4] bg-white text-zinc-700 text-[11px] font-bold hover:bg-zinc-50 transition-all flex items-center gap-1.5 cursor-pointer">
+                    <Share2 className="h-3.5 w-3.5 text-zinc-400" />
+                    Share
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48 bg-white border border-zinc-200 rounded-xl shadow-lg p-1 z-[60]">
-                  <DropdownMenuItem onClick={() => copyToClipboard(generateShareText(selectedLead), "Lead details copied!")} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
-                    <Copy className="h-3.5 w-3.5 text-zinc-400" />
-                    Copy details
+                  <DropdownMenuItem onClick={() => copyToClipboard(generateShareText(selectedLead), 'Copied!')} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
+                    <Copy className="h-3.5 w-3.5 text-zinc-400" /> Copy details
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => copyToClipboard(getShareableUrl(selectedLead), "Shareable link copied!")} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
-                    <ExternalLink className="h-3.5 w-3.5 text-zinc-400" />
-                    Copy link
+                  <DropdownMenuItem onClick={() => copyToClipboard(getShareableUrl(selectedLead), 'Link copied!')} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
+                    <ExternalLink className="h-3.5 w-3.5 text-zinc-400" /> Copy link
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => shareWhatsApp(selectedLead)} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
-                    <MessageSquare className="h-3.5 w-3.5 text-emerald-500" />
-                    Share to WhatsApp
+                    <MessageSquare className="h-3.5 w-3.5 text-emerald-500" /> WhatsApp
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => shareEmail(selectedLead)} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
-                    <Mail className="h-3.5 w-3.5 text-zinc-400" />
-                    Share via Email
+                    <Mail className="h-3.5 w-3.5 text-zinc-400" /> Email
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => { setQrLead(selectedLead); setIsQrOpen(true); }} className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 hover:text-zinc-900 px-2 py-1.5 rounded-lg hover:bg-zinc-50">
-                    <QrCode className="h-3.5 w-3.5 text-zinc-400" />
-                    Show QR code
+                    <QrCode className="h-3.5 w-3.5 text-zinc-400" /> QR code
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <button 
+              <button
                 onClick={() => handleUpdateStatus('Closed')}
-                className="flex-1 min-w-[120px] py-3.5 rounded-xl bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800 transition-all flex items-center justify-center gap-2 shadow-lg shadow-zinc-900/10"
-              >
-                <CheckCircle className="h-4 w-4" />
-                Mark as Closed
+                className="py-2.5 px-4 rounded-xl bg-zinc-900 text-white text-[11px] font-bold hover:bg-zinc-800 transition-all flex items-center gap-1.5">
+                <CheckCircle className="h-3.5 w-3.5" />
+                Close
               </button>
             </div>
           </div>
