@@ -19,14 +19,13 @@ import {
 } from 'lucide-react';
 import { useProfile } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { fetchLeads, fetchProperties, Lead, Property } from '@/lib/queries';
 
 export function Header() {
   const profile = useProfile();
   const router = useRouter();
-  const pathname = usePathname();
 
   // Search Palette State
   const [isOpen, setIsOpen] = useState(false);
@@ -314,55 +313,29 @@ export function Header() {
 
   return (
     <>
-      <header className="bg-transparent px-4 py-2 flex items-center justify-between z-30 select-none">
+      <header className="bg-white/80 backdrop-blur-md border-b border-zinc-200 px-6 py-3.5 flex items-center justify-between z-30 select-none">
         
         {/* Search Trigger Input (Opens CMD+K Dialog) */}
         <div 
           onClick={() => setIsOpen(true)}
-          className="relative w-72 cursor-pointer group"
+          className="relative w-80 cursor-pointer group"
         >
-          <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-400 group-hover:text-zinc-600 transition-colors" />
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400 group-hover:text-zinc-600 transition-colors" />
           <input 
             type="text" 
             readOnly
-            placeholder="Search dialogs, properties... ⌘K" 
-            className="w-full bg-white/90 border border-white/80 rounded-full pl-9 pr-4 py-2 text-xs text-zinc-900 placeholder-zinc-400 shadow-2xs focus:outline-none cursor-pointer hover:bg-white transition-all"
+            placeholder="Search properties, leads, nav...   ⌘K" 
+            className="w-full bg-zinc-50 border border-zinc-200 rounded-xl pl-9 pr-4 py-2 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none cursor-pointer hover:border-zinc-300 transition-all duration-200"
           />
         </div>
 
-        {/* Top Pill Navigation Tabs Bar (Reference Image Style) */}
-        <div className="hidden md:flex items-center gap-1.5 p-1 bg-white/80 backdrop-blur-md border border-white/80 rounded-full shadow-2xs">
-          {[
-            { label: 'Overview', href: '/dashboard' },
-            { label: 'Work Orders', href: '/pipeline' },
-            { label: 'Rent', href: '/leads' },
-            { label: 'Collection', href: '/matchmaking' },
-            { label: 'Access', href: '/site-visits' }
-          ].map(tab => {
-            const isActive = pathname === tab.href;
-            return (
-              <button
-                key={tab.label}
-                onClick={() => router.push(tab.href)}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                  isActive 
-                    ? 'bg-zinc-900 text-white shadow-sm' 
-                    : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/60'
-                }`}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Header Utilities (Notifications & User Avatar) */}
-        <div className="flex items-center gap-3">
-          {/* Global Create Button */}
+        {/* Header Utilities */}
+        <div className="flex items-center gap-5">
+          {/* Global Create Button Dropdown */}
           <div className="relative">
             <button 
               onClick={() => setIsCreateOpen(!isCreateOpen)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-zinc-900 text-white hover:bg-zinc-800 transition-all rounded-full text-xs font-bold cursor-pointer shrink-0 shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 text-white hover:bg-zinc-800 transition-all rounded-xl text-xs font-bold cursor-pointer shrink-0 shadow-2xs"
             >
               <Plus className="h-3.5 w-3.5" />
               <span>Create</span>
@@ -372,33 +345,33 @@ export function Header() {
             {isCreateOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setIsCreateOpen(false)} />
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-zinc-200 rounded-2xl shadow-xl p-1 z-50 text-left">
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-zinc-200 rounded-xl shadow-lg p-1 z-50 text-left">
                   <button 
                     onClick={() => { setIsCreateOpen(false); router.push('/leads/create'); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors text-left"
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors text-left"
                   >
-                    <Users className="h-3.5 w-3.5 text-zinc-400" />
+                    <Users className="h-3.5 w-3.5 text-zinc-450" />
                     New Lead
                   </button>
                   <button 
                     onClick={() => { setIsCreateOpen(false); router.push('/properties/create'); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors text-left"
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors text-left"
                   >
-                    <Home className="h-3.5 w-3.5 text-zinc-400" />
-                    New Property
+                    <Home className="h-3.5 w-3.5 text-zinc-450" />
+                    New Listing
                   </button>
                   <button 
                     onClick={() => { setIsCreateOpen(false); router.push('/pipeline?action=new-deal'); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors text-left"
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors text-left"
                   >
-                    <TrendingUp className="h-3.5 w-3.5 text-zinc-400" />
+                    <TrendingUp className="h-3.5 w-3.5 text-zinc-450" />
                     New Deal
                   </button>
                   <button 
                     onClick={() => { setIsCreateOpen(false); router.push('/site-visits/create'); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors text-left"
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors text-left"
                   >
-                    <Calendar className="h-3.5 w-3.5 text-zinc-400" />
+                    <Calendar className="h-3.5 w-3.5 text-zinc-450" />
                     Schedule Visit
                   </button>
                 </div>
