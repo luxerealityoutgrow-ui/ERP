@@ -532,33 +532,84 @@ export default function MatchmakingPage() {
   const handleBookSingleTour = async () => {
     if (!currentLead || !currentProperty) return;
     
-    const { error } = await supabase.from('audit_logs').insert({
-      user_id: profile?.id || 'e2c5f803-2500-4538-a763-680d7279b4e7',
-      event: 'Site visit scheduled',
-      changes: {
-        client_name: currentLead.client_name,
-        title: currentProperty.title
-      }
-    });
+    const todayStr = '2026-06-18';
+    try {
+      // 1. Insert site_visit record
+      await supabase.from('site_visits').insert({
+        lead_id: currentLead.id,
+        property_id: currentProperty.id,
+        visit_date: todayStr,
+        visit_time: '02:00 PM',
+        status: 'Scheduled',
+        outcome: `Scheduled via Matchmaker for ${currentLead.client_name} at ${currentProperty.title}`,
+        assigned_to: profile?.id
+      });
 
-    if (error) {
-      console.error('Error inserting site visit log:', error);
-    } else {
-      alert(`Site visit successfully scheduled for ${currentLead.client_name} at ${currentProperty.title}! Check the notifications bell.`);
+      // 2. Update lead stage to Site visit
+      await supabase.from('leads').update({ stage_id: 'Site visit' }).eq('id', currentLead.id);
+
+      // 3. Log audit event
+      await supabase.from('audit_logs').insert({
+        user_id: profile?.id || 'e2c5f803-2500-4538-a763-680d7279b4e7',
+        event: 'Site visit scheduled via Matchmaker',
+        changes: {
+          client_name: currentLead.client_name,
+          title: currentProperty.title
+        }
+      });
+
+      alert(`Site visit successfully scheduled in database for ${currentLead.client_name} at ${currentProperty.title}! Check your Site Visits calendar.`);
+    } catch (err) {
+      console.error('Error booking tour:', err);
+    }
+  };
+
+  const handleAssignPropertyToLead = async () => {
+    if (!currentLead || !currentProperty) return;
+    try {
+      await supabase.from('leads').update({
+        preferred_location: currentProperty.location,
+        stage_id: 'Follow up',
+        notes: `Matched & Assigned to property: ${currentProperty.title} (${currentProperty.configuration})`
+      }).eq('id', currentLead.id);
+
+      alert(`Successfully assigned ${currentProperty.title} to ${currentLead.client_name} and moved stage to Follow Up!`);
+    } catch (err) {
+      console.error('Error assigning property:', err);
     }
   };
 
   const handleBookBulkTours = async () => {
     if (selectedMatchesData.length === 0) return;
 
+    const todayStr = '2026-06-18';
     const promises = selectedMatchesData.map(async ({ item, details }) => {
       const isLeadMode = matchMode === 'leads';
+      const leadId = isLeadMode ? currentLead?.id : (item as Lead).id;
+      const propId = isLeadMode ? (item as Property).id : currentProperty?.id;
       const leadName = isLeadMode ? currentLead?.client_name : (item as Lead).client_name;
       const propTitle = isLeadMode ? (item as Property).title : currentProperty?.title;
 
+      if (!leadId) return;
+
+      // Insert site_visit
+      await supabase.from('site_visits').insert({
+        lead_id: leadId,
+        property_id: propId || null,
+        visit_date: todayStr,
+        visit_time: '02:00 PM',
+        status: 'Scheduled',
+        outcome: `Bulk scheduled via Matchmaker for ${leadName} at ${propTitle}`,
+        assigned_to: profile?.id
+      });
+
+      // Update lead stage
+      await supabase.from('leads').update({ stage_id: 'Site visit' }).eq('id', leadId);
+
+      // Audit log
       return supabase.from('audit_logs').insert({
         user_id: profile?.id || 'e2c5f803-2500-4538-a763-680d7279b4e7',
-        event: 'Site visit scheduled',
+        event: 'Bulk site visit scheduled',
         changes: {
           client_name: leadName,
           title: propTitle
@@ -570,7 +621,7 @@ export default function MatchmakingPage() {
       await Promise.all(promises);
       const isLeadMode = matchMode === 'leads';
       const targetName = isLeadMode ? currentLead?.client_name : currentProperty?.title;
-      alert(`Successfully scheduled ${selectedMatchesData.length} site visits for ${targetName}! Check the notifications bell.`);
+      alert(`Successfully created ${selectedMatchesData.length} site visit records in database for ${targetName}! Check your Site Visits calendar.`);
       setSelectedMatchIds(new Set());
     } catch (err) {
       console.error('Error bulk booking tours:', err);
@@ -1286,15 +1337,15 @@ Let us know if you would like to schedule a site visit!`);
 
                 <div className="grid grid-cols-2 gap-2">
                   <button 
-                    onClick={() => alert(`Brochure for ${currentProperty.title} sent to ${currentLead.client_name}!`)}
-                    className="flex items-center justify-center gap-2 py-2 rounded-2xl bg-zinc-900 text-white text-[11px] font-semibold hover:bg-zinc-900 transition-all border border-[zinc-900] cursor-pointer shadow-2xs"
+                    onClick={handleAssignPropertyToLead}
+                    className="flex items-center justify-center gap-2 py-2 rounded-2xl bg-zinc-900 text-white text-[11px] font-semibold hover:bg-zinc-800 transition-all cursor-pointer shadow-2xs"
                   >
-                    <Send className="h-3.5 w-3.5" />
-                    Send Details
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Assign Property
                   </button>
                   <button 
                     onClick={handleBookSingleTour}
-                    className="flex items-center justify-center gap-2 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-600 text-[11px] font-semibold hover:bg-zinc-50 transition-all cursor-pointer"
+                    className="flex items-center justify-center gap-2 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 text-[11px] font-semibold hover:bg-zinc-50 transition-all cursor-pointer"
                   >
                     <Calendar className="h-3.5 w-3.5 text-zinc-500" />
                     Book Tour

@@ -97,7 +97,15 @@ export default function PipelinePage() {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'board' | 'list'>('board');
 
-  // Fetch real deals from Supabase
+  // Properties list for site visit scheduling
+  const [propertiesList, setPropertiesList] = useState<any[]>([]);
+  const [siteVisitDeal, setSiteVisitDeal] = useState<Deal | null>(null);
+  const [siteVisitPropId, setSiteVisitPropId] = useState('');
+  const [siteVisitDate, setSiteVisitDate] = useState('2026-06-18');
+  const [siteVisitTime, setSiteVisitTime] = useState('02:00 PM');
+  const [siteVisitNotes, setSiteVisitNotes] = useState('');
+
+  // Fetch real deals and properties from Supabase
   useEffect(() => {
     if (!profile) return;
     async function loadDeals() {
@@ -119,6 +127,17 @@ export default function PipelinePage() {
           setDeads(data.map(mapLeadToDeal));
         } else {
           setDeads([]);
+        }
+
+        // Fetch properties for site visit scheduling
+        const { data: propsData } = await supabase
+          .from('properties')
+          .select('id, title, location')
+          .eq('is_active', true)
+          .order('title');
+        if (propsData) {
+          setPropertiesList(propsData);
+          if (propsData.length > 0) setSiteVisitPropId(propsData[0].id);
         }
       } catch (err) {
         console.error('Error loading deals:', err);
@@ -186,7 +205,16 @@ export default function PipelinePage() {
     e.preventDefault();
     const dealId = e.dataTransfer.getData('text/plain') || draggedDealId;
     if (dealId) {
-      // Optimistic update
+      const targetDeal = deals.find(d => d.id === dealId);
+      if (targetStage === 'Site visit' && targetDeal) {
+        setSiteVisitDeal(targetDeal);
+        setSiteVisitNotes(`Site visit requested via pipeline drag for ${targetDeal.client_name}`);
+        setDraggedDealId(null);
+        setDragOverStage(null);
+        return;
+      }
+
+      // Optimistic update for other stages
       setDeads(prev => prev.map(d => d.id === dealId ? { ...d, stage: targetStage, lastActive: 'Just now' } : d));
       try {
         await supabase
@@ -199,6 +227,39 @@ export default function PipelinePage() {
     }
     setDraggedDealId(null);
     setDragOverStage(null);
+  };
+
+  const handleConfirmSiteVisitFromPipeline = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!siteVisitDeal) return;
+    const targetId = siteVisitDeal.id;
+
+    // Optimistic update
+    setDeads(prev => prev.map(d => d.id === targetId ? { ...d, stage: 'Site visit', lastActive: 'Just now' } : d));
+
+    try {
+      await supabase.from('site_visits').insert({
+        lead_id: targetId,
+        property_id: siteVisitPropId || null,
+        visit_date: siteVisitDate,
+        visit_time: siteVisitTime,
+        status: 'Scheduled',
+        outcome: siteVisitNotes,
+        assigned_to: profile?.id
+      });
+
+      await supabase.from('leads').update({ stage_id: 'Site visit' }).eq('id', targetId);
+
+      await supabase.from('audit_logs').insert({
+        user_id: profile?.id,
+        event: 'Site visit scheduled via Pipeline',
+        changes: { client_name: siteVisitDeal.client_name, visit_date: siteVisitDate, visit_time: siteVisitTime }
+      });
+    } catch (err) {
+      console.error('Error scheduling site visit from pipeline:', err);
+    }
+
+    setSiteVisitDeal(null);
   };
 
   // Open Edit Modal
@@ -896,11 +957,96 @@ export default function PipelinePage() {
                   </button>
                   <button 
                     type="submit"
-                    className="px-5 py-2 rounded-2xl bg-zinc-900 text-white text-xs font-semibold hover:bg-zinc-900 transition-all shadow-2xs cursor-pointer"
+                    className="px-5 py-2 rounded-2xl bg-zinc-900 text-white text-xs font-semibold hover:bg-zinc-800 transition-all shadow-2xs cursor-pointer"
                   >
                     Save Changes
                   </button>
                 </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Site Visit Schedule Modal on Drag to Site Visit Stage */}
+      {siteVisitDeal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-zinc-950/40 backdrop-blur-sm" onClick={() => setSiteVisitDeal(null)} />
+          <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-zinc-100 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-zinc-900">Schedule Site Visit</h3>
+                <p className="text-xs text-zinc-500 mt-0.5">Moving {siteVisitDeal.client_name} to Site Visit Stage</p>
+              </div>
+              <button onClick={() => setSiteVisitDeal(null)} className="p-2 hover:bg-zinc-100 rounded-full transition-colors">
+                <X className="h-5 w-5 text-zinc-400" />
+              </button>
+            </div>
+
+            <form onSubmit={handleConfirmSiteVisitFromPipeline} className="p-6 space-y-5">
+              <div className="space-y-2 text-left">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Select Property</label>
+                <select
+                  required
+                  className="w-full px-4 py-3 rounded-xl bg-zinc-50 border border-zinc-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all cursor-pointer"
+                  value={siteVisitPropId}
+                  onChange={(e) => setSiteVisitPropId(e.target.value)}
+                >
+                  <option value="">Select a property listing...</option>
+                  {propertiesList.map(p => (
+                    <option key={p.id} value={p.id}>{p.title} ({p.location})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Visit Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={siteVisitDate}
+                    onChange={(e) => setSiteVisitDate(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-zinc-50 border border-zinc-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Visit Time</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="10:00 AM"
+                    value={siteVisitTime}
+                    onChange={(e) => setSiteVisitTime(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-zinc-50 border border-zinc-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Instructions / Notes</label>
+                <textarea
+                  className="w-full h-24 px-4 py-3 rounded-xl bg-zinc-50 border border-zinc-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all resize-none"
+                  placeholder="Notes for site viewing..."
+                  value={siteVisitNotes}
+                  onChange={(e) => setSiteVisitNotes(e.target.value)}
+                />
+              </div>
+
+              <div className="pt-3 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSiteVisitDeal(null)}
+                  className="flex-1 py-3 rounded-xl text-xs font-bold text-zinc-500 hover:text-zinc-900 transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-3 rounded-xl bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800 transition-all shadow-md cursor-pointer"
+                >
+                  Confirm & Block Time
+                </button>
               </div>
             </form>
           </div>

@@ -14,7 +14,8 @@ import {
   Home,
   AlertCircle
 } from 'lucide-react';
-import { supabase } from '@/lib/supabaseClient';
+import { useProfile } from '@/lib/auth';
+import { getPermissions } from '@/lib/permissions';
 
 interface SiteVisit {
   id: string;
@@ -24,14 +25,26 @@ interface SiteVisit {
   property_title: string;
   location: string;
   visit_date: number; // day of June 2026
+  visit_date_raw?: string;
   visit_time: string;
   status: 'Confirmed' | 'Pending' | 'Cancelled';
   agent_notes: string;
+  reschedule_reason?: string;
 }
 
 export default function SiteVisitsPage() {
+  const profile = useProfile();
+  const perms = getPermissions(profile?.role);
+
   const [selectedDay, setSelectedDay] = useState<number>(17); // Default June 17, 2026
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'calendar' | 'all'>('calendar');
+  
+  // Reschedule Modal State
+  const [rescheduleVisit, setRescheduleVisit] = useState<SiteVisit | null>(null);
+  const [rescheduleDay, setRescheduleDay] = useState<number>(18);
+  const [rescheduleTime, setRescheduleTime] = useState('03:00 PM');
+  const [rescheduleReason, setRescheduleReason] = useState('');
   
   // Form input states
   const [visitTime, setVisitTime] = useState('02:00 PM');
@@ -46,15 +59,20 @@ export default function SiteVisitsPage() {
 
   useEffect(() => {
     async function loadData() {
+      if (!profile) return;
       setLoading(true);
       try {
-        const { data: visitsData } = await supabase
+        const isManager = perms.canViewAllCalendar || profile.role === 'Admin' || profile.role === 'SuperAdmin';
+
+        // 1. Fetch site visits based on role
+        let visitsQuery = supabase
           .from('site_visits')
           .select(`
             *,
             leads (
               id,
-              client_name
+              client_name,
+              assigned_to
             ),
             properties (
               id,
@@ -64,12 +82,26 @@ export default function SiteVisitsPage() {
           `)
           .order('visit_date', { ascending: true });
 
-        const { data: leadsData } = await supabase
+        if (!isManager && profile.id) {
+          visitsQuery = visitsQuery.eq('assigned_to', profile.id);
+        }
+
+        const { data: visitsData } = await visitsQuery;
+
+        // 2. Fetch leads for dropdown based on role
+        let leadsQuery = supabase
           .from('leads')
-          .select('id, client_name')
+          .select('id, client_name, assigned_to')
           .eq('is_active', true)
           .order('client_name');
 
+        if (!isManager && profile.id) {
+          leadsQuery = leadsQuery.eq('assigned_to', profile.id);
+        }
+
+        const { data: leadsData } = await leadsQuery;
+
+        // 3. Fetch properties for dropdown
         const { data: propsData } = await supabase
           .from('properties')
           .select('id, title, location')
@@ -91,9 +123,11 @@ export default function SiteVisitsPage() {
               property_title: v.properties?.title || 'Unknown Property',
               location: v.properties?.location || 'TBD',
               visit_date: dayNum,
+              visit_date_raw: v.visit_date,
               visit_time: v.visit_time || '02:00 PM',
               status: (v.status === 'Confirmed' || v.status === 'Scheduled' ? 'Confirmed' : (v.status === 'Cancelled' ? 'Cancelled' : 'Pending')) as 'Confirmed' | 'Pending' | 'Cancelled',
-              agent_notes: v.outcome || v.client_feedback || 'No additional notes.'
+              agent_notes: v.outcome || v.client_feedback || 'No additional notes.',
+              reschedule_reason: v.next_action || ''
             };
           });
           setVisits(mapped);
@@ -108,7 +142,7 @@ export default function SiteVisitsPage() {
       }
     }
     loadData();
-  }, []);
+  }, [profile]);
 
   const handleUpdateStatus = async (visitId: string, newStatus: 'Confirmed' | 'Cancelled') => {
     setVisits(prev => prev.map(v => v.id === visitId ? { ...v, status: newStatus } : v));
@@ -120,6 +154,46 @@ export default function SiteVisitsPage() {
     } catch (err) {
       console.error('Error updating status:', err);
     }
+  };
+
+  const handleOpenReschedule = (visit: SiteVisit) => {
+    setRescheduleVisit(visit);
+    setRescheduleDay(visit.visit_date || 18);
+    setRescheduleTime(visit.visit_time || '03:00 PM');
+    setRescheduleReason(visit.reschedule_reason || '');
+  };
+
+  const handleRescheduleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rescheduleVisit) return;
+
+    const newDateFormatted = `2026-06-${rescheduleDay.toString().padStart(2, '0')}`;
+    
+    // Optimistic update
+    setVisits(prev => prev.map(v => v.id === rescheduleVisit.id ? {
+      ...v,
+      visit_date: rescheduleDay,
+      visit_date_raw: newDateFormatted,
+      visit_time: rescheduleTime,
+      reschedule_reason: rescheduleReason,
+      agent_notes: rescheduleReason ? `Rescheduled: ${rescheduleReason}` : v.agent_notes
+    } : v));
+
+    try {
+      await supabase
+        .from('site_visits')
+        .update({
+          visit_date: newDateFormatted,
+          visit_time: rescheduleTime,
+          next_action: rescheduleReason,
+          outcome: rescheduleReason ? `Rescheduled to June ${rescheduleDay}, 2026. Reason: ${rescheduleReason}` : rescheduleVisit.agent_notes
+        })
+        .eq('id', rescheduleVisit.id);
+    } catch (err) {
+      console.error('Error rescheduling visit:', err);
+    }
+
+    setRescheduleVisit(null);
   };
 
   // June 2026 calendar configuration
@@ -323,14 +397,24 @@ export default function SiteVisitsPage() {
 
                   <div className="flex items-center gap-2">
                     <button 
+                      onClick={() => handleOpenReschedule(visit)}
+                      className="px-3 py-2 rounded-xl bg-zinc-50 border border-zinc-200 text-xs font-bold text-zinc-700 hover:bg-zinc-100 hover:border-zinc-300 transition-all cursor-pointer flex items-center gap-1.5"
+                      title="Reschedule Visit"
+                    >
+                      <Calendar className="h-3.5 w-3.5 text-zinc-500" />
+                      Reschedule
+                    </button>
+                    <button 
                       onClick={() => handleUpdateStatus(visit.id, 'Confirmed')}
-                      className="h-10 w-10 rounded-xl bg-zinc-50 border border-zinc-200 flex items-center justify-center text-zinc-400 hover:text-zinc-500 hover:border-zinc-500 transition-all cursor-pointer"
+                      className="h-10 w-10 rounded-xl bg-zinc-50 border border-zinc-200 flex items-center justify-center text-zinc-400 hover:text-emerald-600 hover:border-emerald-500 transition-all cursor-pointer"
+                      title="Confirm Viewing"
                     >
                       <Check className="h-4 w-4" />
                     </button>
                     <button 
                       onClick={() => handleUpdateStatus(visit.id, 'Cancelled')}
                       className="h-10 w-10 rounded-xl bg-zinc-50 border border-zinc-200 flex items-center justify-center text-zinc-400 hover:text-rose-500 hover:border-rose-500 transition-all cursor-pointer"
+                      title="Cancel Viewing"
                     >
                       <X className="h-4 w-4" />
                     </button>

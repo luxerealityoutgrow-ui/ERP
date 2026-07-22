@@ -84,7 +84,7 @@ const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canViewProperties: true,
     canCreateProperties: true, // Client says properties can be added by all
     canEditProperties: true,
-    canDeleteProperties: true, // Client says properties can be deleted by all
+    canDeleteProperties: false, // Only Admin/SuperAdmin can delete properties
     canViewPipeline: true,
     canViewAllPipeline: false, // Sales execs only see their own pipeline deals
     canViewMatchmaking: true,

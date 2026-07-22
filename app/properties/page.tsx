@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useProfile } from '@/lib/auth';
 import { fetchProperties, Property } from '@/lib/queries';
 import { supabase } from '@/lib/supabaseClient';
+import { getPermissions } from '@/lib/permissions';
 import { 
   Home, 
   Search, 
@@ -21,7 +22,8 @@ import {
   Mail,
   ChevronDown,
   Image as ImageIcon,
-  DollarSign
+  DollarSign,
+  Trash2
 } from 'lucide-react';
 import Link from 'next/link';
 import { formatCurrency, formatPriceShort } from '@/lib/formatters';
@@ -29,6 +31,7 @@ import { ImageSlider } from '@/components/ui/image-slider';
 
 export default function PropertyInventoryPage() {
   const profile = useProfile();
+  const perms = getPermissions(profile?.role);
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -208,6 +211,34 @@ ${prop.description ? `\n${prop.description}` : ''}`;
     if (items.length === 0) return;
     const text = items.map(p => getPropertyText(p).replace(/\*/g, '')).join('\n\n---\n\n');
     navigator.clipboard.writeText(text);
+  };
+
+  const handleDeleteProperty = async (id: string) => {
+    if (!perms.canDeleteProperties) return;
+    if (!confirm('Are you sure you want to permanently delete this property listing?')) return;
+    setProperties(prev => prev.filter(p => p.id !== id));
+    if (selectedProperty?.id === id) {
+      setIsDrawerOpen(false);
+      setSelectedProperty(null);
+    }
+    try {
+      await supabase.from('properties').delete().eq('id', id);
+    } catch (err) {
+      console.error('Error deleting property:', err);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!perms.canDeleteProperties || selectedIds.size === 0) return;
+    if (!confirm(`Are you sure you want to permanently delete ${selectedIds.size} selected properties?`)) return;
+    const idsToDelete = Array.from(selectedIds);
+    setProperties(prev => prev.filter(p => !selectedIds.has(p.id)));
+    setSelectedIds(new Set());
+    try {
+      await supabase.from('properties').delete().in('id', idsToDelete);
+    } catch (err) {
+      console.error('Error bulk deleting properties:', err);
+    }
   };
 
   // Handle open property drawer with images
@@ -567,12 +598,15 @@ ${prop.description ? `\n${prop.description}` : ''}`;
                   <th className="px-4 py-3 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Owner</th>
                   <th className="px-4 py-3 text-[10px] font-bold text-zinc-500 uppercase tracking-wider text-center">Active</th>
                   <th className="px-4 py-3 text-[10px] font-bold text-zinc-500 uppercase tracking-wider text-center">Send</th>
+                  {perms.canDeleteProperties && (
+                    <th className="px-4 py-3 text-[10px] font-bold text-zinc-500 uppercase tracking-wider text-center">Action</th>
+                  )}
                 </tr>
               </thead>
               <tbody>
                 {filteredProperties.length === 0 ? (
                   <tr>
-                    <td colSpan={12} className="px-4 py-12 text-center">
+                    <td colSpan={perms.canDeleteProperties ? 13 : 12} className="px-4 py-12 text-center">
                       <Home className="h-8 w-8 text-zinc-300 mx-auto mb-2" />
                       <p className="text-sm font-medium text-zinc-500">No properties match your filters</p>
                     </td>
@@ -655,6 +689,17 @@ ${prop.description ? `\n${prop.description}` : ''}`;
                           <MessageSquare className="h-3.5 w-3.5" />
                         </button>
                       </td>
+                      {perms.canDeleteProperties && (
+                        <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => handleDeleteProperty(prop.id)}
+                            className="p-1.5 rounded-lg hover:bg-rose-50 text-zinc-400 hover:text-rose-600 transition-colors cursor-pointer"
+                            title="Delete Property (Admin only)"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))
                 )}
@@ -819,6 +864,16 @@ ${prop.description ? `\n${prop.description}` : ''}`;
                 <Copy className="h-4 w-4" />
                 Copy
               </button>
+              {perms.canDeleteProperties && (
+                <button 
+                  onClick={() => handleDeleteProperty(selectedProperty.id)}
+                  className="py-2.5 px-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-xs font-bold hover:bg-rose-100 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  title="Delete Property"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </button>
+              )}
               <Link href={`/properties/${selectedProperty.id}`} className="py-2.5 px-4 rounded-xl bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800 transition-all flex items-center justify-center gap-2">
                 View Full Details
               </Link>
@@ -861,6 +916,16 @@ ${prop.description ? `\n${prop.description}` : ''}`;
               <Copy className="h-3.5 w-3.5 text-zinc-550" />
               Copy Spec
             </button>
+
+            {perms.canDeleteProperties && (
+              <button
+                onClick={handleBulkDelete}
+                className="px-3.5 py-2 bg-rose-950/60 border border-rose-800 text-rose-250 rounded-xl text-xs font-bold hover:bg-rose-900 hover:text-white transition-all shadow-xs shrink-0 flex items-center gap-1.5 cursor-pointer"
+              >
+                <Trash2 className="h-3.5 w-3.5 text-rose-400" />
+                Delete Selected
+              </button>
+            )}
           </div>
 
           <button 
