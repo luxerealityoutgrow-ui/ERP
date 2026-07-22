@@ -354,20 +354,15 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
       {isEdit && <input type="hidden" name="id" value={initialValues.id} />}
       
       {/* Sticky top header bar */}
-      <div className="sticky top-0 z-10 bg-white border-b border-[#ebebeb] px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link href="/leads" className="p-1.5 rounded-lg hover:bg-zinc-100 transition-colors">
-            <ChevronLeft className="h-4 w-4 text-zinc-500" />
-          </Link>
-          <div>
-            <h1 className="text-[15px] font-extrabold text-zinc-900 tracking-tight" style={{letterSpacing:'-0.3px'}}>
-              {isEdit ? 'Edit Lead' : 'New Lead'}
-            </h1>
-            <p className="text-[10px] text-zinc-400 font-medium block lg:hidden">Single Scroll Layout</p>
-            <p className="text-[10px] text-zinc-400 font-medium hidden lg:block">Luxe Realty Pune · {sections[activeSection].label}</p>
-          </div>
-        </div>
-        <button type="submit" className="dc-btn gold font-bold flex items-center gap-1.5 cursor-pointer">
+      <div className="sticky top-0 z-10 bg-white border-b border-[#ebebeb] px-4 lg:px-6 py-3 lg:py-4 flex items-center justify-between gap-3">
+        <Link href="/leads" className="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-800 transition-colors shrink-0">
+          <ChevronLeft className="h-4 w-4" />
+          <span className="text-xs font-semibold hidden sm:block">Back to Leads</span>
+        </Link>
+        <h1 className="text-[15px] font-extrabold text-zinc-900 tracking-tight flex-1 text-center lg:text-left" style={{letterSpacing:'-0.3px'}}>
+          {isEdit ? 'Edit Lead' : 'New Lead'}
+        </h1>
+        <button type="submit" className="dc-btn gold font-bold flex items-center gap-1.5 cursor-pointer shrink-0">
           Save Lead
         </button>
       </div>
@@ -479,50 +474,38 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
         </div>
 
         {/* ── MOBILE VIEWPORT: Single Page Scrolling stacked layout ── */}
-        <div className="block lg:hidden px-6 py-8 text-left space-y-6 bg-white border border-[#e8e7e4] rounded-[24px] shadow-sm my-6 mx-4">
+        <div className="block lg:hidden px-5 pt-6 pb-10 text-left space-y-6 bg-[#fafaf8]">
           
-          <div className="space-y-4">
-            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider flex items-baseline gap-2">
-              <span className="font-serif italic font-bold text-[#d4ad4d] text-base">01.</span>
+          <div className="bg-white rounded-2xl px-5 py-5 shadow-sm border border-[#eeede9] space-y-4">
+            <h3 className="text-[11px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider flex items-baseline gap-2">
+              <span className="font-serif italic font-bold text-[#d4ad4d] text-sm">01.</span>
               <span>Contact Details</span>
             </h3>
             {renderContactFields()}
           </div>
 
-          <div className="h-px bg-zinc-200/50 my-6" />
-
-          <div className="space-y-4">
-            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider flex items-baseline gap-2">
-              <span className="font-serif italic font-bold text-[#d4ad4d] text-base">02.</span>
+          <div className="bg-white rounded-2xl px-5 py-5 shadow-sm border border-[#eeede9] space-y-4">
+            <h3 className="text-[11px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider flex items-baseline gap-2">
+              <span className="font-serif italic font-bold text-[#d4ad4d] text-sm">02.</span>
               <span>Classification & Assignment</span>
             </h3>
             {renderClassifyFields()}
           </div>
 
-          <div className="h-px bg-zinc-200/50 my-6" />
-
-          <div className="space-y-4">
-            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider flex items-baseline gap-2">
-              <span className="font-serif italic font-bold text-[#d4ad4d] text-base">03.</span>
+          <div className="bg-white rounded-2xl px-5 py-5 shadow-sm border border-[#eeede9] space-y-4">
+            <h3 className="text-[11px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider flex items-baseline gap-2">
+              <span className="font-serif italic font-bold text-[#d4ad4d] text-sm">03.</span>
               <span>Requirements</span>
             </h3>
             {renderRequirementsFields()}
           </div>
 
-          <div className="h-px bg-zinc-200/50 my-6" />
-
-          <div className="space-y-4">
-            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider flex items-baseline gap-2">
-              <span className="font-serif italic font-bold text-[#d4ad4d] text-base">04.</span>
+          <div className="bg-white rounded-2xl px-5 py-5 shadow-sm border border-[#eeede9] space-y-4">
+            <h3 className="text-[11px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider flex items-baseline gap-2">
+              <span className="font-serif italic font-bold text-[#d4ad4d] text-sm">04.</span>
               <span>Internal Notes</span>
             </h3>
             {renderNotesFields()}
-          </div>
-
-          <div className="pt-4">
-            <button type="submit" className="w-full py-3 bg-[#d4ad4d] hover:bg-[#b8922e] text-white text-xs font-extrabold rounded-xl transition-all shadow-md flex items-center justify-center cursor-pointer">
-              Save Lead & Complete
-            </button>
           </div>
         </div>
 
