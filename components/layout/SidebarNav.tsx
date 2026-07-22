@@ -16,7 +16,7 @@ import {
 import { useProfile } from '@/lib/auth';
 import { canAccessRoute } from '@/lib/permissions';
 
-export function SidebarNav() {
+export function SidebarNav({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname();
   const profile = useProfile();
 
@@ -58,6 +58,7 @@ export function SidebarNav() {
               <Link
                 key={item.title}
                 href={item.href}
+                onClick={onClose}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-[9px] text-xs font-semibold transition-all ${
                   isActive
                     ? 'bg-zinc-900 text-[#d4ad4d] border-l-2 border-[#d4ad4d] rounded-l-none'

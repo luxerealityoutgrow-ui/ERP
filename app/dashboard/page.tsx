@@ -304,8 +304,8 @@ export default function DashboardPage() {
       <div className="bg-white border border-[#e8e7e4] rounded-[20px] shadow-xs overflow-hidden">
         
         {/* Header Bar with Live Duration Selector */}
-        <div className="p-4 md:px-6 border-b border-[#ebebeb] flex items-center justify-between gap-4">
-          <div className="flex items-center gap-1.5 p-1 bg-[#fafaf8] border border-[#e8e7e4] rounded-xl">
+        <div className="p-4 md:px-6 border-b border-[#ebebeb] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-1.5 p-1 bg-[#fafaf8] border border-[#e8e7e4] rounded-xl w-full sm:w-auto">
             <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest px-2.5">
               Period:
             </span>
@@ -335,7 +335,7 @@ export default function DashboardPage() {
           <button 
             type="button" 
             onClick={handleExportReport}
-            className="dc-btn gold font-extrabold text-[11px] px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 shadow-xs cursor-pointer"
+            className="dc-btn gold font-extrabold text-[11px] px-3.5 py-1.5 rounded-xl flex items-center justify-center gap-1.5 shadow-xs cursor-pointer w-full sm:w-auto"
           >
             <Download className="h-4 w-4" />
             Export Report (PDF)
@@ -431,7 +431,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[500px]">
           
           {/* Main Workspace Left Column (8 cols) */}
-          <div className="lg:col-span-8 p-6 md:p-8 border-r border-[#ebebeb] space-y-6">
+          <div className="lg:col-span-8 p-6 md:p-8 border-r-0 lg:border-r border-b lg:border-b-0 border-[#ebebeb] space-y-6">
             
             {/* 1. SALES PIPELINE FUNNEL CONVERSION */}
             <div className="space-y-3">
@@ -491,8 +491,8 @@ export default function DashboardPage() {
                 </span>
               </div>
 
-              <div className="border border-[#e8e7e4] rounded-xl overflow-hidden bg-white">
-                <table className="w-full text-left text-xs">
+              <div className="border border-[#e8e7e4] rounded-xl bg-white overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                <table className="w-full text-left text-xs min-w-[600px]">
                   <thead>
                     <tr className="bg-[#fafaf8] border-b border-[#ebebeb] text-[9px] font-extrabold text-zinc-400 uppercase tracking-wider">
                       <th className="py-2.5 px-3.5">Agent Name</th>
@@ -549,8 +549,8 @@ export default function DashboardPage() {
                 </Link>
               </div>
 
-              <div className="border border-[#e8e7e4] rounded-xl overflow-hidden bg-white">
-                <table className="w-full text-left text-xs">
+              <div className="border border-[#e8e7e4] rounded-xl bg-white overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                <table className="w-full text-left text-xs min-w-[600px]">
                   <thead>
                     <tr className="bg-[#fafaf8] border-b border-[#ebebeb] text-[9px] font-extrabold text-zinc-400 uppercase tracking-wider">
                       <th className="py-2.5 px-3.5">Client Name</th>

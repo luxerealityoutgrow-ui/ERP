@@ -4,10 +4,9 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createPropertyAction, updatePropertyAction } from '@/app/properties/actions';
 import { supabase } from '@/lib/supabaseClient';
-import { TagsInput as TagPicker } from '@/components/ui/tags-input';
 import { TagsInput } from '@/components/ui/tags-input';
 import { MediaPicker } from '@/components/ui/media-picker';
-import { Building2, MapPin, User, ImageIcon, DollarSign, Ruler, Trash2, ChevronLeft, ChevronDown, FileText } from 'lucide-react';
+import { Building2, MapPin, User, ImageIcon, DollarSign, Trash2, ChevronLeft, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 
 interface PropertyFormProps {
@@ -106,6 +105,202 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
     return `₹${n.toLocaleString('en-IN')}`;
   }
 
+  // ── Render Helpers for Property Form Sections ──
+
+  const renderBasicInfo = () => (
+    <div className="space-y-5">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <FieldLabel required>Property Title</FieldLabel>
+          <input
+            name="title"
+            className={inputCls}
+            placeholder="e.g. Modern Luxury Villa"
+            defaultValue={initialValues.title ?? ''}
+            required
+            onChange={e => setPreviewTitle(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <FieldLabel>Property Code</FieldLabel>
+          <input name="property_code" className={inputCls} placeholder="PRP-001" defaultValue={initialValues.property_code ?? ''} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <FieldLabel>Property Type</FieldLabel>
+          <SelectWrapper>
+            <select
+              name="property_type"
+              className={selectCls}
+              defaultValue={initialValues.property_type ?? ''}
+              onChange={e => setPreviewType(e.target.value)}
+            >
+              <option value="">Select Type</option>
+              <option>Apartment</option>
+              <option>Penthouse</option>
+              <option>Villa / Independent House</option>
+              <option>Office Space</option>
+              <option>Shop / Retail</option>
+              <option>Plot / Land</option>
+            </select>
+          </SelectWrapper>
+        </div>
+        <div className="space-y-1.5">
+          <FieldLabel>Configuration</FieldLabel>
+          <TagsInput
+            value={configuration}
+            onChange={setConfiguration}
+            options={[
+              { value: '1 BHK', label: '1 BHK' },
+              { value: '2 BHK', label: '2 BHK' },
+              { value: '3 BHK', label: '3 BHK' },
+              { value: '4 BHK', label: '4 BHK' },
+              { value: '5 BHK', label: '5 BHK' },
+            ]}
+            allowCustom={true}
+            placeholder="Add config..."
+          />
+          <input type="hidden" name="configuration" value={configuration.join(', ')} />
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <FieldLabel>Description</FieldLabel>
+        <textarea
+          name="description"
+          className={textareaCls}
+          rows={3}
+          placeholder="Public property description copy..."
+          defaultValue={initialValues.description ?? ''}
+        />
+      </div>
+    </div>
+  );
+
+  const renderLocation = () => (
+    <div className="space-y-5">
+      <div className="space-y-1.5">
+        <FieldLabel required>Society Name / Location Tags</FieldLabel>
+        <TagsInput
+          value={locations}
+          onChange={setLocations}
+          options={locationOptions}
+          allowCustom={true}
+          placeholder="e.g. Kalyani Nagar, Viman Nagar"
+        />
+        <input type="hidden" name="location" value={locations.join(', ')} />
+      </div>
+
+      <div className="space-y-1.5">
+        <FieldLabel>Address</FieldLabel>
+        <textarea
+          name="address"
+          className={textareaCls}
+          rows={3}
+          placeholder="Full property address details..."
+          defaultValue={initialValues.address ?? ''}
+        />
+      </div>
+    </div>
+  );
+
+  const renderPricing = () => (
+    <div className="space-y-5">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <FieldLabel required>Price (₹)</FieldLabel>
+          <input
+            type="number"
+            name="price"
+            className={inputCls}
+            placeholder="e.g. 15000000"
+            defaultValue={initialValues.price ?? ''}
+            required
+            onChange={e => setPreviewPrice(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <FieldLabel>Listing Type</FieldLabel>
+          <SelectWrapper>
+            <select name="listing_type" className={selectCls} defaultValue={initialValues.listing_type ?? 'Sale'}>
+              <option>Sale</option>
+              <option>Rent</option>
+            </select>
+          </SelectWrapper>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <FieldLabel>Carpet Area (sq ft)</FieldLabel>
+          <input type="number" name="carpet_area" className={inputCls} placeholder="e.g. 1200" defaultValue={initialValues.carpet_area ?? ''} />
+        </div>
+        <div className="space-y-1.5">
+          <FieldLabel>Built Up Area (sq ft)</FieldLabel>
+          <input type="number" name="built_up_area" className={inputCls} placeholder="e.g. 1500" defaultValue={initialValues.built_up_area ?? ''} />
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderOwnership = () => (
+    <div className="space-y-5">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <FieldLabel>Owner Name</FieldLabel>
+          <input name="owner_name" className={inputCls} placeholder="Contact person" defaultValue={initialValues.owner_name ?? ''} />
+        </div>
+        <div className="space-y-1.5">
+          <FieldLabel>Owner Contact</FieldLabel>
+          <input name="owner_contact" className={inputCls} placeholder="+91 90000 00000" defaultValue={initialValues.owner_contact ?? ''} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 pt-2">
+        <div className="space-y-1.5">
+          <FieldLabel>Apartment / Unit No (Private)</FieldLabel>
+          <input 
+            name="unit_no" 
+            className={inputCls + " border-[#d4ad4d]/40 font-bold bg-[#fafaf8]"} 
+            placeholder="e.g. Cypress-401, Floor 9" 
+            defaultValue={initialValues.unit_no ?? ''} 
+          />
+        </div>
+        <div className="space-y-1.5">
+          <FieldLabel>Agreed Brokerage Terms (Private)</FieldLabel>
+          <input 
+            name="brokerage" 
+            className={inputCls + " border-[#d4ad4d]/40 font-bold bg-[#fafaf8]"} 
+            placeholder="e.g. 1% or 2%" 
+            defaultValue={initialValues.brokerage ?? ''} 
+          />
+        </div>
+      </div>
+
+      <div className="space-y-1.5 pt-2">
+        <FieldLabel>Internal Notes</FieldLabel>
+        <textarea
+          name="internal_notes"
+          className={textareaCls}
+          rows={3}
+          placeholder="Private notes..."
+          defaultValue={initialValues.internal_notes ?? ''}
+        />
+      </div>
+    </div>
+  );
+
+  const renderMedia = () => (
+    <div className="space-y-5">
+      <div className="space-y-1.5">
+        <FieldLabel>Property Images</FieldLabel>
+        <MediaPicker bucket="property-images" fieldPrefix="image_" />
+      </div>
+    </div>
+  );
+
   return (
     <form action={formAction} className="min-h-screen bg-[#fafaf8]">
       {isEdit && <input type="hidden" name="id" value={initialValues.id} />}
@@ -120,7 +315,8 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
             <h1 className="text-[15px] font-extrabold text-zinc-900" style={{ letterSpacing: '-0.3px' }}>
               {isEdit ? 'Edit Property' : 'New Property'}
             </h1>
-            <p className="text-[10px] text-zinc-400 font-medium">
+            <p className="text-[10px] text-zinc-400 font-medium block lg:hidden">Single Scroll Layout</p>
+            <p className="text-[10px] text-zinc-400 font-medium hidden lg:block">
               Luxe Realty Pune · {SECTIONS[activeSection].label}
             </p>
           </div>
@@ -139,7 +335,7 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
           )}
           <button
             type="submit"
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#d4ad4d] text-white text-[11px] font-bold hover:bg-[#b8922e] transition-all shadow-[0_2px_8px_rgba(212,173,77,.35)]"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#d4ad4d] text-white text-[11px] font-bold hover:bg-[#b8922e] transition-all shadow-[0_2px_8px_rgba(212,173,77,.35)] cursor-pointer"
           >
             {isEdit ? 'Update Property' : 'Save Property'}
           </button>
@@ -153,327 +349,125 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
         </div>
       )}
 
-      {/* Split panel: left nav + right fields */}
-      <div className="flex" style={{ minHeight: 'calc(100vh - 65px)' }}>
-
-        {/* Left navigation */}
-        <div className="w-[200px] shrink-0 border-r border-[#ebebeb] bg-white pt-6 pb-10">
-          {SECTIONS.map((s, i) => {
-            const Icon = s.icon;
-            return (
-              <button
-                key={i}
-                type="button"
-                onClick={() => setActiveSection(i)}
-                className={`w-full flex items-center gap-3 px-5 py-2.5 text-left transition-all border-r-2 ${
-                  activeSection === i
-                    ? 'border-[#d4ad4d] bg-zinc-50 text-zinc-900'
-                    : 'border-transparent text-zinc-400 hover:text-zinc-700 hover:bg-zinc-50'
-                }`}
-              >
-                <span
-                  className={`w-2 h-2 rounded-full shrink-0 transition-all ${
-                    i < activeSection
-                      ? 'bg-[#d4ad4d]'
-                      : activeSection === i
-                      ? 'bg-[#d4ad4d] ring-4 ring-[#d4ad4d]/20'
-                      : 'bg-[#e8e7e4]'
+      <div className="max-w-6xl mx-auto">
+        {/* ── DESKTOP VIEWPORT: Split Panel Nav Wizard ── */}
+        <div className="hidden lg:flex" style={{ minHeight: 'calc(100vh - 65px)' }}>
+          {/* Left navigation */}
+          <div className="w-[200px] shrink-0 border-r border-[#ebebeb] bg-white pt-6 pb-10">
+            {SECTIONS.map((s, i) => {
+              const Icon = s.icon;
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setActiveSection(i)}
+                  className={`w-full flex items-center gap-3 px-5 py-2.5 text-left transition-all border-r-2 ${
+                    activeSection === i
+                      ? 'border-[#d4ad4d] bg-zinc-50 text-zinc-900'
+                      : 'border-transparent text-zinc-400 hover:text-zinc-700 hover:bg-zinc-50'
                   }`}
-                />
-                <span className="text-[11px] font-bold">{s.label}</span>
-              </button>
-            );
-          })}
-
-          {/* Live preview card */}
-          {(previewTitle || previewType) && (
-            <div className="mx-3 mt-6 p-3 bg-[#fafaf8] border border-[#ebebeb] rounded-xl">
-              <div className="text-[9px] font-extrabold text-zinc-300 uppercase tracking-wider mb-2">Preview</div>
-              {previewTitle && (
-                <div className="text-[11px] font-extrabold text-zinc-900 leading-tight">{previewTitle}</div>
-              )}
-              {previewType && (
-                <div className="text-[9.5px] text-zinc-400 mt-1">{previewType}</div>
-              )}
-              {previewPrice && (
-                <div className="text-[11px] font-bold text-[#d4ad4d] mt-1.5">{formatPrice(previewPrice)}</div>
-              )}
-              {locations.length > 0 && (
-                <div className="text-[9px] text-zinc-400 mt-1 flex items-center gap-1">
-                  <MapPin className="h-2.5 w-2.5" />
-                  {locations.slice(0, 2).join(', ')}
-                  {locations.length > 2 && ` +${locations.length - 2}`}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Right fields */}
-        <div className="flex-1 px-8 py-6 max-w-2xl">
-
-          {/* ── SECTION 0: Basic Info ── */}
-          {activeSection === 0 && (
-            <div className="space-y-5">
-              <div className="text-[9px] font-extrabold text-zinc-300 uppercase tracking-[0.15em] mb-4">Basic Information</div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <FieldLabel required>Property Title</FieldLabel>
-                  <input
-                    name="title"
-                    className={inputCls}
-                    placeholder="e.g. Modern Luxury Villa"
-                    defaultValue={initialValues.title ?? ''}
-                    required
-                    onChange={e => setPreviewTitle(e.target.value)}
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full shrink-0 transition-all ${
+                      i < activeSection
+                        ? 'bg-[#d4ad4d]'
+                        : activeSection === i
+                        ? 'bg-[#d4ad4d] ring-4 ring-[#d4ad4d]/20'
+                        : 'bg-[#e8e7e4]'
+                    }`}
                   />
-                </div>
-                <div className="space-y-1.5">
-                  <FieldLabel>Property Code</FieldLabel>
-                  <input name="property_code" className={inputCls} placeholder="PRP-001" defaultValue={initialValues.property_code ?? ''} />
-                </div>
-              </div>
+                  <span className="text-[11px] font-bold">{s.label}</span>
+                </button>
+              );
+            })}
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <FieldLabel>Property Type</FieldLabel>
-                  <SelectWrapper>
-                    <select
-                      name="property_type"
-                      className={selectCls}
-                      defaultValue={initialValues.property_type ?? ''}
-                      onChange={e => setPreviewType(e.target.value)}
-                    >
-                      <option value="">Select Type</option>
-                      <option>Apartment</option>
-                      <option>Penthouse</option>
-                      <option>Duplex</option>
-                      <option>Row House</option>
-                      <option>Bungalow</option>
-                      <option>Independent Building</option>
-                      <option>Plot</option>
-                      <option>Shop</option>
-                      <option>Showroom</option>
-                      <option>Office</option>
-                      <option>Restaurant Space</option>
-                    </select>
-                  </SelectWrapper>
-                </div>
-                <div className="space-y-1.5">
-                  <FieldLabel>Listing Type</FieldLabel>
-                  <SelectWrapper>
-                    <select name="listing_type" className={selectCls} defaultValue={initialValues.listing_type ?? ''}>
-                      <option value="">Select Option</option>
-                      <option value="Sale">For Sale</option>
-                      <option value="Rent">For Rent</option>
-                    </select>
-                  </SelectWrapper>
-                </div>
-              </div>
-
-              {isEdit && (
-                <div className="space-y-1.5">
-                  <FieldLabel>Status</FieldLabel>
-                  <SelectWrapper>
-                    <select name="status_id" className={selectCls} defaultValue={initialValues.status_id ?? 'Available'}>
-                      <option>Available</option>
-                      <option>Under Offer</option>
-                      <option>Hold</option>
-                      <option>Sold</option>
-                      <option>Rented</option>
-                    </select>
-                  </SelectWrapper>
-                </div>
-              )}
-
-              <div className="space-y-1.5">
-                <FieldLabel>Description</FieldLabel>
-                <textarea
-                  name="description"
-                  className={textareaCls}
-                  rows={4}
-                  placeholder="Describe the unique features of this property..."
-                  defaultValue={initialValues.description ?? ''}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* ── SECTION 1: Location ── */}
-          {activeSection === 1 && (
-            <div className="space-y-5">
-              <div className="text-[9px] font-extrabold text-zinc-300 uppercase tracking-[0.15em] mb-4">Location Details</div>
-              <div className="space-y-1.5">
-                <FieldLabel>Location / Area</FieldLabel>
-                <TagsInput
-                  value={locations}
-                  onChange={setLocations}
-                  options={locationOptions}
-                  allowCustom={true}
-                  placeholder="Type or select locations..."
-                />
-                <input type="hidden" name="location" value={locations.join(', ')} />
-                <p className="text-[9.5px] text-zinc-400 italic">Select or type custom locations. New ones will be saved for future use.</p>
-              </div>
-              <div className="space-y-1.5">
-                <FieldLabel>Full Address</FieldLabel>
-                <textarea
-                  name="address"
-                  className={textareaCls}
-                  rows={2}
-                  placeholder="Street name, Building number, Area"
-                  defaultValue={initialValues.address ?? ''}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* ── SECTION 2: Pricing & Area ── */}
-          {activeSection === 2 && (
-            <div className="space-y-5">
-              <div className="text-[9px] font-extrabold text-zinc-300 uppercase tracking-[0.15em] mb-4">Pricing & Area</div>
-              <div className="space-y-1.5">
-                <FieldLabel>Price (₹)</FieldLabel>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-[12px] font-medium">₹</span>
-                  <input
-                    type="number"
-                    name="price"
-                    className={inputCls + ' pl-7'}
-                    placeholder="e.g. 50000000"
-                    defaultValue={initialValues.price ?? ''}
-                    onChange={e => setPreviewPrice(e.target.value)}
-                  />
-                </div>
+            {/* Live preview card */}
+            {(previewTitle || previewType) && (
+              <div className="mx-3 mt-6 p-3 bg-[#fafaf8] border border-[#ebebeb] rounded-xl">
+                <div className="text-[9px] font-extrabold text-zinc-300 uppercase tracking-wider mb-2">Preview</div>
+                {previewTitle && (
+                  <div className="text-[11px] font-extrabold text-zinc-900 leading-tight">{previewTitle}</div>
+                )}
+                {previewType && (
+                  <div className="text-[9.5px] text-zinc-400 mt-1">{previewType}</div>
+                )}
                 {previewPrice && (
-                  <p className="text-[10px] font-bold text-[#d4ad4d]">= {formatPrice(previewPrice)}</p>
+                  <div className="text-[11px] font-bold text-[#d4ad4d] mt-1.5">{formatPrice(previewPrice)}</div>
+                )}
+                {locations.length > 0 && (
+                  <div className="text-[9px] text-zinc-400 mt-1 flex items-center gap-1">
+                    <MapPin className="h-2.5 w-2.5" />
+                    {locations.slice(0, 2).join(', ')}
+                    {locations.length > 2 && ` +${locations.length - 2}`}
+                  </div>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <FieldLabel>Carpet Area (sq ft)</FieldLabel>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      name="carpet_area"
-                      className={inputCls}
-                      placeholder="0"
-                      defaultValue={initialValues.carpet_area ?? ''}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <FieldLabel>Built-up Area (sq ft)</FieldLabel>
-                  <input
-                    type="number"
-                    name="built_up_area"
-                    className={inputCls}
-                    placeholder="0"
-                    defaultValue={initialValues.built_up_area ?? ''}
-                  />
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <FieldLabel>Configuration (BHK/Rooms)</FieldLabel>
-                <TagPicker value={configuration} onChange={setConfiguration} />
-                <input type="hidden" name="configuration" value={configuration.join(',')} />
-                <p className="text-[9.5px] text-zinc-400 italic">Press enter to add (e.g. 2 BHK, 3 BHK)</p>
-              </div>
-            </div>
-          )}
-
-          {/* ── SECTION 3: Private Ownership & Terms ── */}
-          {activeSection === 3 && (
-            <div className="space-y-5">
-              <div className="text-[9px] font-extrabold text-zinc-300 uppercase tracking-[0.15em] mb-4">Ownership & Private Terms</div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <FieldLabel>Owner Name</FieldLabel>
-                  <input name="owner_name" className={inputCls} placeholder="Contact person" defaultValue={initialValues.owner_name ?? ''} />
-                </div>
-                <div className="space-y-1.5">
-                  <FieldLabel>Owner Contact</FieldLabel>
-                  <input name="owner_contact" className={inputCls} placeholder="+91 90000 00000" defaultValue={initialValues.owner_contact ?? ''} />
-                </div>
-              </div>
-
-              {/* DEDICATED PRIVATE FIELDS: UNIT NO & BROKERAGE (KEPT PRIVATE FROM WHATSAPP SHARE COPY) */}
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                <div className="space-y-1.5">
-                  <FieldLabel>Apartment / Unit No (Private)</FieldLabel>
-                  <input 
-                    name="unit_no" 
-                    className={inputCls + " border-[#d4ad4d]/40 font-bold bg-[#fafaf8]"} 
-                    placeholder="e.g. Cypress-401, Floor 9, B-G 01" 
-                    defaultValue={initialValues.unit_no ?? ''} 
-                  />
-                  <p className="text-[9px] text-zinc-400 italic">🔒 Private field. Never shared with clients on WhatsApp.</p>
-                </div>
-                <div className="space-y-1.5">
-                  <FieldLabel>Agreed Brokerage Terms (Private)</FieldLabel>
-                  <input 
-                    name="brokerage" 
-                    className={inputCls + " border-[#d4ad4d]/40 font-bold bg-[#fafaf8]"} 
-                    placeholder="e.g. 1% or 2% + GST" 
-                    defaultValue={initialValues.brokerage ?? ''} 
-                  />
-                  <p className="text-[9px] text-zinc-400 italic">🔒 Private field. Kept strictly within internal ERP.</p>
-                </div>
-              </div>
-
-              <div className="space-y-1.5 pt-2">
-                <FieldLabel>Internal Notes</FieldLabel>
-                <textarea
-                  name="internal_notes"
-                  className={textareaCls}
-                  rows={3}
-                  placeholder="Private notes, key location, owner negotiation notes..."
-                  defaultValue={initialValues.internal_notes ?? ''}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* ── SECTION 4: Media ── */}
-          {activeSection === 4 && (
-            <div className="space-y-5">
-              <div className="text-[9px] font-extrabold text-zinc-300 uppercase tracking-[0.15em] mb-4">Property Images</div>
-              <MediaPicker bucket="property-images" fieldPrefix="image_" />
-              <p className="text-[9.5px] text-zinc-400">Upload high-quality images to showcase this listing. JPG, PNG, WEBP · Max 10 MB per file.</p>
-            </div>
-          )}
-
-          {/* Bottom navigation */}
-          <div className="mt-10 flex items-center justify-between pt-5 border-t border-[#ebebeb]">
-            {activeSection > 0 ? (
-              <button
-                type="button"
-                onClick={() => setActiveSection(s => s - 1)}
-                className="text-[11px] font-bold text-zinc-400 hover:text-zinc-700 flex items-center gap-1 transition-colors"
-              >
-                ← {SECTIONS[activeSection - 1].label}
-              </button>
-            ) : <span />}
-            {activeSection < SECTIONS.length - 1 ? (
-              <button
-                type="button"
-                onClick={() => setActiveSection(s => s + 1)}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-[#e8e7e4] bg-white text-zinc-700 text-[11px] font-bold hover:bg-zinc-50 transition-all"
-              >
-                {SECTIONS[activeSection + 1].label} →
-              </button>
-            ) : (
-              <button
-                type="submit"
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#d4ad4d] text-white text-[11px] font-bold hover:bg-[#b8922e] transition-all shadow-[0_2px_8px_rgba(212,173,77,.35)]"
-              >
-                {isEdit ? 'Update Property' : 'Save Property'}
-              </button>
             )}
           </div>
+
+          {/* Right fields */}
+          <div className="flex-1 px-8 py-6 max-w-2xl">
+            {activeSection === 0 && renderBasicInfo()}
+            {activeSection === 1 && renderLocation()}
+            {activeSection === 2 && renderPricing()}
+            {activeSection === 3 && renderOwnership()}
+            {activeSection === 4 && renderMedia()}
+
+            {/* Bottom navigation bar */}
+            <div className="mt-8 flex items-center justify-between pt-4 border-t border-[#ebebeb]">
+              {activeSection > 0 ? (
+                <button type="button" onClick={() => setActiveSection(s => s - 1)}
+                  className="text-[11px] font-bold text-zinc-400 hover:text-zinc-700 flex items-center gap-1 transition-colors">
+                  ← {SECTIONS[activeSection - 1].label}
+                </button>
+              ) : <span />}
+              {activeSection < SECTIONS.length - 1 ? (
+                <button type="button" onClick={() => setActiveSection(s => s + 1)}
+                  className="dc-btn font-bold text-[11px] flex items-center gap-1">
+                  {SECTIONS[activeSection + 1].label} →
+                </button>
+              ) : (
+                <button type="submit" className="dc-btn gold font-bold">Save Property</button>
+              )}
+            </div>
+          </div>
         </div>
+
+        {/* ── MOBILE VIEWPORT: Single Page Scrolling stacked layout ── */}
+        <div className="block lg:hidden px-4 py-6 space-y-5">
+          
+          <div className="bg-white p-5 border border-[#e8e7e4] rounded-[16px] space-y-4">
+            <h3 className="text-xs font-black text-zinc-900 border-b border-[#f5f5f3] pb-2 uppercase tracking-wide">1. Basic Information</h3>
+            {renderBasicInfo()}
+          </div>
+
+          <div className="bg-white p-5 border border-[#e8e7e4] rounded-[16px] space-y-4">
+            <h3 className="text-xs font-black text-zinc-900 border-b border-[#f5f5f3] pb-2 uppercase tracking-wide">2. Location Details</h3>
+            {renderLocation()}
+          </div>
+
+          <div className="bg-white p-5 border border-[#e8e7e4] rounded-[16px] space-y-4">
+            <h3 className="text-xs font-black text-zinc-900 border-b border-[#f5f5f3] pb-2 uppercase tracking-wide">3. Pricing & Carpet Area</h3>
+            {renderPricing()}
+          </div>
+
+          <div className="bg-white p-5 border border-[#e8e7e4] rounded-[16px] space-y-4">
+            <h3 className="text-xs font-black text-zinc-900 border-b border-[#f5f5f3] pb-2 uppercase tracking-wide">4. Ownership & Private Terms</h3>
+            {renderOwnership()}
+          </div>
+
+          <div className="bg-white p-5 border border-[#e8e7e4] rounded-[16px] space-y-4">
+            <h3 className="text-xs font-black text-zinc-900 border-b border-[#f5f5f3] pb-2 uppercase tracking-wide">5. Media Uploads</h3>
+            {renderMedia()}
+          </div>
+
+          <div className="pt-2">
+            <button type="submit" className="w-full py-3 bg-[#d4ad4d] hover:bg-[#b8922e] text-white text-xs font-extrabold rounded-xl transition-all shadow-md flex items-center justify-center cursor-pointer">
+              Save Property & List
+            </button>
+          </div>
+        </div>
+
       </div>
     </form>
   );

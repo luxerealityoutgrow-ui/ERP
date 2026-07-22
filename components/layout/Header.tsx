@@ -21,8 +21,8 @@ import {
   ArrowRight,
   FileText,
   Building2,
-  Phone,
-  Tag
+  Tag,
+  Menu
 } from 'lucide-react';
 import { useProfile } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
@@ -40,7 +40,7 @@ interface NotificationItem {
   link: string;
 }
 
-export function Header() {
+export function Header({ onToggleMenu }: { onToggleMenu?: () => void }) {
   const profile = useProfile();
   const router = useRouter();
   
@@ -216,10 +216,18 @@ export function Header() {
     <header className="sticky top-0 z-40 bg-zinc-950 border-b border-zinc-850 h-16 px-6 flex items-center justify-between shadow-md text-left">
       
       {/* Left: Universal Search CMD+K Trigger Input (Former Location of Logo) */}
-      <div className="flex items-center gap-4 flex-1 max-w-md">
+      <div className="flex items-center gap-2 md:gap-4 flex-1 max-w-md">
+        <button 
+          type="button"
+          onClick={onToggleMenu}
+          className="block lg:hidden p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-all cursor-pointer shrink-0"
+        >
+          <Menu className="h-4 w-4" />
+        </button>
+        {/* Desktop Search Input */}
         <div 
           onClick={() => setIsSearchOpen(true)}
-          className="relative w-full cursor-pointer group"
+          className="hidden md:block relative w-full cursor-pointer group"
         >
           <input 
             type="text" 
@@ -232,6 +240,15 @@ export function Header() {
             ⌘K
           </span>
         </div>
+
+        {/* Mobile Search Icon Button */}
+        <button 
+          type="button"
+          onClick={() => setIsSearchOpen(true)}
+          className="block md:hidden p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-all cursor-pointer shrink-0"
+        >
+          <Search className="h-4 w-4" />
+        </button>
       </div>
 
       {/* Right: Status Pills & Action Controls */}
@@ -239,17 +256,30 @@ export function Header() {
         
         {/* Create Button Dropdown */}
         <div className="relative">
+          {/* Desktop Create Button Dropdown */}
           <button
             onClick={() => {
               setIsCreateOpen(!isCreateOpen);
               setIsNotifOpen(false);
               setIsProfileOpen(false);
             }}
-            className="flex items-center gap-1.5 px-3 py-2 bg-[#d4ad4d] hover:bg-[#c49d3d] text-white text-xs font-semibold rounded-[9px] transition-all shadow-xs cursor-pointer"
+            className="hidden md:flex items-center gap-1.5 px-3 py-2 bg-[#d4ad4d] hover:bg-[#c49d3d] text-white text-xs font-semibold rounded-[9px] transition-all shadow-xs cursor-pointer"
           >
             <Plus className="h-3.5 w-3.5" />
             <span>Create</span>
             <ChevronDown className="h-3 w-3 opacity-80" />
+          </button>
+
+          {/* Mobile Create Button Dropdown (Icon Only) */}
+          <button
+            onClick={() => {
+              setIsCreateOpen(!isCreateOpen);
+              setIsNotifOpen(false);
+              setIsProfileOpen(false);
+            }}
+            className="flex md:hidden items-center justify-center p-2.5 bg-[#d4ad4d] hover:bg-[#c49d3d] text-white rounded-lg transition-all shadow-xs cursor-pointer shrink-0"
+          >
+            <Plus className="h-4 w-4" />
           </button>
 
           {isCreateOpen && (

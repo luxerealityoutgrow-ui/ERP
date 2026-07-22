@@ -703,10 +703,10 @@ export default function PipelinePage() {
       {/* ── ADD DEAL MODAL (Direction A — Floating Split-Pane Modal) ── */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/40 backdrop-blur-xs">
-          <div className="relative w-full max-w-3xl bg-white rounded-[20px] shadow-2xl border border-[#e8e7e4] overflow-hidden animate-in zoom-in-95 duration-200 text-left grid grid-cols-1 md:grid-cols-12">
+          <div className="relative w-full max-w-3xl bg-white rounded-[20px] shadow-2xl border border-[#e8e7e4] overflow-y-auto md:overflow-hidden max-h-[90vh] md:max-h-[90vh] animate-in zoom-in-95 duration-200 text-left grid grid-cols-1 md:grid-cols-12">
             
             {/* Left Summary Pane (5 cols) */}
-            <div className="md:col-span-5 p-6 bg-[#fafaf8] border-r border-[#ebebeb] flex flex-col justify-between space-y-6">
+            <div className="md:col-span-5 p-6 bg-[#fafaf8] border-r-0 border-b md:border-r md:border-b-0 border-[#ebebeb] flex flex-col justify-between space-y-6">
               <div>
                 <span className="px-2 py-0.5 rounded text-[8.5px] font-extrabold bg-[#f4ebd0] text-[#967420] border border-[#e8d5a3] uppercase tracking-wider">
                   DEAL SUMMARY PREVIEW
