@@ -22,10 +22,10 @@ const SECTIONS = [
   { label: 'Media', icon: ImageIcon },
 ];
 
-const inputCls = "w-full h-9 px-3 border border-[#e8e7e4] rounded-lg text-[12px] font-medium text-zinc-800 bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-2 focus:ring-[#d4ad4d]/15 transition-all placeholder:text-zinc-300";
-const selectCls = "w-full h-9 px-3 border border-[#e8e7e4] rounded-lg text-[12px] font-medium text-zinc-800 bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-2 focus:ring-[#d4ad4d]/15 transition-all appearance-none cursor-pointer";
-const labelCls = "text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-[0.1em]";
-const textareaCls = "w-full px-3 py-2.5 border border-[#e8e7e4] rounded-lg text-[12px] font-medium text-zinc-800 bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-2 focus:ring-[#d4ad4d]/15 transition-all resize-none placeholder:text-zinc-300";
+const inputCls = "w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base lg:text-[12px] font-medium text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all";
+const selectCls = "w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base lg:text-[12px] font-medium text-zinc-800 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all appearance-none cursor-pointer";
+const labelCls = "text-[10px] font-bold text-zinc-400 uppercase tracking-widest";
+const textareaCls = "w-full px-3.5 py-2.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base lg:text-[12px] font-medium text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all resize-none";
 
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
@@ -434,34 +434,42 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
         </div>
 
         {/* ── MOBILE VIEWPORT: Single Page Scrolling stacked layout ── */}
-        <div className="block lg:hidden px-4 py-6 space-y-5">
+        <div className="block lg:hidden px-6 py-8 text-left space-y-6 bg-white border border-[#e8e7e4] rounded-[24px] shadow-sm my-6 mx-4">
           
-          <div className="bg-white p-5 border border-[#e8e7e4] rounded-[16px] space-y-4">
-            <h3 className="text-xs font-black text-zinc-900 border-b border-[#f5f5f3] pb-2 uppercase tracking-wide">1. Basic Information</h3>
+          <div className="space-y-4">
+            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider">Basic Information</h3>
             {renderBasicInfo()}
           </div>
 
-          <div className="bg-white p-5 border border-[#e8e7e4] rounded-[16px] space-y-4">
-            <h3 className="text-xs font-black text-zinc-900 border-b border-[#f5f5f3] pb-2 uppercase tracking-wide">2. Location Details</h3>
+          <div className="h-px bg-zinc-200/50 my-6" />
+
+          <div className="space-y-4">
+            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider">Location Details</h3>
             {renderLocation()}
           </div>
 
-          <div className="bg-white p-5 border border-[#e8e7e4] rounded-[16px] space-y-4">
-            <h3 className="text-xs font-black text-zinc-900 border-b border-[#f5f5f3] pb-2 uppercase tracking-wide">3. Pricing & Carpet Area</h3>
+          <div className="h-px bg-zinc-200/50 my-6" />
+
+          <div className="space-y-4">
+            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider">Pricing & Carpet Area</h3>
             {renderPricing()}
           </div>
 
-          <div className="bg-white p-5 border border-[#e8e7e4] rounded-[16px] space-y-4">
-            <h3 className="text-xs font-black text-zinc-900 border-b border-[#f5f5f3] pb-2 uppercase tracking-wide">4. Ownership & Private Terms</h3>
+          <div className="h-px bg-zinc-200/50 my-6" />
+
+          <div className="space-y-4">
+            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider">Ownership & Private Terms</h3>
             {renderOwnership()}
           </div>
 
-          <div className="bg-white p-5 border border-[#e8e7e4] rounded-[16px] space-y-4">
-            <h3 className="text-xs font-black text-zinc-900 border-b border-[#f5f5f3] pb-2 uppercase tracking-wide">5. Media Uploads</h3>
+          <div className="h-px bg-zinc-200/50 my-6" />
+
+          <div className="space-y-4">
+            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider">Media Uploads</h3>
             {renderMedia()}
           </div>
 
-          <div className="pt-2">
+          <div className="pt-4">
             <button type="submit" className="w-full py-3 bg-[#d4ad4d] hover:bg-[#b8922e] text-white text-xs font-extrabold rounded-xl transition-all shadow-md flex items-center justify-center cursor-pointer">
               Save Property & List
             </button>

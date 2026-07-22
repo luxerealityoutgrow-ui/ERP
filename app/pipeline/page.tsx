@@ -18,7 +18,8 @@ import {
   Edit2,
   Calendar,
   Layout,
-  List
+  List,
+  ChevronDown
 } from 'lucide-react';
 import { formatCurrency, formatPriceShort } from '@/lib/formatters';
 import { supabase } from '@/lib/supabaseClient';
@@ -758,10 +759,10 @@ export default function PipelinePage() {
                 </button>
               </div>
 
-              <form onSubmit={handleSaveAdd} className="space-y-3.5">
+              <form onSubmit={handleSaveAdd} className="space-y-4">
                 {/* Client Name Type-able & Searchable Autocomplete Field */}
-                <div className="space-y-1 text-left">
-                  <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider block">
+                <div className="space-y-1.5 text-left">
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
                     Client Name (Type or Select Lead) *
                   </label>
                   <div className="relative">
@@ -783,7 +784,7 @@ export default function PipelinePage() {
                           if (matched.budget_max) setBudget(matched.budget_max.toString());
                         }
                       }}
-                      className="w-full bg-[#fafaf8] border border-[#e8e7e4] rounded-xl px-3.5 py-2 text-xs font-bold text-zinc-900 focus:outline-none focus:border-[#d4ad4d] transition-all"
+                      className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-medium text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all"
                     />
                     <datalist id="leads-datalist">
                       {rawLeadsList.map(l => (
@@ -796,8 +797,8 @@ export default function PipelinePage() {
                 </div>
 
                 {/* Property Name Type-able & Searchable Autocomplete Field */}
-                <div className="space-y-1 text-left">
-                  <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider block">
+                <div className="space-y-1.5 text-left">
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
                     Property Name (Type or Select Listing) *
                   </label>
                   <div className="relative">
@@ -819,7 +820,7 @@ export default function PipelinePage() {
                           if (matched.price) setBudget(matched.price.toString());
                         }
                       }}
-                      className="w-full bg-[#fafaf8] border border-[#e8e7e4] rounded-xl px-3.5 py-2 text-xs font-bold text-zinc-900 focus:outline-none focus:border-[#d4ad4d] transition-all"
+                      className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-medium text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all"
                     />
                     <datalist id="properties-datalist">
                       {propertiesList.map(p => (
@@ -832,69 +833,75 @@ export default function PipelinePage() {
                 </div>
 
                 {/* Budget Value */}
-                <div className="space-y-1 text-left">
-                  <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider block">Agreed Deal Value (₹) *</label>
+                <div className="space-y-1.5 text-left">
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Agreed Deal Value (₹) *</label>
                   <input 
                     type="number" 
                     required
                     placeholder="e.g. 25000000"
                     value={budget}
                     onChange={(e) => setBudget(e.target.value)}
-                    className="w-full bg-[#fafaf8] border border-[#e8e7e4] rounded-xl px-3.5 py-2 text-xs font-bold text-zinc-900 focus:outline-none focus:border-[#d4ad4d] transition-all"
+                    className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-medium text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all"
                   />
                 </div>
 
                 {/* Stage & Source Grid */}
                 <div className="grid grid-cols-2 gap-3 text-left">
-                  <div className="space-y-1">
-                    <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider block">Initial Stage *</label>
-                    <select 
-                      value={stage}
-                      onChange={(e) => setStage(e.target.value)}
-                      className="w-full bg-[#fafaf8] border border-[#e8e7e4] rounded-xl px-3 py-2 text-xs font-bold text-zinc-900 focus:outline-none focus:border-[#d4ad4d] transition-all cursor-pointer"
-                    >
-                      {STAGES.map(s => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Initial Stage *</label>
+                    <div className="relative">
+                      <select 
+                        value={stage}
+                        onChange={(e) => setStage(e.target.value)}
+                        className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-medium text-zinc-800 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all appearance-none cursor-pointer"
+                      >
+                        {STAGES.map(s => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
+                    </div>
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider block">Lead Source</label>
-                    <select 
-                      value={source}
-                      onChange={(e) => setSource(e.target.value)}
-                      className="w-full bg-[#fafaf8] border border-[#e8e7e4] rounded-xl px-3 py-2 text-xs font-bold text-zinc-900 focus:outline-none focus:border-[#d4ad4d] transition-all cursor-pointer"
-                    >
-                      {LEAD_SOURCES.map(s => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Lead Source</label>
+                    <div className="relative">
+                      <select 
+                        value={source}
+                        onChange={(e) => setSource(e.target.value)}
+                        className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-medium text-zinc-800 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all appearance-none cursor-pointer"
+                      >
+                        {LEAD_SOURCES.map(s => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
+                    </div>
                   </div>
                 </div>
 
                 {/* Notes */}
-                <div className="space-y-1 text-left">
-                  <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider block">Deal Notes</label>
+                <div className="space-y-1.5 text-left">
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Deal Notes</label>
                   <textarea 
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Enter special requirements or terms..."
-                    className="w-full h-16 bg-[#fafaf8] border border-[#e8e7e4] rounded-xl px-3 py-2 text-xs font-medium text-zinc-800 focus:outline-none focus:border-[#d4ad4d] transition-all resize-none"
+                    className="w-full h-20 px-3.5 py-2.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-medium text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all resize-none"
                   />
                 </div>
 
-                <div className="pt-2 flex items-center justify-end gap-2 border-t border-[#f5f5f3]">
+                <div className="pt-3 flex items-center justify-end gap-2 border-t border-[#f5f5f3]">
                   <button 
                     type="button"
                     onClick={() => setIsAddModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-[#e8e7e4] text-xs font-bold text-zinc-600 hover:bg-zinc-50 transition-all cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl border border-[#e8e7e4] text-xs font-bold text-zinc-600 hover:bg-zinc-50 transition-all cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button 
                     type="submit"
-                    className="px-5 py-2 rounded-xl bg-[#d4ad4d] text-white text-xs font-extrabold hover:bg-[#b8922e] transition-all shadow-2xs cursor-pointer"
+                    className="px-5 py-2.5 rounded-xl bg-[#d4ad4d] text-white text-xs font-extrabold hover:bg-[#b8922e] transition-all shadow-md cursor-pointer"
                   >
                     Create Deal
                   </button>
@@ -940,77 +947,86 @@ export default function PipelinePage() {
                 
                 {/* Client Name */}
                 <div className="space-y-1.5">
-                  <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Client Name</label>
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Client Name</label>
                   <input 
                     type="text" 
                     required
                     value={clientName}
                     onChange={(e) => setClientName(e.target.value)}
-                    className="w-full bg-white border border-zinc-200 rounded-2xl px-3 py-2 text-xs text-zinc-900 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400/20 transition-all"
+                    className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-medium text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all"
                   />
                 </div>
 
                 {/* Budget */}
                 <div className="space-y-1.5">
-                  <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Budget Value (₹)</label>
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Budget Value (₹)</label>
                   <input 
                     type="number" 
                     required
                     value={budget}
                     onChange={(e) => setBudget(e.target.value)}
-                    className="w-full bg-white border border-zinc-200 rounded-2xl px-3 py-2 text-xs text-zinc-900 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400/20 transition-all"
+                    className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-medium text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all"
                   />
                 </div>
 
                 {/* Property Preference & Stage */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Property Pref</label>
-                    <select 
-                      value={propertyPref}
-                      onChange={(e) => setPropertyPref(e.target.value)}
-                      className="w-full bg-white border border-zinc-200 rounded-2xl px-3 py-2 text-xs text-zinc-900 focus:outline-none focus:border-zinc-400 transition-all"
-                    >
-                      {PROPERTY_PREFERENCES.map(p => (
-                        <option key={p} value={p}>{p}</option>
-                      ))}
-                    </select>
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Property Pref</label>
+                    <div className="relative">
+                      <select 
+                        value={propertyPref}
+                        onChange={(e) => setPropertyPref(e.target.value)}
+                        className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-medium text-zinc-800 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all appearance-none cursor-pointer"
+                      >
+                        {PROPERTY_PREFERENCES.map(p => (
+                          <option key={p} value={p}>{p}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
+                    </div>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Current Stage</label>
-                    <select 
-                      value={stage}
-                      onChange={(e) => setStage(e.target.value)}
-                      className="w-full bg-white border border-zinc-200 rounded-2xl px-3 py-2 text-xs text-zinc-900 focus:outline-none focus:border-zinc-400 transition-all"
-                    >
-                      {STAGES.map(s => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Current Stage</label>
+                    <div className="relative">
+                      <select 
+                        value={stage}
+                        onChange={(e) => setStage(e.target.value)}
+                        className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-medium text-zinc-800 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all appearance-none cursor-pointer"
+                      >
+                        {STAGES.map(s => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
+                    </div>
                   </div>
                 </div>
 
                 {/* Lead Source */}
                 <div className="space-y-1.5">
-                  <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Lead Source</label>
-                  <select 
-                    value={source}
-                    onChange={(e) => setSource(e.target.value)}
-                    className="w-full bg-white border border-zinc-200 rounded-2xl px-3 py-2 text-xs text-zinc-900 focus:outline-none focus:border-zinc-400 transition-all"
-                  >
-                    {LEAD_SOURCES.map(s => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Lead Source</label>
+                  <div className="relative">
+                    <select 
+                      value={source}
+                      onChange={(e) => setSource(e.target.value)}
+                      className="w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-medium text-zinc-800 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all appearance-none cursor-pointer"
+                    >
+                      {LEAD_SOURCES.map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
+                  </div>
                 </div>
 
                 {/* Notes */}
                 <div className="space-y-1.5">
-                  <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Notes</label>
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Notes</label>
                   <textarea 
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    className="w-full h-20 bg-white border border-zinc-200 rounded-2xl px-3 py-2 text-xs text-zinc-900 focus:outline-none focus:border-zinc-400 transition-all resize-none"
+                    className="w-full h-20 px-3.5 py-2.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base md:text-xs font-medium text-[#2d2d2d] placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all resize-none"
                   />
                 </div>
               </div>

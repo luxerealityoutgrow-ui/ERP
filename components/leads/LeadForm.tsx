@@ -7,6 +7,7 @@ import { TagsInput } from '@/components/ui/tags-input';
 import { supabase } from '@/lib/supabaseClient';
 import { ChevronLeft, ChevronDown, User, Calendar, AlertTriangle, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 
 const LOCATION_OPTIONS = [
   { value: 'Kalyani Nagar', label: 'Kalyani Nagar' },
@@ -38,6 +39,11 @@ const CONFIG_OPTIONS = [
   'Office Space',
   'Plot'
 ];
+
+const inputCls = "w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base lg:text-[12px] font-medium text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all";
+const selectCls = "w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base lg:text-[12px] font-medium text-zinc-800 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all appearance-none cursor-pointer";
+const textareaCls = "w-full px-3.5 py-2.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base lg:text-[12px] font-medium text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all resize-none";
+const labelCls = "text-[10px] font-bold text-zinc-400 uppercase tracking-widest";
 
 export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> }) {
   const router = useRouter();
@@ -122,38 +128,38 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
   // ── Render Helpers for Form Sections ──
 
   const renderContactFields = () => (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div className="space-y-1.5">
-        <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-[0.1em]">Client Name <span className="text-rose-400">*</span></label>
-        <input name="client_name" value={formState.client_name} onChange={handleChange} className="w-full h-9 px-3 border border-[#e8e7e4] rounded-lg text-[12px] font-medium text-zinc-800 bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-2 focus:ring-[#d4ad4d]/15 transition-all" placeholder="e.g. Rahul Sharma" required />
+        <label className={labelCls}>Client Name <span className="text-rose-500/80">*</span></label>
+        <input name="client_name" value={formState.client_name} onChange={handleChange} className={inputCls} placeholder="e.g. Rahul Sharma" required />
       </div>
       
       <div className="space-y-1.5">
-        <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-[0.1em]">Phone Number <span className="text-rose-400">*</span></label>
-        <input name="phone" value={formState.phone} onChange={handleChange} className="w-full h-9 px-3 border border-[#e8e7e4] rounded-lg text-[12px] font-medium text-zinc-800 bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-2 focus:ring-[#d4ad4d]/15 transition-all" placeholder="+91 98452 11002" required />
-        <p className="text-[9px] text-zinc-400 italic">Main deciding element. CRM automatically checks for duplicate numbers.</p>
+        <label className={labelCls}>Phone Number <span className="text-rose-500/80">*</span></label>
+        <input name="phone" value={formState.phone} onChange={handleChange} className={inputCls} placeholder="+91 98452 11002" required />
+        <p className="text-[10px] text-zinc-400 italic font-medium">Main deciding element. CRM automatically checks for duplicate numbers.</p>
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-[0.1em]">
+        <label className={labelCls}>
           Email ID <span className="text-zinc-300 font-semibold">(Optional)</span>
         </label>
-        <input type="email" name="email" defaultValue={initialValues.email ?? ''} className="w-full h-9 px-3 border border-[#e8e7e4] rounded-lg text-[12px] font-medium text-zinc-800 bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-2 focus:ring-[#d4ad4d]/15 transition-all" placeholder="client@example.com" />
+        <input type="email" name="email" defaultValue={initialValues.email ?? ''} className={inputCls} placeholder="client@example.com" />
       </div>
     </div>
   );
 
   const renderClassifyFields = () => (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div className="space-y-1.5">
-        <label className="text-[9.5px] font-extrabold text-[#b8922e] uppercase tracking-[0.1em] flex items-center gap-1">
-          <User className="h-3 w-3" /> Assigned Representative *
+        <label className="text-[10px] font-bold text-[#b8922e] uppercase tracking-widest flex items-center gap-1">
+          <User className="h-3.5 w-3.5" /> Assigned Representative *
         </label>
         <div className="relative">
           <select 
             name="assigned_to" 
             defaultValue={initialValues.assigned_to ?? ''} 
-            className="w-full h-9 px-3 border border-[#d4ad4d]/40 rounded-lg text-[12px] font-bold text-zinc-900 bg-[#fafaf8] focus:outline-none focus:border-[#d4ad4d] focus:ring-2 focus:ring-[#d4ad4d]/15 transition-all appearance-none cursor-pointer"
+            className={selectCls + " border-[#d4ad4d]/40 font-bold"}
           >
             <option value="">Select Sales Executive / Admin...</option>
             {teamProfiles.map(p => (
@@ -162,27 +168,27 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
               </option>
             ))}
           </select>
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 pointer-events-none" />
+          <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
         </div>
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-[0.1em] flex items-center gap-1">
-          <Calendar className="h-3 w-3 text-zinc-500" /> Next Follow-Up Date
+        <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1">
+          <Calendar className="h-3.5 w-3.5 text-zinc-400" /> Next Follow-Up Date
         </label>
         <input 
           type="date" 
           name="next_followup_date" 
           defaultValue={initialValues.next_followup_date ?? ''} 
-          className="w-full h-9 px-3 border border-[#e8e7e4] rounded-lg text-[12px] font-medium text-zinc-800 bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-2 focus:ring-[#d4ad4d]/15 transition-all" 
+          className={inputCls} 
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-[0.1em]">Lead Source <span className="text-rose-400">*</span></label>
+          <label className={labelCls}>Lead Source *</label>
           <div className="relative">
-            <select name="lead_source_id" defaultValue={initialValues.lead_source_id ?? 'Google Ads'} className="w-full h-9 px-3 border border-[#e8e7e4] rounded-lg text-[12px] font-medium text-zinc-800 bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-2 focus:ring-[#d4ad4d]/15 transition-all appearance-none" required>
+            <select name="lead_source_id" defaultValue={initialValues.lead_source_id ?? 'Google Ads'} className={selectCls} required>
               <option value="Google Ads">Google Ads</option>
               <option value="WhatsApp Inbound">WhatsApp Inbound</option>
               <option value="Direct Referral">Direct Referral</option>
@@ -192,50 +198,50 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
               <option value="Website">Website</option>
               <option value="Walk-in">Walk-in</option>
             </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 pointer-events-none" />
+            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
           </div>
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-[0.1em]">Category <span className="text-rose-400">*</span></label>
+          <label className={labelCls}>Category *</label>
           <div className="relative">
-            <select name="category" defaultValue={initialValues.category ?? 'Residential'} className="w-full h-9 px-3 border border-[#e8e7e4] rounded-lg text-[12px] font-medium text-zinc-800 bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-2 focus:ring-[#d4ad4d]/15 transition-all appearance-none" required>
+            <select name="category" defaultValue={initialValues.category ?? 'Residential'} className={selectCls} required>
               <option value="Residential">Residential</option>
               <option value="Commercial">Commercial</option>
             </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 pointer-events-none" />
+            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-[0.1em]">Transaction Type <span className="text-rose-400">*</span></label>
+          <label className={labelCls}>Transaction Type *</label>
           <div className="relative">
-            <select name="transaction_type" defaultValue={initialValues.transaction_type ?? 'Outright'} className="w-full h-9 px-3 border border-[#e8e7e4] rounded-lg text-[12px] font-medium text-zinc-800 bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-2 focus:ring-[#d4ad4d]/15 transition-all appearance-none" required>
+            <select name="transaction_type" defaultValue={initialValues.transaction_type ?? 'Outright'} className={selectCls} required>
               <option value="Outright">Outright (Buy)</option>
               <option value="Rent">Rent / Lease</option>
             </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 pointer-events-none" />
+            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
           </div>
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-[0.1em]">Pipeline Stage</label>
+          <label className={labelCls}>Pipeline Stage</label>
           <div className="relative">
-            <select name="stage_id" defaultValue={initialValues.stage_id ?? 'New inquiry'} className="w-full h-9 px-3 border border-[#e8e7e4] rounded-lg text-[12px] font-medium text-zinc-800 bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-2 focus:ring-[#d4ad4d]/15 transition-all appearance-none">
+            <select name="stage_id" defaultValue={initialValues.stage_id ?? 'New inquiry'} className={selectCls}>
               <option value="New inquiry">New inquiry</option>
               <option value="Site visit">Site visit</option>
               <option value="Follow up">Follow up</option>
               <option value="Closure">Closure</option>
             </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 pointer-events-none" />
+            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
           </div>
         </div>
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-[0.1em]">Status <span className="text-rose-400">*</span></label>
+        <label className={labelCls}>Status *</label>
         <div className="flex flex-wrap gap-2">
           <input type="hidden" name="status" value={formState.status} />
           {['Hot', 'Warm', 'No answer', 'Not reachable', 'Switched off', 'Closed'].map(st => {
@@ -270,11 +276,11 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
   );
 
   const renderRequirementsFields = () => (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div className="space-y-1.5">
-        <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-[0.1em]">Property Type <span className="text-rose-400">*</span></label>
+        <label className={labelCls}>Property Type *</label>
         <div className="relative">
-          <select name="property_type" defaultValue={initialValues.property_type ?? 'Apartment'} className="w-full h-9 px-3 border border-[#e8e7e4] rounded-lg text-[12px] font-medium text-zinc-800 bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-2 focus:ring-[#d4ad4d]/15 transition-all appearance-none" required>
+          <select name="property_type" defaultValue={initialValues.property_type ?? 'Apartment'} className={selectCls} required>
             <option value="Apartment">Apartment</option>
             <option value="Villa">Villa / Independent House</option>
             <option value="Penthouse">Penthouse</option>
@@ -282,13 +288,13 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
             <option value="Shop">Shop / Retail</option>
             <option value="Plot">Plot / Land</option>
           </select>
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 pointer-events-none" />
+          <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
         </div>
       </div>
 
       <div className="space-y-2">
-        <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-[0.1em] block">
-          Configuration Requirements (Select Multiple: 3 BHK, 4 BHK, 5 BHK) *
+        <label className={labelCls}>
+          Configuration Requirements (Select Multiple) *
         </label>
         <div className="flex flex-wrap gap-2">
           {CONFIG_OPTIONS.map(cfg => {
@@ -298,7 +304,7 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
                 key={cfg}
                 type="button"
                 onClick={() => toggleConfig(cfg)}
-                className={`px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all cursor-pointer ${
                   isSelected
                     ? 'bg-zinc-900 text-white border-zinc-900 shadow-xs'
                     : 'bg-white text-zinc-600 border-[#e8e7e4] hover:bg-zinc-50'
@@ -313,7 +319,7 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-[0.1em]">Preferred Locations</label>
+        <label className={labelCls}>Preferred Locations</label>
         <TagsInput
           value={preferredLocations}
           onChange={setPreferredLocations}
@@ -325,20 +331,20 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-[0.1em]">Max Budget <span className="text-rose-400">*</span></label>
+        <label className={labelCls}>Max Budget *</label>
         <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-[12px] font-bold">₹</span>
-          <input type="number" name="budget_max" defaultValue={initialValues.budget_max ?? ''} className="w-full h-9 pl-7 pr-3 border border-[#e8e7e4] rounded-lg text-[12px] font-medium text-zinc-800 bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-2 focus:ring-[#d4ad4d]/15 transition-all" placeholder="e.g. 50000000" required />
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 text-base lg:text-[12px] font-bold">₹</span>
+          <input type="number" name="budget_max" defaultValue={initialValues.budget_max ?? ''} className={inputCls + " pl-7"} placeholder="e.g. 50000000" required />
         </div>
       </div>
     </div>
   );
 
   const renderNotesFields = () => (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div className="space-y-1.5">
-        <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-[0.1em]">Internal Notes & Requirements</label>
-        <textarea name="notes" defaultValue={initialValues.notes ?? ''} className="w-full h-32 p-3 border border-[#e8e7e4] rounded-lg text-[12px] font-medium text-zinc-800 bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-2 focus:ring-[#d4ad4d]/15 transition-all resize-none" placeholder="Enter specific timeline, preferred floor, facing, or budget details..." />
+        <label className={labelCls}>Internal Notes & Requirements</label>
+        <textarea name="notes" defaultValue={initialValues.notes ?? ''} className={textareaCls + " h-32"} placeholder="Enter specific timeline, preferred floor, facing, or budget details..." />
       </div>
     </div>
   );
@@ -366,8 +372,8 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
         </button>
       </div>
 
-      <div className="max-w-6xl mx-auto">
-        {/* 🛑 Duplicate Mobile Warning Banner */}
+      <div className="max-w-4xl mx-auto">
+        {/* 🛑 Duplicate Warning Banner */}
         {(state as any)?.duplicate && (state as any)?.existingLead && (
           <div className="m-4 lg:mx-8 p-4 bg-rose-50 border border-rose-200 rounded-2xl space-y-3 text-left">
             <div className="flex items-center gap-2.5 text-rose-700">
@@ -446,7 +452,7 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
           </div>
           
           {/* Right content panel */}
-          <div className="flex-1 px-8 py-6 max-w-2xl">
+          <div className="flex-1 px-8 py-6 max-w-2xl text-left">
             {activeSection === 0 && renderContactFields()}
             {activeSection === 1 && renderClassifyFields()}
             {activeSection === 2 && renderRequirementsFields()}
@@ -473,29 +479,35 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
         </div>
 
         {/* ── MOBILE VIEWPORT: Single Page Scrolling stacked layout ── */}
-        <div className="block lg:hidden px-4 py-6 space-y-5">
+        <div className="block lg:hidden px-6 py-8 text-left space-y-6 bg-white border border-[#e8e7e4] rounded-[24px] shadow-sm my-6 mx-4">
           
-          <div className="bg-white p-5 border border-[#e8e7e4] rounded-[16px] space-y-4">
-            <h3 className="text-xs font-black text-zinc-900 border-b border-[#f5f5f3] pb-2 uppercase tracking-wide">1. Contact Details</h3>
+          <div className="space-y-4">
+            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider">Contact Details</h3>
             {renderContactFields()}
           </div>
 
-          <div className="bg-white p-5 border border-[#e8e7e4] rounded-[16px] space-y-4">
-            <h3 className="text-xs font-black text-zinc-900 border-b border-[#f5f5f3] pb-2 uppercase tracking-wide">2. Classification & Assignment</h3>
+          <div className="h-px bg-zinc-200/50 my-6" />
+
+          <div className="space-y-4">
+            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider">Classification & Assignment</h3>
             {renderClassifyFields()}
           </div>
 
-          <div className="bg-white p-5 border border-[#e8e7e4] rounded-[16px] space-y-4">
-            <h3 className="text-xs font-black text-zinc-900 border-b border-[#f5f5f3] pb-2 uppercase tracking-wide">3. Requirements</h3>
+          <div className="h-px bg-zinc-200/50 my-6" />
+
+          <div className="space-y-4">
+            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider">Requirements</h3>
             {renderRequirementsFields()}
           </div>
 
-          <div className="bg-white p-5 border border-[#e8e7e4] rounded-[16px] space-y-4">
-            <h3 className="text-xs font-black text-zinc-900 border-b border-[#f5f5f3] pb-2 uppercase tracking-wide">4. Internal Notes</h3>
+          <div className="h-px bg-zinc-200/50 my-6" />
+
+          <div className="space-y-4">
+            <h3 className="text-[13px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider">Internal Notes</h3>
             {renderNotesFields()}
           </div>
 
-          <div className="pt-2">
+          <div className="pt-4">
             <button type="submit" className="w-full py-3 bg-[#d4ad4d] hover:bg-[#b8922e] text-white text-xs font-extrabold rounded-xl transition-all shadow-md flex items-center justify-center cursor-pointer">
               Save Lead & Complete
             </button>
