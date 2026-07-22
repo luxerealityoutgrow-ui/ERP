@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Luxe Realty ERP - Journey Map (Editorial Dark)</title>
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .serif-display {
+      font-family: 'Playfair Display', serif;
+    }
+    code, pre {
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-150 min-h-screen p-6 md:p-12 selection:bg-amber-500 selection:text-zinc-950">
+  <div class="max-w-4xl mx-auto space-y-12">
+    
+    <!-- Design Selector Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-zinc-800 pb-8 gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 text-[9px] font-extrabold bg-amber-500 text-zinc-950 rounded uppercase tracking-wider">Direction B</span>
+          <h1 class="serif-display text-2xl font-bold tracking-tight text-white">Editorial Dark Mode Journey Map</h1>
+        </div>
+        <p class="text-xs text-zinc-400 mt-1.5">A cinematic timeline layout displaying workflow paths in gold-accented typography.</p>
+      </div>
+      <div class="flex items-center gap-2 p-1 bg-zinc-900 rounded-xl border border-zinc-800">
+        <a href="/journey-map-minimal.html" class="px-3 py-1.5 hover:bg-zinc-800 rounded-lg text-xs font-bold text-zinc-400 transition-colors">Minimal Bento</a>
+        <a href="/journey-map-editorial.html" class="px-3 py-1.5 bg-zinc-800 text-amber-450 rounded-lg text-xs font-bold text-white">Editorial Dark</a>
+        <a href="/journey-map-glassmorphic.html" class="px-3 py-1.5 hover:bg-zinc-800 rounded-lg text-xs font-bold text-zinc-400 transition-colors">Glassmorphic Hub</a>
+      </div>
+    </div>
+
+    <!-- Intro Narrative Section -->
+    <div class="space-y-4 max-w-2xl">
+      <h2 class="serif-display text-xl font-bold text-white italic">The Architecture of Real-Estate Operations</h2>
+      <p class="text-xs text-zinc-400 leading-relaxed">
+        This document charts the logical flows, access thresholds, and backend validations constructed to support Luxe Realty Pune. Select any stage in the timeline below to examine the codebase modifications and journey optimizations.
+      </p>
+    </div>
+
+    <!-- Vertical Timeline -->
+    <div class="relative pl-8 border-l border-zinc-850 space-y-12 my-8">
+      
+      <!-- Stage 1 -->
+      <div class="relative cursor-pointer group" onclick="toggleDetails('details-1')">
+        <span class="absolute -left-[38px] top-1.5 h-4 w-4 rounded-full border-4 border-zinc-950 bg-zinc-800 group-hover:bg-amber-500 group-hover:border-amber-900/30 transition-all"></span>
+        <div class="space-y-1">
+          <div class="flex items-center gap-3">
+            <span class="serif-display text-sm font-bold text-white group-hover:text-amber-500 transition-colors">I. Authentication & Landing Gates</span>
+            <span class="text-[10px] text-zinc-500 font-mono">01 / 06</span>
+          </div>
+          <p class="text-xs text-zinc-450 max-w-lg">System redirects and role validation loops fixed for secure access.</p>
+        </div>
+      </div>
+
+      <!-- Stage 2 -->
+      <div class="relative cursor-pointer group" onclick="toggleDetails('details-2')">
+        <span class="absolute -left-[38px] top-1.5 h-4 w-4 rounded-full border-4 border-zinc-950 bg-zinc-800 group-hover:bg-amber-500 group-hover:border-amber-900/30 transition-all"></span>
+        <div class="space-y-1">
+          <div class="flex items-center gap-3">
+            <span class="serif-display text-sm font-bold text-white group-hover:text-amber-500 transition-colors">II. Lead Intake & Status Toggles</span>
+            <span class="text-[10px] text-zinc-500 font-mono">02 / 06</span>
+          </div>
+          <p class="text-xs text-zinc-450 max-w-lg">Enabling active/inactive toggles in list views and drawer panels.</p>
+        </div>
+      </div>
+
+      <!-- Stage 3 -->
+      <div class="relative cursor-pointer group" onclick="toggleDetails('details-3')">
+        <span class="absolute -left-[38px] top-1.5 h-4 w-4 rounded-full border-4 border-zinc-950 bg-zinc-800 group-hover:bg-amber-500 group-hover:border-amber-900/30 transition-all"></span>
+        <div class="space-y-1">
+          <div class="flex items-center gap-3">
+            <span class="serif-display text-sm font-bold text-white group-hover:text-amber-500 transition-colors">III. Algorithmic Matchmaking</span>
+            <span class="text-[10px] text-zinc-500 font-mono">03 / 06</span>
+          </div>
+          <p class="text-xs text-zinc-450 max-w-lg">Multi-select match capabilities and structured data sharing templates.</p>
+        </div>
+      </div>
+
+      <!-- Stage 4 -->
+      <div class="relative cursor-pointer group" onclick="toggleDetails('details-4')">
+        <span class="absolute -left-[38px] top-1.5 h-4 w-4 rounded-full border-4 border-zinc-950 bg-zinc-800 group-hover:bg-amber-500 group-hover:border-amber-900/30 transition-all"></span>
+        <div class="space-y-1">
+          <div class="flex items-center gap-3">
+            <span class="serif-display text-sm font-bold text-white group-hover:text-amber-500 transition-colors">IV. Site Viewings & Scheduling</span>
+            <span class="text-[10px] text-zinc-500 font-mono">04 / 06</span>
+          </div>
+          <p class="text-xs text-zinc-450 max-w-lg">Validating property relationships and inputs via dynamic dropdowns.</p>
+        </div>
+      </div>
+
+      <!-- Stage 5 -->
+      <div class="relative cursor-pointer group" onclick="toggleDetails('details-5')">
+        <span class="absolute -left-[38px] top-1.5 h-4 w-4 rounded-full border-4 border-zinc-950 bg-zinc-800 group-hover:bg-amber-500 group-hover:border-amber-900/30 transition-all"></span>
+        <div class="space-y-1">
+          <div class="flex items-center gap-3">
+            <span class="serif-display text-sm font-bold text-white group-hover:text-amber-500 transition-colors">V. Deal Progression & Pipeline</span>
+            <span class="text-[10px] text-zinc-500 font-mono">05 / 06</span>
+          </div>
+          <p class="text-xs text-zinc-450 max-w-lg">Kanban board stage change integrations and auto-archiving.</p>
+        </div>
+      </div>
+
+      <!-- Stage 6 -->
+      <div class="relative cursor-pointer group" onclick="toggleDetails('details-6')">
+        <span class="absolute -left-[38px] top-1.5 h-4 w-4 rounded-full border-4 border-zinc-950 bg-zinc-800 group-hover:bg-amber-500 group-hover:border-amber-900/30 transition-all"></span>
+        <div class="space-y-1">
+          <div class="flex items-center gap-3">
+            <span class="serif-display text-sm font-bold text-white group-hover:text-amber-500 transition-colors">VI. System Auditing Logs</span>
+            <span class="text-[10px] text-zinc-500 font-mono">06 / 06</span>
+          </div>
+          <p class="text-xs text-zinc-450 max-w-lg">Logging operations modifications with verified profile identities.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Detail Box (Warm Dark) -->
+    <div id="details-section" class="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 hidden space-y-6 animate-in fade-in duration-300">
+      <div class="flex justify-between items-center border-b border-zinc-800 pb-4">
+        <h3 id="details-title" class="serif-display text-base font-bold text-amber-500">Step Details</h3>
+        <button onclick="closeDetails()" class="text-xs font-bold text-zinc-500 hover:text-white transition-colors">Close</button>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+        <!-- Admin Details -->
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+            <span class="text-[9px] font-extrabold uppercase tracking-widest text-zinc-400">SuperAdmin Operations</span>
+          </div>
+          <p id="details-admin-desc" class="text-xs text-zinc-400 leading-relaxed">Admin description.</p>
+          <div class="p-3 bg-zinc-950 border border-zinc-800 rounded-xl space-y-1.5">
+            <p class="text-[9px] font-extrabold text-amber-600/70 uppercase tracking-widest">Friction Gaps</p>
+            <p id="details-admin-vulnerability" class="text-xs text-zinc-300">None</p>
+          </div>
+        </div>
+
+        <!-- Sales Exec Details -->
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="h-1.5 w-1.5 rounded-full bg-white"></span>
+            <span class="text-[9px] font-extrabold uppercase tracking-widest text-zinc-400">Sales Executive Path</span>
+          </div>
+          <p id="details-sales-desc" class="text-xs text-zinc-400 leading-relaxed">Sales Exec description.</p>
+          <div class="p-3 bg-zinc-950 border border-zinc-800 rounded-xl space-y-1.5">
+            <p class="text-[9px] font-extrabold text-zinc-550 uppercase tracking-widest">Friction Gaps</p>
+            <p id="details-sales-vulnerability" class="text-xs text-zinc-300">None</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Solidified Updates -->
+      <div class="border-t border-zinc-800 pt-6 space-y-3">
+        <h4 class="text-xs font-extrabold text-white uppercase tracking-wider">Implemented Optimizations & Solidified Code</h4>
+        <p id="details-optimization-desc" class="text-xs text-zinc-400">Optimization detail description.</p>
+        <div class="p-4 bg-zinc-950 border border-zinc-800 text-zinc-300 rounded-2xl text-[10px] font-mono leading-relaxed overflow-x-auto" id="details-code-snippet">
+          // Code snippet here
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    const data = {
+      'details-1': {
+        title: 'I. Authentication & Landing Gates',
+        adminDesc: 'SuperAdmin lands directly on the main Performance Dashboard page to track macro KPIs, site viewing distributions, and audit logs.',
+        adminVulnerability: 'Could easily toggle roles to spoof administrative session states without DB validation checks.',
+        salesDesc: 'Sales Executives land directly on the Leads lists. Dashboard metrics and administrative screens are blocked for their role.',
+        salesVulnerability: 'Auth redirects loops where they get kicked back to Dashboard, redirecting them in an infinite layout loop.',
+        optimizationDesc: 'Cleaned login page check loop using supabase.auth.getUser() instead of client-state hooks. Solidified backend routes so any user trying to fetch a blocked route is cleanly redirected back to /leads, and removed the client role switcher.',
+        codeSnippet: `// app/login/page.tsx\nconst { data: { user } } = await supabase.auth.getUser();\nif (user) {\n  const profile = await fetchProfile(user.id);\n  router.replace(profile.role === 'SalesPerson' ? '/leads' : '/dashboard');\n}`
+      },
+      'details-2': {
+        title: 'II. Lead Intake & Status Toggles',
+        adminDesc: 'Admin reviews new leads created by sales execs. Can change their assigned sales person, update status, and manage micro-markets.',
+        adminVulnerability: 'Marking a lead active/inactive was not logs audited, leading to ghost leads in the CRM database.',
+        salesDesc: 'Sales Exec inputs new prospects from various channels. Can change status, update client preferences, and log followup dates.',
+        salesVulnerability: 'Lead form did not contain an Active Status toggle switch, requiring manual pipeline deletion to archive.',
+        optimizationDesc: 'Added a live active/inactive status toggle directly in the leads table rows, the slide-out drawers, and the edit forms. Integrated server actions (createLeadAction & updateLeadAction) to record all status updates to audit logs.',
+        codeSnippet: `// app/leads/actions.ts\nconst { data: updated, error } = await supabase\n  .from('leads')\n  .update({ ...data, is_active: formData.get('is_active') === 'true' })\n  .eq('id', id);`
+      },
+      'details-3': {
+        title: 'III. Algorithmic Matchmaking',
+        adminDesc: 'Admin monitors property status changes (Available, Under Offer, Sold) and reviews matchmaking match rates.',
+        adminVulnerability: 'Unsold properties under offer were matched as available, skewing sales forecast numbers.',
+        salesDesc: 'Sales Exec triggers matchmaking for a lead, filtering available properties by BHK size, location, and price.',
+        salesVulnerability: 'Matching required one-by-one verification. Sharing matches was fully manual and slow.',
+        optimizationDesc: 'Implemented a multi-select matchmaking dashboard enabling salespersons to bulk check matches, view detailed matching criteria scores, copy pre-formatted WhatsApp templates, and schedule viewings immediately.',
+        codeSnippet: `// app/matchmaking/page.tsx\nconst matches = properties.filter(prop => \n  prop.status_id === 'Available' && \n  calculateScore(lead, prop) >= minMatchScore\n);`
+      },
+      'details-4': {
+        title: 'IV. Site Viewings & Scheduling',
+        adminDesc: 'Admin monitors overall site viewing completion rates on the dashboard and oversees schedules.',
+        adminVulnerability: 'Site viewing schedules were disconnected from leads/properties, allowing invalid schedules.',
+        salesDesc: 'Sales Exec inputs scheduled viewings for matched properties, gathers client feedback, and records visit outcomes.',
+        salesVulnerability: 'Schedules used free-text text inputs, creating spelling errors and orphan relationships in the database.',
+        optimizationDesc: 'Upgraded all form inputs to structured dropdown select tags referencing verified database entities. Integrated Supabase queries to populate client and property options from live tables, logging actions to audit logs.',
+        codeSnippet: `// src/lib/siteVisits.ts\nconst { data: inserted, error } = await supabase\n  .from('site_visits')\n  .insert([{ lead_id, property_id, assigned_to: profile.id, visit_date, status: 'Scheduled' }]);`
+      },
+      'details-5': {
+        title: 'V. Deal Progression & Pipeline',
+        adminDesc: 'Admin oversees deals across the Sales Pipeline and handles bulk removals.',
+        adminVulnerability: 'Deleted deals left active leads in the main list, cluttering CRM pipelines with dead leads.',
+        salesDesc: 'Sales Exec drags deal cards through Kanban stages (New inquiry, Site visit, Follow up, Closure) as negotiations progress.',
+        salesVulnerability: 'Moving a card to closed-won did not mark the lead as inactive, requiring double actions.',
+        optimizationDesc: 'Solidified pipeline stage change handlers. Dragging a card to the "Closure" stage or deleting a deal automatically updates the lead status in the database to inactive and archives the deal card.',
+        codeSnippet: `// app/leads/page.tsx\nconst handleRowStageChange = async (leadId, newStage) => {\n  const shouldDeactivate = newStage === 'Closure';\n  await supabase.from('leads').update({ stage_id: newStage, is_active: !shouldDeactivate }).eq('id', leadId);\n}`
+      },
+      'details-6': {
+        title: 'VI. Operations Auditing',
+        adminDesc: 'SuperAdmin reviews the audit log timeline on the dashboard to check modifications, listing uploads, and lead updates.',
+        adminVulnerability: 'Critical actions like Kanban drag-and-drop or site visit cancellations were missing from audit trails.',
+        salesDesc: 'Sales Exec cannot access audit log views, maintaining privacy across client lists and sales staff.',
+        salesVulnerability: 'No restrictions on fetching raw logs for lower roles in backend API structures.',
+        optimizationDesc: 'Added joined queries connecting audit logs with user profiles (profiles: full_name) to render clear actions. Restricted access to the audit logs component strictly to Admins and SuperAdmins.',
+        codeSnippet: `// app/dashboard/page.tsx\nconst { data: fetchedLogs } = await supabase\n  .from('audit_logs')\n  .select('*, profiles(full_name)')\n  .order('created_at', { ascending: false }).limit(15);`
+      }
+    };
+
+    function toggleDetails(id) {
+      const item = data[id];
+      if (!item) return;
+
+      document.getElementById('details-title').innerText = item.title;
+      document.getElementById('details-admin-desc').innerText = item.adminDesc;
+      document.getElementById('details-admin-vulnerability').innerText = item.adminVulnerability;
+      document.getElementById('details-sales-desc').innerText = item.salesDesc;
+      document.getElementById('details-sales-vulnerability').innerText = item.salesVulnerability;
+      document.getElementById('details-optimization-desc').innerText = item.optimizationDesc;
+      document.getElementById('details-code-snippet').innerText = item.codeSnippet;
+
+      document.getElementById('details-section').classList.remove('hidden');
+      document.getElementById('details-section').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function closeDetails() {
+      document.getElementById('details-section').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>

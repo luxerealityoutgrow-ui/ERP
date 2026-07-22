@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Luxe Realty ERP - Journey Map</title>
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    code, pre {
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-900 min-h-screen p-4 md:p-12 flex items-center justify-center relative overflow-x-hidden selection:bg-indigo-500 selection:text-white">
+  
+  <!-- Backdrop Blur Blobs -->
+  <div class="absolute top-1/4 left-1/4 h-96 w-96 rounded-full bg-indigo-600/30 blur-3xl -z-10 animate-pulse duration-[10s]"></div>
+  <div class="absolute bottom-1/4 right-1/4 h-96 w-96 rounded-full bg-emerald-500/20 blur-3xl -z-10 animate-pulse duration-[8s]"></div>
+
+  <div class="w-full max-w-5xl backdrop-blur-xl bg-white/80 border border-white/30 rounded-3xl p-6 md:p-10 shadow-2xl space-y-8">
+    
+    <!-- Design Selector Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-zinc-200/50 pb-6 gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 text-[9px] font-extrabold bg-indigo-650 text-white rounded uppercase tracking-wider shadow-sm">Interactive Portal</span>
+          <h1 class="text-xl font-black tracking-tight bg-gradient-to-r from-zinc-900 via-indigo-950 to-zinc-900 bg-clip-text text-transparent">Luxe Realty ERP Journey Mapping</h1>
+        </div>
+        <p class="text-xs text-zinc-550 mt-1">An immersive, neo-skeuomorphic control board mapping structural roles and workflow status checks.</p>
+      </div>
+      <div class="flex items-center gap-2 p-1 bg-zinc-200/40 rounded-xl border border-zinc-200/35">
+        <a href="/journey-map-minimal.html" class="px-3 py-1.5 hover:bg-white/50 rounded-lg text-xs font-bold text-zinc-650 transition-colors">Minimal Bento</a>
+        <a href="/journey-map-editorial.html" class="px-3 py-1.5 hover:bg-white/50 rounded-lg text-xs font-bold text-zinc-650 transition-colors">Editorial Dark</a>
+        <a href="/journey-map-glassmorphic.html" class="px-3 py-1.5 bg-white shadow-xs rounded-lg text-xs font-bold text-indigo-700">Glassmorphic Hub</a>
+      </div>
+    </div>
+
+    <!-- Layout: Split Sidebar & Content -->
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+      
+      <!-- Left sidebar menu -->
+      <div class="md:col-span-4 space-y-3">
+        <p class="text-[9px] font-black text-indigo-600/80 uppercase tracking-widest px-2">CRM Stages</p>
+        <div class="space-y-1">
+          <button onclick="selectStep('details-1', this)" class="w-full text-left px-4 py-3 rounded-xl text-xs font-extrabold text-zinc-900 hover:bg-white/60 hover:text-zinc-900 transition-all flex justify-between items-center bg-white/60 shadow-xs border border-white/20">
+            <span>01. Access Gateways</span>
+            <span class="text-[9px] font-mono text-zinc-400 bg-zinc-200/50 px-1.5 py-0.5 rounded">Auth</span>
+          </button>
+          <button onclick="selectStep('details-2', this)" class="w-full text-left px-4 py-3 rounded-xl text-xs font-extrabold text-zinc-700 hover:bg-white/60 hover:text-zinc-900 transition-all flex justify-between items-center">
+            <span>02. Lead Ingestion</span>
+            <span class="text-[9px] font-mono text-zinc-400 bg-zinc-200/50 px-1.5 py-0.5 rounded">Status</span>
+          </button>
+          <button onclick="selectStep('details-3', this)" class="w-full text-left px-4 py-3 rounded-xl text-xs font-extrabold text-zinc-700 hover:bg-white/60 hover:text-zinc-900 transition-all flex justify-between items-center">
+            <span>03. Matchmaking logic</span>
+            <span class="text-[9px] font-mono text-zinc-400 bg-zinc-200/50 px-1.5 py-0.5 rounded">Match</span>
+          </button>
+          <button onclick="selectStep('details-4', this)" class="w-full text-left px-4 py-3 rounded-xl text-xs font-extrabold text-zinc-700 hover:bg-white/60 hover:text-zinc-900 transition-all flex justify-between items-center">
+            <span>04. Site Viewings</span>
+            <span class="text-[9px] font-mono text-zinc-400 bg-zinc-200/50 px-1.5 py-0.5 rounded">Visits</span>
+          </button>
+          <button onclick="selectStep('details-5', this)" class="w-full text-left px-4 py-3 rounded-xl text-xs font-extrabold text-zinc-700 hover:bg-white/60 hover:text-zinc-900 transition-all flex justify-between items-center">
+            <span>05. Funnel Progression</span>
+            <span class="text-[9px] font-mono text-zinc-400 bg-zinc-200/50 px-1.5 py-0.5 rounded">Kanban</span>
+          </button>
+          <button onclick="selectStep('details-6', this)" class="w-full text-left px-4 py-3 rounded-xl text-xs font-extrabold text-zinc-700 hover:bg-white/60 hover:text-zinc-900 transition-all flex justify-between items-center">
+            <span>06. Quality Audits</span>
+            <span class="text-[9px] font-mono text-zinc-400 bg-zinc-200/50 px-1.5 py-0.5 rounded">Logs</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Right detail viewport (frosted bento frame) -->
+      <div class="md:col-span-8 bg-white/40 border border-white/30 rounded-2xl p-6 md:p-8 space-y-6 shadow-sm">
+        
+        <!-- Header -->
+        <div class="flex justify-between items-start border-b border-zinc-200/55 pb-4">
+          <div>
+            <span class="text-[9px] font-black text-indigo-650 uppercase tracking-widest">Selected Stage</span>
+            <h3 id="details-title" class="text-base font-black text-zinc-900 mt-0.5">01. Access Gateways (Auth & Entry)</h3>
+          </div>
+        </div>
+
+        <!-- Role Split -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          
+          <!-- Admin Path -->
+          <div class="space-y-2">
+            <span class="text-[9px] font-extrabold bg-zinc-900 text-white px-2 py-0.5 rounded uppercase tracking-wider shadow-xs">SuperAdmin</span>
+            <p id="details-admin-desc" class="text-xs text-zinc-600 leading-relaxed pt-1">SuperAdmin lands directly on the main Performance Dashboard page to track macro KPIs, site viewing distributions, and audit logs.</p>
+            <div class="bg-red-50/50 border border-red-150 rounded-xl p-3 mt-2">
+              <span class="text-[9px] font-extrabold uppercase tracking-wide text-red-650">Vulnerability Gap</span>
+              <p id="details-admin-vulnerability" class="text-xs text-red-750 font-medium mt-0.5">Could easily toggle roles to spoof administrative session states without DB validation checks.</p>
+            </div>
+          </div>
+
+          <!-- Sales Exec Path -->
+          <div class="space-y-2">
+            <span class="text-[9px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-150 px-2 py-0.5 rounded uppercase tracking-wider shadow-xs">Sales Executive</span>
+            <p id="details-sales-desc" class="text-xs text-zinc-600 leading-relaxed pt-1">Sales Executives land directly on the Leads lists. Dashboard metrics and administrative screens are blocked for their role.</p>
+            <div class="bg-red-50/50 border border-red-150 rounded-xl p-3 mt-2">
+              <span class="text-[9px] font-extrabold uppercase tracking-wide text-red-650">Vulnerability Gap</span>
+              <p id="details-sales-vulnerability" class="text-xs text-red-750 font-medium mt-0.5">Auth redirects loops where they get kicked back to Dashboard, redirecting them in an infinite layout loop.</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Solidified Implementation -->
+        <div class="border-t border-zinc-200/55 pt-6 space-y-3">
+          <h4 class="text-xs font-black text-zinc-950 uppercase tracking-wider">Implemented Optimizations & Solidified Code</h4>
+          <p id="details-optimization-desc" class="text-xs text-zinc-655">Cleaned login page check loop using supabase.auth.getUser() instead of client-state hooks. Solidified backend routes so any user trying to fetch a blocked route is cleanly redirected back to /leads, and removed the client role switcher.</p>
+          <div class="p-4 bg-zinc-900 border border-zinc-800 text-zinc-350 rounded-xl text-[10.5px] font-mono leading-relaxed overflow-x-auto shadow-inner" id="details-code-snippet">
+// app/login/page.tsx
+const { data: { user } } = await supabase.auth.getUser();
+if (user) {
+  const profile = await fetchProfile(user.id);
+  router.replace(profile.role === 'SalesPerson' ? '/leads' : '/dashboard');
+}
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    const data = {
+      'details-1': {
+        title: '01. Access Gateways (Auth & Entry)',
+        adminDesc: 'SuperAdmin lands directly on the main Performance Dashboard page to track macro KPIs, site viewing distributions, and audit logs.',
+        adminVulnerability: 'Could easily toggle roles to spoof administrative session states without DB validation checks.',
+        salesDesc: 'Sales Executives land directly on the Leads lists. Dashboard metrics and administrative screens are blocked for their role.',
+        salesVulnerability: 'Auth redirects loops where they get kicked back to Dashboard, redirecting them in an infinite layout loop.',
+        optimizationDesc: 'Cleaned login page check loop using supabase.auth.getUser() instead of client-state hooks. Solidified backend routes so any user trying to fetch a blocked route is cleanly redirected back to /leads, and removed the client role switcher.',
+        codeSnippet: `// app/login/page.tsx\nconst { data: { user } } = await supabase.auth.getUser();\nif (user) {\n  const profile = await fetchProfile(user.id);\n  router.replace(profile.role === 'SalesPerson' ? '/leads' : '/dashboard');\n}`
+      },
+      'details-2': {
+        title: '02. Lead Ingestion (Intake & Status)',
+        adminDesc: 'Admin reviews new leads created by sales execs. Can change their assigned sales person, update status, and manage micro-markets.',
+        adminVulnerability: 'Marking a lead active/inactive was not logs audited, leading to ghost leads in the CRM database.',
+        salesDesc: 'Sales Exec inputs new prospects from various channels. Can change status, update client preferences, and log followup dates.',
+        salesVulnerability: 'Lead form did not contain an Active Status toggle switch, requiring manual pipeline deletion to archive.',
+        optimizationDesc: 'Added a live active/inactive status toggle directly in the leads table rows, the slide-out drawers, and the edit forms. Integrated server actions (createLeadAction & updateLeadAction) to record all status updates to audit logs.',
+        codeSnippet: `// app/leads/actions.ts\nconst { data: updated, error } = await supabase\n  .from('leads')\n  .update({ ...data, is_active: formData.get('is_active') === 'true' })\n  .eq('id', id);`
+      },
+      'details-3': {
+        title: '03. Property Matchmaking',
+        adminDesc: 'Admin monitors property status changes (Available, Under Offer, Sold) and reviews matchmaking match rates.',
+        adminVulnerability: 'Unsold properties under offer were matched as available, skewing sales forecast numbers.',
+        salesDesc: 'Sales Exec triggers matchmaking for a lead, filtering available properties by BHK size, location, and price.',
+        salesVulnerability: 'Matching required one-by-one verification. Sharing matches was fully manual and slow.',
+        optimizationDesc: 'Implemented a multi-select matchmaking dashboard enabling salespersons to bulk check matches, view detailed matching criteria scores, copy pre-formatted WhatsApp templates, and schedule viewings immediately.',
+        codeSnippet: `// app/matchmaking/page.tsx\nconst matches = properties.filter(prop => \n  prop.status_id === 'Available' && \n  calculateScore(lead, prop) >= minMatchScore\n);`
+      },
+      'details-4': {
+        title: '04. Site Viewings & Schedules',
+        adminDesc: 'Admin monitors overall site viewing completion rates on the dashboard and oversees schedules.',
+        adminVulnerability: 'Site viewing schedules were disconnected from leads/properties, allowing invalid schedules.',
+        salesDesc: 'Sales Exec inputs scheduled viewings for matched properties, gathers client feedback, and records visit outcomes.',
+        salesVulnerability: 'Schedules used free-text text inputs, creating spelling errors and orphan relationships in the database.',
+        optimizationDesc: 'Upgraded all form inputs to structured dropdown select tags referencing verified database entities. Integrated Supabase queries to populate client and property options from live tables, logging actions to audit logs.',
+        codeSnippet: `// src/lib/siteVisits.ts\nconst { data: inserted, error } = await supabase\n  .from('site_visits')\n  .insert([{ lead_id, property_id, assigned_to: profile.id, visit_date, status: 'Scheduled' }]);`
+      },
+      'details-5': {
+        title: '05. Funnel Progression & Deal Closure',
+        adminDesc: 'Admin oversees deals across the Sales Pipeline and handles bulk removals.',
+        adminVulnerability: 'Deleted deals left active leads in the main list, cluttering CRM pipelines with dead leads.',
+        salesDesc: 'Sales Exec drags deal cards through Kanban stages (New inquiry, Site visit, Follow up, Closure) as negotiations progress.',
+        salesVulnerability: 'Moving a card to closed-won did not mark the lead as inactive, requiring double actions.',
+        optimizationDesc: 'Solidified pipeline stage change handlers. Dragging a card to the "Closure" stage or deleting a deal automatically updates the lead status in the database to inactive and archives the deal card.',
+        codeSnippet: `// app/leads/page.tsx\nconst handleRowStageChange = async (leadId, newStage) => {\n  const shouldDeactivate = newStage === 'Closure';\n  await supabase.from('leads').update({ stage_id: newStage, is_active: !shouldDeactivate }).eq('id', leadId);\n}`
+      },
+      'details-6': {
+        title: '06. Quality Auditing (Operations)',
+        adminDesc: 'SuperAdmin reviews the audit log timeline on the dashboard to check modifications, listing uploads, and lead updates.',
+        adminVulnerability: 'Critical actions like Kanban drag-and-drop or site visit cancellations were missing from audit trails.',
+        salesDesc: 'Sales Exec cannot access audit log views, maintaining privacy across client lists and sales staff.',
+        salesVulnerability: 'No restrictions on fetching raw logs for lower roles in backend API structures.',
+        optimizationDesc: 'Added joined queries connecting audit logs with user profiles (profiles: full_name) to render clear actions. Restricted access to the audit logs component strictly to Admins and SuperAdmins.',
+        codeSnippet: `// app/dashboard/page.tsx\nconst { data: fetchedLogs } = await supabase\n  .from('audit_logs')\n  .select('*, profiles(full_name)')\n  .order('created_at', { ascending: false }).limit(15);`
+      }
+    };
+
+    function selectStep(id, btnElement) {
+      const item = data[id];
+      if (!item) return;
+
+      // Update button visual selection styles
+      const buttons = btnElement.parentElement.children;
+      for (let btn of buttons) {
+        btn.classList.remove('bg-white/60', 'text-zinc-900', 'shadow-xs', 'border', 'border-white/20');
+        btn.classList.add('text-zinc-700');
+      }
+      btnElement.classList.add('bg-white/60', 'text-zinc-900', 'shadow-xs', 'border', 'border-white/20');
+      btnElement.classList.remove('text-zinc-700');
+
+      // Update views content
+      document.getElementById('details-title').innerText = item.title;
+      document.getElementById('details-admin-desc').innerText = item.adminDesc;
+      document.getElementById('details-admin-vulnerability').innerText = item.adminVulnerability;
+      document.getElementById('details-sales-desc').innerText = item.salesDesc;
+      document.getElementById('details-sales-vulnerability').innerText = item.salesVulnerability;
+      document.getElementById('details-optimization-desc').innerText = item.optimizationDesc;
+      document.getElementById('details-code-snippet').innerText = item.codeSnippet;
+    }
+  </script>
+</body>
+</html>
