@@ -427,42 +427,42 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
         </div>
 
         {/* ── MOBILE VIEWPORT: Single Page Scrolling stacked layout ── */}
-        <div className="block lg:hidden px-5 pt-6 pb-10 text-left space-y-6 bg-[#fafaf8]">
+        <div className="block lg:hidden text-left space-y-0 bg-white">
           
-          <div className="bg-white rounded-2xl px-5 py-5 shadow-sm border border-[#eeede9] space-y-4">
-            <h3 className="text-[11px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider flex items-baseline gap-2">
+          <div className="px-5 pt-6 pb-5 border-b border-zinc-100 space-y-4">
+            <h3 className="text-[11px] font-black text-zinc-900 pb-2.5 uppercase tracking-wider flex items-baseline gap-2 border-b border-zinc-100">
               <span className="font-serif italic font-bold text-[#d4ad4d] text-sm">01.</span>
               <span>Basic Information</span>
             </h3>
             {renderBasicInfo()}
           </div>
 
-          <div className="bg-white rounded-2xl px-5 py-5 shadow-sm border border-[#eeede9] space-y-4">
-            <h3 className="text-[11px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider flex items-baseline gap-2">
+          <div className="px-5 pt-6 pb-5 border-b border-zinc-100 space-y-4">
+            <h3 className="text-[11px] font-black text-zinc-900 pb-2.5 uppercase tracking-wider flex items-baseline gap-2 border-b border-zinc-100">
               <span className="font-serif italic font-bold text-[#d4ad4d] text-sm">02.</span>
               <span>Location Details</span>
             </h3>
             {renderLocation()}
           </div>
 
-          <div className="bg-white rounded-2xl px-5 py-5 shadow-sm border border-[#eeede9] space-y-4">
-            <h3 className="text-[11px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider flex items-baseline gap-2">
+          <div className="px-5 pt-6 pb-5 border-b border-zinc-100 space-y-4">
+            <h3 className="text-[11px] font-black text-zinc-900 pb-2.5 uppercase tracking-wider flex items-baseline gap-2 border-b border-zinc-100">
               <span className="font-serif italic font-bold text-[#d4ad4d] text-sm">03.</span>
               <span>Pricing & Carpet Area</span>
             </h3>
             {renderPricing()}
           </div>
 
-          <div className="bg-white rounded-2xl px-5 py-5 shadow-sm border border-[#eeede9] space-y-4">
-            <h3 className="text-[11px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider flex items-baseline gap-2">
+          <div className="px-5 pt-6 pb-5 border-b border-zinc-100 space-y-4">
+            <h3 className="text-[11px] font-black text-zinc-900 pb-2.5 uppercase tracking-wider flex items-baseline gap-2 border-b border-zinc-100">
               <span className="font-serif italic font-bold text-[#d4ad4d] text-sm">04.</span>
               <span>Ownership & Private Terms</span>
             </h3>
             {renderOwnership()}
           </div>
 
-          <div className="bg-white rounded-2xl px-5 py-5 shadow-sm border border-[#eeede9] space-y-4">
-            <h3 className="text-[11px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider flex items-baseline gap-2">
+          <div className="px-5 pt-6 pb-8 space-y-4">
+            <h3 className="text-[11px] font-black text-zinc-900 pb-2.5 uppercase tracking-wider flex items-baseline gap-2 border-b border-zinc-100">
               <span className="font-serif italic font-bold text-[#d4ad4d] text-sm">05.</span>
               <span>Media Uploads</span>
             </h3>

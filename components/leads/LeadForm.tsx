@@ -367,7 +367,7 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
         </button>
       </div>
 
-      <div className="max-w-4xl mx-auto">
+      <div className="lg:max-w-4xl lg:mx-auto">
         {/* 🛑 Duplicate Warning Banner */}
         {(state as any)?.duplicate && (state as any)?.existingLead && (
           <div className="m-4 lg:mx-8 p-4 bg-rose-50 border border-rose-200 rounded-2xl space-y-3 text-left">
@@ -474,34 +474,34 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
         </div>
 
         {/* ── MOBILE VIEWPORT: Single Page Scrolling stacked layout ── */}
-        <div className="block lg:hidden px-5 pt-6 pb-10 text-left space-y-6 bg-[#fafaf8]">
+        <div className="block lg:hidden text-left space-y-0 bg-white">
           
-          <div className="bg-white rounded-2xl px-5 py-5 shadow-sm border border-[#eeede9] space-y-4">
-            <h3 className="text-[11px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider flex items-baseline gap-2">
+          <div className="px-5 pt-6 pb-5 border-b border-zinc-100 space-y-4">
+            <h3 className="text-[11px] font-black text-zinc-900 pb-2.5 uppercase tracking-wider flex items-baseline gap-2 border-b border-zinc-100">
               <span className="font-serif italic font-bold text-[#d4ad4d] text-sm">01.</span>
               <span>Contact Details</span>
             </h3>
             {renderContactFields()}
           </div>
 
-          <div className="bg-white rounded-2xl px-5 py-5 shadow-sm border border-[#eeede9] space-y-4">
-            <h3 className="text-[11px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider flex items-baseline gap-2">
+          <div className="px-5 pt-6 pb-5 border-b border-zinc-100 space-y-4">
+            <h3 className="text-[11px] font-black text-zinc-900 pb-2.5 uppercase tracking-wider flex items-baseline gap-2 border-b border-zinc-100">
               <span className="font-serif italic font-bold text-[#d4ad4d] text-sm">02.</span>
               <span>Classification & Assignment</span>
             </h3>
             {renderClassifyFields()}
           </div>
 
-          <div className="bg-white rounded-2xl px-5 py-5 shadow-sm border border-[#eeede9] space-y-4">
-            <h3 className="text-[11px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider flex items-baseline gap-2">
+          <div className="px-5 pt-6 pb-5 border-b border-zinc-100 space-y-4">
+            <h3 className="text-[11px] font-black text-zinc-900 pb-2.5 uppercase tracking-wider flex items-baseline gap-2 border-b border-zinc-100">
               <span className="font-serif italic font-bold text-[#d4ad4d] text-sm">03.</span>
               <span>Requirements</span>
             </h3>
             {renderRequirementsFields()}
           </div>
 
-          <div className="bg-white rounded-2xl px-5 py-5 shadow-sm border border-[#eeede9] space-y-4">
-            <h3 className="text-[11px] font-black text-zinc-900 border-b border-zinc-100 pb-2.5 uppercase tracking-wider flex items-baseline gap-2">
+          <div className="px-5 pt-6 pb-8 space-y-4">
+            <h3 className="text-[11px] font-black text-zinc-900 pb-2.5 uppercase tracking-wider flex items-baseline gap-2 border-b border-zinc-100">
               <span className="font-serif italic font-bold text-[#d4ad4d] text-sm">04.</span>
               <span>Internal Notes</span>
             </h3>
