@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { 
   Users, 
   Home, 
@@ -44,12 +45,16 @@ export function Header({ onToggleMenu }: { onToggleMenu?: () => void }) {
   const profile = useProfile();
   const router = useRouter();
   const pathname = usePathname();
-  const [activeRange, setActiveRange] = useState('30d');
+  const [activeRange, setActiveRange] = useState('today');
 
   useEffect(() => {
     // Sync initial state if window variable exists
-    if (typeof window !== 'undefined' && (window as any).__dashboardRange) {
-      setActiveRange((window as any).__dashboardRange);
+    if (typeof window !== 'undefined') {
+      if ((window as any).__dashboardRange) {
+        setActiveRange((window as any).__dashboardRange);
+      } else {
+        (window as any).__dashboardRange = 'today';
+      }
     }
 
     const handleRangeEvent = (e: Event) => {
@@ -280,8 +285,7 @@ export function Header({ onToggleMenu }: { onToggleMenu?: () => void }) {
       {/* Center: Dashboard Range Selector (Conditionally shown only on /dashboard) */}
       {pathname === '/dashboard' && (
         <div className="flex items-center gap-1.5 mx-auto shrink-0 z-10">
-          {/* Desktop segmented controls */}
-          <div className="hidden md:flex items-center gap-1 p-0.5 bg-zinc-900 border border-zinc-800 rounded-lg">
+          <div className="flex items-center gap-0.5 p-0.5 bg-zinc-900 border border-zinc-800 rounded-lg relative">
             {[
               { key: 'today', label: 'Today' },
               { key: '7d', label: '7D' },
@@ -296,33 +300,21 @@ export function Header({ onToggleMenu }: { onToggleMenu?: () => void }) {
                   key={opt.key}
                   type="button"
                   onClick={() => handleRangeChange(opt.key)}
-                  className={`px-2.5 py-1 rounded-md text-[10px] font-black transition-all cursor-pointer ${
-                    isSelected 
-                      ? 'bg-zinc-800 text-white border border-zinc-700/50 shadow-xs' 
-                      : 'text-zinc-500 hover:text-zinc-300'
+                  className={`relative px-2 md:px-3 py-1 rounded-md text-[9px] md:text-[10px] font-black transition-colors cursor-pointer select-none z-10 ${
+                    isSelected ? 'text-zinc-950 font-extrabold' : 'text-zinc-500 hover:text-zinc-300'
                   }`}
                 >
+                  {isSelected && (
+                    <motion.div
+                      layoutId="header-active-pill"
+                      className="absolute inset-0 bg-[#d4ad4d] rounded-md -z-10 shadow-sm"
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  )}
                   {opt.label}
                 </button>
               );
             })}
-          </div>
-          
-          {/* Mobile compact dropdown */}
-          <div className="block md:hidden relative">
-            <select
-              value={activeRange}
-              onChange={(e) => handleRangeChange(e.target.value)}
-              className="h-8 pl-2 pr-6 bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] font-extrabold text-white outline-none cursor-pointer appearance-none"
-            >
-              <option value="today">Today</option>
-              <option value="7d">7D</option>
-              <option value="30d">30D</option>
-              <option value="90d">90D</option>
-              <option value="ytd">YTD</option>
-              <option value="all">All</option>
-            </select>
-            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-zinc-400 pointer-events-none" />
           </div>
         </div>
       )}

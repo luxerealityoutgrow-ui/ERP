@@ -47,12 +47,16 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   // Date range filter: today | 7d | 30d | 90d | ytd | all
-  const [dateRange, setDateRange] = useState<'today' | '7d' | '30d' | '90d' | 'ytd' | 'all'>('30d');
+  const [dateRange, setDateRange] = useState<'today' | '7d' | '30d' | '90d' | 'ytd' | 'all'>('today');
   const [detailModal, setDetailModal] = useState<{ type: string; title: string; items: any[] } | null>(null);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && (window as any).__dashboardRange) {
-      setDateRange((window as any).__dashboardRange);
+    if (typeof window !== 'undefined') {
+      if ((window as any).__dashboardRange) {
+        setDateRange((window as any).__dashboardRange);
+      } else {
+        (window as any).__dashboardRange = 'today';
+      }
     }
 
     const handleRangeEvent = (e: Event) => {
