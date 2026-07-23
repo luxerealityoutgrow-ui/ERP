@@ -4,6 +4,8 @@ import { Button } from './button';
 import { Upload, X, Image } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+import { supabase } from '@/lib/supabaseClient';
+
 interface MediaPickerProps {
   bucket: string;
   fieldPrefix?: string;
@@ -46,20 +48,37 @@ export function MediaPicker({
     
     setUploading(true);
     try {
-      // In a real app, this would upload to Supabase Storage
-      // For now, simulate upload
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const uploadedUrls: string[] = [];
+      for (const file of files) {
+        // Generate a clean path with timestamp and random characters
+        const fileExt = file.name.split('.').pop();
+        const cleanName = `${fieldPrefix}${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from(bucket)
+          .upload(cleanName, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        uploadedUrls.push(cleanName);
+      }
       
-      const urls = files.map((file, index) => `${fieldPrefix}${index}-${file.name}`);
-      onUploadComplete?.(urls);
+      onUploadComplete?.(uploadedUrls);
       setFiles([]);
       setPreviews([]);
     } catch (error) {
       console.error('Upload failed:', error);
+      alert('File upload failed: ' + (error as any).message);
     } finally {
       setUploading(false);
     }
   };
+
 
   return (
     <div className="space-y-4">

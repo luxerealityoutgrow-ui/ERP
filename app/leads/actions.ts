@@ -1,9 +1,32 @@
 // app/leads/actions.ts – server actions for CRUD
-import { supabase } from '@/lib/supabaseClient';
+'use server';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 import type { Profile } from '@/lib/auth';
 
+function createSupabaseServerClient() {
+  const cookieStore = cookies();
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll(); },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {}
+        },
+      },
+    }
+  );
+}
+
 export async function createLeadAction(prevState: any, formData: FormData) {
-  const profile = await useProfile();
+  const supabase = createSupabaseServerClient();
+  const profile = await useProfile(supabase);
   
   const phoneRaw = String(formData.get('phone') || '').trim();
   const cleanPhone = phoneRaw.replace(/[^0-9]/g, '').slice(-10);
@@ -67,7 +90,7 @@ export async function createLeadAction(prevState: any, formData: FormData) {
     next_followup_date: formData.get('next_followup_date') || null,
     status: formData.get('status') || 'Hot',
     notes: formData.get('notes'),
-    is_active: formData.get('is_active') === 'true',
+    is_active: true,
     created_at: new Date().toISOString()
   };
 
@@ -91,7 +114,6 @@ export async function createLeadAction(prevState: any, formData: FormData) {
       .single();
     
     if (setting?.value) {
-      // Fire and forget integration call
       fetch(setting.value, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -115,10 +137,11 @@ export async function createLeadAction(prevState: any, formData: FormData) {
 }
 
 export async function updateLeadAction(prevState: any, formData: FormData) {
+  const supabase = createSupabaseServerClient();
   const id = formData.get('id') as string;
   if (!id) return { error: "Missing lead ID" };
 
-  const profile = await useProfile();
+  const profile = await useProfile(supabase);
   const data: Record<string, unknown> = {
     client_name: formData.get('client_name'),
     phone: formData.get('phone'),
@@ -161,10 +184,23 @@ export async function updateLeadAction(prevState: any, formData: FormData) {
   return { success: true, data: updated };
 }
 
-// Helper to get signed in profile – returns promise of Profile or null
-async function useProfile(): Promise<Profile | null> {
+// Helper to get signed in profile using service role (bypasses RLS for profile lookup)
+async function useProfile(supabase: ReturnType<typeof createSupabaseServerClient>): Promise<Profile | null> {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const cookieStore = cookies();
+    const anonClient = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() { return cookieStore.getAll(); },
+          setAll(cookiesToSet) {
+            try { cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options)); } catch {}
+          },
+        },
+      }
+    );
+    const { data: { user } } = await anonClient.auth.getUser();
     if (user) {
       const { data: profile } = await supabase
         .from('profiles')
@@ -175,17 +211,6 @@ async function useProfile(): Promise<Profile | null> {
     }
   } catch (e) {
     console.error('Error fetching auth user:', e);
-  }
-
-  try {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .limit(1)
-      .single();
-    if (profile) return profile as Profile;
-  } catch (e) {
-    console.error('Error fetching fallback profile:', e);
   }
 
   return {

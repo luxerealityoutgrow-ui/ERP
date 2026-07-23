@@ -10,21 +10,30 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 
 const LOCATION_OPTIONS = [
-  { value: 'Kalyani Nagar', label: 'Kalyani Nagar' },
-  { value: 'Koregaon Park', label: 'Koregaon Park' },
-  { value: 'Baner', label: 'Baner' },
-  { value: 'Viman Nagar', label: 'Viman Nagar' },
-  { value: 'Hinjewadi', label: 'Hinjewadi' },
-  { value: 'Kharadi', label: 'Kharadi' },
-  { value: 'Wakad', label: 'Wakad' },
   { value: 'Aundh', label: 'Aundh' },
-  { value: 'Hadapsar', label: 'Hadapsar' },
-  { value: 'Magarpatta', label: 'Magarpatta' },
-  { value: 'Boat Club Road', label: 'Boat Club Road' },
-  { value: 'Camp', label: 'Camp' },
-  { value: 'Pimpri-Chinchwad', label: 'Pimpri-Chinchwad' },
+  { value: 'Balewadi', label: 'Balewadi' },
+  { value: 'Baner', label: 'Baner' },
   { value: 'Bavdhan', label: 'Bavdhan' },
+  { value: 'Boat Club Road', label: 'Boat Club Road' },
+  { value: 'Bund Garden Road', label: 'Bund Garden Road' },
+  { value: 'Camp', label: 'Camp' },
+  { value: 'Hadapsar', label: 'Hadapsar' },
+  { value: 'Hinjewadi', label: 'Hinjewadi' },
+  { value: 'Kalyani Nagar', label: 'Kalyani Nagar' },
+  { value: 'Kharadi', label: 'Kharadi' },
+  { value: 'Koregaon Park', label: 'Koregaon Park' },
+  { value: 'Koregaon Park Annexe', label: 'Koregaon Park Annexe' },
+  { value: 'Magarpatta', label: 'Magarpatta' },
+  { value: 'Mangaldas Road', label: 'Mangaldas Road' },
+  { value: 'Mundhwa', label: 'Mundhwa' },
+  { value: 'New Kalyani Nagar', label: 'New Kalyani Nagar' },
   { value: 'Pashan', label: 'Pashan' },
+  { value: 'Pimpri-Chinchwad', label: 'Pimpri-Chinchwad' },
+  { value: 'Sopan Baug', label: 'Sopan Baug' },
+  { value: 'Viman Nagar', label: 'Viman Nagar' },
+  { value: 'Wakad', label: 'Wakad' },
+  { value: 'Wagholi', label: 'Wagholi' },
+  { value: 'Wanowrie', label: 'Wanowrie' },
 ];
 
 const CONFIG_OPTIONS = [
@@ -73,6 +82,15 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
     phone: initialValues.phone ?? '', 
     status: initialValues.status ?? 'Hot' 
   });
+  const [previewBudgetMax, setPreviewBudgetMax] = useState(initialValues.budget_max ?? '');
+
+  function formatPrice(v: string | number) {
+    const n = parseFloat(String(v));
+    if (!n) return '';
+    if (n >= 10000000) return `₹${(n / 10000000).toFixed(1).replace(/\.0$/, '')} Cr`;
+    if (n >= 100000) return `₹${(n / 100000).toFixed(1).replace(/\.0$/, '')} L`;
+    return `₹${n.toLocaleString('en-IN')}`;
+  }
   
   const sections = [
     { label: 'Contact' },
@@ -81,13 +99,14 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
     { label: 'Notes' }
   ];
 
-  // Fetch real team members from Supabase profiles
+  // Fetch real team members from Supabase profiles (all assignable roles)
   useEffect(() => {
     async function loadTeam() {
       try {
         const { data } = await supabase
           .from('profiles')
           .select('id, full_name, role, email')
+          .in('role', ['SalesPerson', 'Admin', 'SuperAdmin', 'Senior Agent'])
           .order('full_name');
         if (data && data.length > 0) {
           setTeamProfiles(data);
@@ -95,10 +114,12 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
           // Fallback static roster
           setTeamProfiles([
             { id: '29363d68-a8ad-4efb-8fd0-6b6dc29091e7', full_name: 'Saif Bhayani', role: 'Admin' },
-            { id: '59d23862-bb84-4bbe-9e70-8c59214f5020', full_name: 'Yohaan Mehta', role: 'Admin' },
+            { id: '59d23862-bb84-4bbe-9e70-8c59214f5020', full_name: 'Yohaan Mehta', role: 'SalesPerson' },
             { id: 'e2c5f803-2500-4538-a763-680d7279b4e7', full_name: 'Husain Badri', role: 'SuperAdmin' },
-            { id: '33333333-3333-3333-3333-333333333333', full_name: 'Rahul Sharma', role: 'Senior Agent' },
-            { id: '44444444-4444-4444-4444-444444444444', full_name: 'Priya Mehta', role: 'SalesPerson' }
+            { id: '540b2e7f-12f5-4d62-9aaf-089da959dfb7', full_name: 'Benazir Bhayani', role: 'SalesPerson' },
+            { id: '6d202aad-3e6e-4568-b6d2-1c236c770ef5', full_name: 'Hamirr Jobnputra', role: 'SalesPerson' },
+            { id: '1b973ead-d1b0-4500-8dca-d9b329affce9', full_name: 'Rishi Mahboobani', role: 'SalesPerson' },
+            { id: 'feacdf8b-e875-4dd0-ac62-692982e27835', full_name: 'Shriram Boyane', role: 'SalesPerson' },
           ]);
         }
       } catch (err) {
@@ -334,8 +355,21 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
         <label className={labelCls}>Max Budget *</label>
         <div className="relative">
           <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 text-base lg:text-[12px] font-bold">₹</span>
-          <input type="number" name="budget_max" defaultValue={initialValues.budget_max ?? ''} className={inputCls + " pl-7"} placeholder="e.g. 50000000" required />
+          <input 
+            type="number" 
+            name="budget_max" 
+            defaultValue={initialValues.budget_max ?? ''} 
+            className={inputCls + " pl-7"} 
+            placeholder="e.g. 50000000" 
+            required 
+            onChange={e => setPreviewBudgetMax(e.target.value)}
+          />
         </div>
+        {previewBudgetMax && (
+          <div className="text-[11px] font-bold text-[#d4ad4d] mt-1">
+            {formatPrice(previewBudgetMax)}
+          </div>
+        )}
       </div>
     </div>
   );

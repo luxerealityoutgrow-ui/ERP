@@ -51,6 +51,41 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
   const [state, formAction] = useActionState(isEdit ? updatePropertyAction : createPropertyAction, null);
   const [deleting, setDeleting] = useState(false);
   const [activeSection, setActiveSection] = useState(0);
+  const [images, setImages] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (initialValues.id) {
+      supabase.from('property_images')
+        .select('*')
+        .eq('property_id', initialValues.id)
+        .order('sort_order', { ascending: true })
+        .then(async ({ data }) => {
+          if (data) {
+            const mapped = await Promise.all(data.map(async img => {
+              if (img.url.startsWith('http')) return { ...img, previewUrl: img.url };
+              const { data: sData } = await supabase.storage.from('property-images').createSignedUrl(img.url, 604800);
+              return { ...img, previewUrl: sData?.signedUrl || img.url };
+            }));
+            setImages(mapped);
+          }
+        });
+    }
+  }, [initialValues.id]);
+
+  const handleImagesUploaded = async (newPaths: string[]) => {
+    const newImgs = await Promise.all(newPaths.map(async path => {
+      const { data: sData } = await supabase.storage.from('property-images').createSignedUrl(path, 604800);
+      return {
+        url: path,
+        previewUrl: sData?.signedUrl || path
+      };
+    }));
+    setImages(prev => [...prev, ...newImgs]);
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+  };
 
   const [configuration, setConfiguration] = useState<string[]>(
     initialValues.configuration ? initialValues.configuration.split(',').map((s: string) => s.trim()) : []
@@ -61,6 +96,7 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
       : []
   );
   const [locationOptions, setLocationOptions] = useState<{ value: string; label: string }[]>([]);
+
 
   // Live preview state
   const [previewTitle, setPreviewTitle] = useState(initialValues.title || '');
@@ -293,13 +329,47 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
   );
 
   const renderMedia = () => (
-    <div className="space-y-5">
+    <div className="space-y-5 text-left">
       <div className="space-y-1.5">
-        <FieldLabel>Property Images</FieldLabel>
-        <MediaPicker bucket="property-images" fieldPrefix="image_" />
+        <FieldLabel>Property Images & Videos</FieldLabel>
+        <MediaPicker 
+          bucket="property-images" 
+          fieldPrefix={`prop-${initialValues.id || 'new'}_`} 
+          onUploadComplete={handleImagesUploaded}
+        />
       </div>
+
+      {images.length > 0 && (
+        <div className="space-y-2 pt-2">
+          <FieldLabel>Uploaded Media ({images.length})</FieldLabel>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {images.map((img, idx) => (
+              <div key={idx} className="relative group aspect-video rounded-xl overflow-hidden border border-zinc-200 bg-zinc-50">
+                <img 
+                  src={img.previewUrl} 
+                  alt="Property media" 
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleRemoveImage(idx)}
+                  className="absolute top-1.5 right-1.5 bg-white/95 text-rose-600 hover:text-rose-700 p-1 rounded-md shadow-sm border border-zinc-100 transition-colors"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Hidden inputs to pass paths to Server Action */}
+      {images.map((img, idx) => (
+        <input key={idx} type="hidden" name="image_urls" value={img.url} />
+      ))}
     </div>
   );
+
 
   return (
     <form action={formAction} className="min-h-screen bg-[#fafaf8]">

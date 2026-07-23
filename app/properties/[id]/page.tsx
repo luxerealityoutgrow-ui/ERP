@@ -49,15 +49,25 @@ export default function PropertyDetailPage() {
       try {
         const [prop, imgResult] = await Promise.all([
           fetchProperty(id),
-          supabase.from('property_images').select('url').eq('property_id', id)
+          supabase.from('property_images').select('url').eq('property_id', id).order('sort_order', { ascending: true })
         ]);
         setProperty(prop);
-        if (imgResult.data) {
-          setImages(imgResult.data.map((img) => img.url));
+        if (imgResult.data && imgResult.data.length > 0) {
+          const signedUrls = await Promise.all(
+            imgResult.data.map(async (img) => {
+              if (img.url.startsWith('http')) return img.url;
+              const { data: sData } = await supabase.storage
+                .from('property-images')
+                .createSignedUrl(img.url, 604800);
+              return sData?.signedUrl || img.url;
+            })
+          );
+          setImages(signedUrls);
         }
       } catch (err) {
         console.error('Error loading property:', err);
       } finally {
+
         setLoading(false);
       }
     };
@@ -68,13 +78,21 @@ export default function PropertyDetailPage() {
   const handleStatusUpdate = async (newStatus: string) => {
     if (!property) return;
     setUpdating(true);
+    const updateData: Record<string, unknown> = { status_id: newStatus };
+    if (newStatus === 'Sold') {
+      updateData.is_active = false;
+    }
     try {
       const { error } = await supabase
         .from('properties')
-        .update({ status_id: newStatus })
+        .update(updateData)
         .eq('id', property.id);
       if (!error) {
-        setProperty({ ...property, status_id: newStatus });
+        setProperty({ 
+          ...property, 
+          status_id: newStatus,
+          ...(newStatus === 'Sold' ? { is_active: false } : {})
+        });
       }
     } catch (err) {
       console.error('Error updating status:', err);
@@ -91,18 +109,16 @@ export default function PropertyDetailPage() {
 
   const getPropertyShareText = () => {
     if (!property) return '';
-    return `🏠 *${property.title}*
-📍 ${property.location}
-💰 Price: ${formatCurrency(property.price)}
-🏢 Type: ${property.property_type} (${property.configuration || 'N/A'})
-📐 Area: ${property.carpet_area ? `${property.carpet_area} sqft` : 'N/A'}
-🔑 Listing: For ${property.listing_type}
-📋 Code: ${property.property_code}
+    const priceStr = property.price ? formatCurrency(property.price) : 'Price on request';
+    return `${property.title}
+Location: ${property.location}
+Price: ${priceStr}
+Type: ${property.property_type} (${property.configuration || 'N/A'})
+Area: ${property.carpet_area ? `${property.carpet_area} sqft` : 'N/A'}
+Listing: For ${property.listing_type}
+Code: ${property.property_code}
 
-${property.description || ''}
-
----
-_Shared from Luxe Realty ERP_`;
+${property.description || ''}`;
   };
 
   const handleShareWhatsApp = () => {

@@ -88,7 +88,7 @@ const TagsInput = React.forwardRef<HTMLDivElement, TagsInputProps>(
     }, [])
 
     return (
-      <div ref={containerRef} className="relative">
+      <div ref={containerRef} className={cn("relative", showOptions && "z-50")}>
         <div
           ref={ref}
           className={cn(
@@ -99,11 +99,11 @@ const TagsInput = React.forwardRef<HTMLDivElement, TagsInputProps>(
           onClick={() => inputRef.current?.focus()}
         >
           {value.map((tag) => (
-            <Badge key={tag} variant="secondary" className="gap-1">
+            <Badge key={tag} variant="secondary" className="gap-1 bg-zinc-100 hover:bg-zinc-250 text-zinc-800 border-zinc-200">
               {tag}
               {!disabled && (
                 <X
-                  className="h-3 w-3 cursor-pointer hover:text-destructive"
+                  className="h-3 w-3 cursor-pointer hover:text-destructive text-zinc-400 hover:text-zinc-600"
                   onClick={(e) => {
                     e.stopPropagation()
                     removeTag(tag)
@@ -125,11 +125,11 @@ const TagsInput = React.forwardRef<HTMLDivElement, TagsInputProps>(
         </div>
         
         {showOptions && filteredOptions.length > 0 && (
-          <div className="absolute z-50 w-full mt-1 bg-background border border-input rounded-md shadow-lg max-h-48 overflow-y-auto">
+          <div className="absolute z-50 w-full mt-1 bg-white border border-zinc-200 rounded-xl shadow-xl max-h-48 overflow-y-auto py-1">
             {filteredOptions.map((option) => (
               <div
                 key={option.value}
-                className="px-3 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground"
+                className="px-3.5 py-2 text-xs font-bold text-zinc-700 cursor-pointer hover:bg-zinc-50 hover:text-zinc-950 transition-colors"
                 onClick={() => selectOption(option)}
               >
                 {option.label}
@@ -140,6 +140,7 @@ const TagsInput = React.forwardRef<HTMLDivElement, TagsInputProps>(
       </div>
     )
   }
+
 )
 
 TagsInput.displayName = "TagsInput"

@@ -56,6 +56,7 @@ export default function PropertyInventoryPage() {
   const [filterPropertyType, setFilterPropertyType] = useState('');
   const [filterConfiguration, setFilterConfiguration] = useState('');
   const [filterListingType, setFilterListingType] = useState('');
+  const [filterSourceType, setFilterSourceType] = useState(''); // '' = All, 'Direct' = direct, 'Broker' = through broker
   const [filterPriceMin, setFilterPriceMin] = useState('');
   const [filterPriceMax, setFilterPriceMax] = useState('');
   const [filterAreaMin, setFilterAreaMin] = useState('');
@@ -154,9 +155,9 @@ export default function PropertyInventoryPage() {
         if (!isNaN(max)) matchesArea = (prop.carpet_area || 0) <= max;
       }
 
-      return matchesSearch && matchesTab && matchesActiveState && matchesLocation && matchesPropertyType && matchesConfiguration && matchesListingType && matchesPrice && matchesArea;
+      return matchesSearch && matchesTab && matchesActiveState && matchesLocation && matchesPropertyType && matchesConfiguration && matchesListingType && matchesSourceType && matchesPrice && matchesArea;
     });
-  }, [displayProperties, searchQuery, activeTab, activeState, filterLocations, filterPropertyType, filterConfiguration, filterListingType, filterPriceMin, filterPriceMax, filterAreaMin, filterAreaMax]);
+  }, [displayProperties, searchQuery, activeTab, activeState, filterLocations, filterPropertyType, filterConfiguration, filterListingType, filterSourceType, filterPriceMin, filterPriceMax, filterAreaMin, filterAreaMax]);
 
   // Selection helpers
   const allVisibleSelected = filteredProperties.length > 0 && filteredProperties.every(p => selectedIds.has(p.id));
@@ -180,21 +181,22 @@ export default function PropertyInventoryPage() {
     });
   };
 
-  // Clean WhatsApp share text excluding private unit numbers, floor numbers, and brokerage
+  // Clean plain text share (no emojis) — suitable for WhatsApp and clipboard
   const getPropertyText = (prop: Property) => {
     // Strip (null) or internal codes from title
     const cleanTitle = (prop.title || '').replace(/\s*\(\s*null\s*\)/gi, '').trim();
-    
-    let text = `🏠 *${cleanTitle}*\n📍 ${prop.location || 'Pune'}\n💰 ${formatPriceShort(prop.price)}\n🏢 ${prop.configuration || prop.property_type || 'Apartment'}\n📐 ${prop.carpet_area ? `${prop.carpet_area} sq ft` : 'N/A'}\n🔑 For ${prop.listing_type || 'Sale'}`;
+    const priceStr = prop.price ? formatPriceShort(prop.price) : 'Price on request';
+
+    let text = `${cleanTitle}\nLocation: ${prop.location || 'Pune'}\nPrice: ${priceStr}\nType: ${prop.configuration || prop.property_type || 'Apartment'}\nArea: ${prop.carpet_area ? `${prop.carpet_area} sq ft` : 'N/A'}\nFor: ${prop.listing_type || 'Sale'}`;
 
     if ((prop as any).parking_spaces) {
-      text += `\n🚗 ${(prop as any).parking_spaces} Car parks`;
+      text += `\nParking: ${(prop as any).parking_spaces} Car park(s)`;
     }
     if ((prop as any).facing) {
-      text += `\n🧭 ${(prop as any).facing}`;
+      text += `\nFacing: ${(prop as any).facing}`;
     }
     if ((prop as any).furnishing) {
-      text += `\n🛋 ${(prop as any).furnishing}`;
+      text += `\nFurnishing: ${(prop as any).furnishing}`;
     }
     if (prop.description) {
       // Strip any accidental unit no or brokerage text from description if present
@@ -216,8 +218,8 @@ export default function PropertyInventoryPage() {
   const handleShareWhatsApp = (props?: Property[]) => {
     const items = props || getSelectedProperties();
     if (items.length === 0) return;
-    const header = items.length > 1 ? `📋 *${items.length} Properties from Luxe Realty*\n${'—'.repeat(20)}\n\n` : '';
-    const text = header + items.map((p, i) => items.length > 1 ? `${i + 1}. ${getPropertyText(p)}` : getPropertyText(p)).join('\n\n---\n\n') + '\n\n_Shared from Luxe Realty ERP_';
+    const header = items.length > 1 ? `LUXE REALTY PUNE - ${items.length} PROPERTIES\n${'─'.repeat(30)}\n\n` : `LUXE REALTY PUNE\n\n`;
+    const text = header + items.map((p, i) => items.length > 1 ? `${i + 1}. ${getPropertyText(p)}` : getPropertyText(p)).join('\n\n---\n\n');
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
@@ -278,9 +280,19 @@ export default function PropertyInventoryPage() {
       const { data } = await supabase
         .from('property_images')
         .select('url')
-        .eq('property_id', prop.id);
-      if (data) {
-        setDrawerImages(data.map(img => img.url));
+        .eq('property_id', prop.id)
+        .order('sort_order', { ascending: true });
+      if (data && data.length > 0) {
+        const signedUrls = await Promise.all(
+          data.map(async (img) => {
+            if (img.url.startsWith('http')) return img.url;
+            const { data: sData } = await supabase.storage
+              .from('property-images')
+              .createSignedUrl(img.url, 604800); // 7 days expiry
+            return sData?.signedUrl || img.url;
+          })
+        );
+        setDrawerImages(signedUrls);
       }
     } catch (err) {
       console.error('Error loading images:', err);
@@ -288,6 +300,7 @@ export default function PropertyInventoryPage() {
       setDrawerImagesLoading(false);
     }
   };
+
 
   // Status color helper
   const getStatusStyle = (status: string | undefined) => {
@@ -310,6 +323,18 @@ export default function PropertyInventoryPage() {
       // Revert on error
       setProperties(prev => prev.map(p => p.id === propId ? { ...p, is_active: currentState } : p));
       console.error('Error toggling active state:', err);
+    }
+  };
+
+  // Inline status change — auto-deactivate when Sold
+  const handleInlineStatusChange = async (propId: string, newStatusId: string) => {
+    const updateData: Record<string, unknown> = { status_id: newStatusId };
+    if (newStatusId === 'Sold') updateData.is_active = false;
+    setProperties(prev => prev.map(p => p.id === propId ? { ...p, status_id: newStatusId, ...(newStatusId === 'Sold' ? { is_active: false } : {}) } : p));
+    try {
+      await supabase.from('properties').update(updateData).eq('id', propId);
+    } catch (err) {
+      console.error('Error updating status:', err);
     }
   };
 
@@ -406,6 +431,21 @@ export default function PropertyInventoryPage() {
                 className={`dc-seg-btn ${activeState === state ? 'on' : ''}`}
               >
                 {state}
+              </button>
+            ))}
+          </div>
+
+          <div className="dc-divider"></div>
+
+          {/* Direct / Broker Source Filter */}
+          <div className="dc-seg">
+            {([{ key: '', label: 'All' }, { key: 'Direct', label: 'Direct' }, { key: 'Broker', label: 'Broker' }]).map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setFilterSourceType(key)}
+                className={`dc-seg-btn ${filterSourceType === key ? 'on' : ''}`}
+              >
+                {label}
               </button>
             ))}
           </div>

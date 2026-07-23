@@ -33,7 +33,8 @@ export async function fetchLeads(profile: Profile | null): Promise<Lead[]> {
   let query = supabase
     .from('leads')
     .select('*')
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(200);
 
   if (!perms.canViewAllLeads && profile?.id) {
     query = query.eq('assigned_to', profile.id);
@@ -70,10 +71,12 @@ export async function fetchProperties(profile: Profile | null): Promise<Property
   const { data, error } = await supabase
     .from('properties')
     .select('*')
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(200);
   if (error) throw error;
   return data as Property[];
 }
+
 
 export async function fetchProperty(id: string): Promise<Property> {
   const { data, error } = await supabase

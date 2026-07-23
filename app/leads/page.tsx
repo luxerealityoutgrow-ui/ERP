@@ -531,18 +531,24 @@ export default function LeadsPage() {
   // Sharing Helper Functions
   const generateShareText = (l: Lead) => {
     const createdDate = l.created_at ? new Date(l.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'N/A';
-    return `📋 *Luxe Realty Lead Details*
-👤 *Name:* ${l.client_name}
-📞 *Phone:* ${l.phone || 'N/A'}
-✉️ *Email:* ${l.email || 'N/A'}
-🌐 *Source:* ${l.lead_source_id || 'N/A'}
-🏷️ *Status:* ${l.status || 'New'}
-📅 *Created:* ${createdDate}
-📍 *Location:* ${l.preferred_location || 'Flexible'}
-🏢 *Property:* ${l.property_type || 'N/A'} (${l.configuration || 'Any'})
-💰 *Budget:* ${l.budget_min ? `${formatBudgetAbbreviated(l.budget_min)} - ${formatBudgetAbbreviated(l.budget_max)}` : 'Flexible'}
-💼 *Type:* ${l.transaction_type || 'Outright'} / ${l.category || 'Residential'}
-📝 *Notes:* ${l.notes || 'None'}`;
+    const budgetStr = l.budget_min
+      ? `${formatBudgetAbbreviated(l.budget_min)} - ${formatBudgetAbbreviated(l.budget_max)}`
+      : 'Flexible';
+    return `LUXE REALTY PUNE - LEAD DETAILS
+
+Name: ${l.client_name}
+Phone: ${l.phone || 'N/A'}
+Email: ${l.email || 'N/A'}
+Source: ${l.lead_source_id || 'N/A'}
+Status: ${l.status || 'New'}
+Created: ${createdDate}
+
+Location Preference: ${l.preferred_location || 'Flexible'}
+Property Type: ${l.property_type || 'N/A'} (${l.configuration || 'Any'})
+Budget: ${budgetStr}
+Transaction: ${l.transaction_type || 'Outright'} / ${l.category || 'Residential'}
+
+Notes: ${l.notes || 'None'}`;
   };
 
   const copyToClipboard = async (text: string, successMsg = "Copied to clipboard!") => {
@@ -577,18 +583,26 @@ export default function LeadsPage() {
     if (selectedLeads.length === 0) return;
     
     const leadsSummary = selectedLeads.map((l, index) => {
-      return `${index + 1}️⃣ *${l.client_name}*
-• Budget: ${l.budget_min ? `${formatBudgetAbbreviated(l.budget_min)} - ${formatBudgetAbbreviated(l.budget_max)}` : 'Flexible'}
-• Location Pref: ${l.preferred_location || 'Flexible'}
-• Property Type: ${l.property_type || 'N/A'} (${l.configuration || 'Any'})
-• Notes: ${l.notes || 'None'}`;
+      const budgetStr = l.budget_min
+        ? `${formatBudgetAbbreviated(l.budget_min)} - ${formatBudgetAbbreviated(l.budget_max)}`
+        : 'Flexible';
+      return `${index + 1}. ${l.client_name}
+   Phone: ${l.phone || 'N/A'}
+   Email: ${l.email || 'N/A'}
+   Source: ${l.lead_source_id || 'N/A'}
+   Status: ${l.status || 'New'}
+   Location: ${l.preferred_location || 'Flexible'}
+   Property: ${l.property_type || 'N/A'} (${l.configuration || 'Any'})
+   Budget: ${budgetStr}
+   Transaction: ${l.transaction_type || 'Outright'} / ${l.category || 'Residential'}
+   Notes: ${l.notes || 'None'}`;
     }).join('\n\n');
 
-    const headerText = `📋 *LUXE REALTY - SHARED LEADS SUMMARY (${selectedLeads.length} leads)*\n\n`;
+    const headerText = `LUXE REALTY PUNE - SHARED LEADS SUMMARY (${selectedLeads.length} Lead${selectedLeads.length > 1 ? 's' : ''})\n${'─'.repeat(40)}\n\n`;
     const fullText = headerText + leadsSummary;
 
     if (type === 'copy') {
-      copyToClipboard(fullText, `${selectedLeads.length} leads details copied!`);
+      copyToClipboard(fullText, `${selectedLeads.length} lead${selectedLeads.length > 1 ? 's' : ''} copied!`);
     } else if (type === 'whatsapp') {
       const text = encodeURIComponent(fullText);
       window.open(`https://wa.me/?text=${text}`, '_blank');
