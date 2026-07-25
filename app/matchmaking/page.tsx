@@ -530,7 +530,11 @@ export default function MatchmakingPage() {
     }
   }, [multiSelectMode, selectedMatchIds, matchMode, currentLead, currentProperty, properties, leads]);
 
-  // Set default comparison node when active list changes
+  // Set default comparison node when the active match list changes (e.g. switching
+  // which lead/property is focused, or the match threshold). Deliberately does NOT
+  // depend on selectedLeadId/selectedPropertyId themselves — those are also used to
+  // track which match card the user has clicked in the grid below, and including them
+  // here would reset that selection back to the first card on every click.
   useEffect(() => {
     if (multiSelectMode) return;
     if (matchMode === 'leads') {
@@ -542,7 +546,7 @@ export default function MatchmakingPage() {
         setSelectedLeadId(filteredLeadMatches[0].id);
       }
     }
-  }, [matchMode, selectedLeadId, selectedPropertyId, leads, properties, multiSelectMode, filteredPropertyMatches, filteredLeadMatches]);
+  }, [matchMode, leads, properties, multiSelectMode, filteredPropertyMatches, filteredLeadMatches]);
 
   const handleBookSingleTour = () => {
     handleOpenBookingModal();
@@ -1031,7 +1035,6 @@ Let us know if you would like to schedule a site visit!`);
                         handleToggleMatchSelect(match.id);
                       } else {
                         setSelectedPropertyId(match.id);
-                        setIsAnalysisOpen(true);
                       }
                     }}
                     className={`bg-white border rounded-2xl p-4 text-left cursor-pointer transition-all duration-200 hover:border-zinc-350 hover:shadow-sm relative ${
@@ -1145,7 +1148,6 @@ Let us know if you would like to schedule a site visit!`);
                         handleToggleMatchSelect(match.id);
                       } else {
                         setSelectedLeadId(match.id);
-                        setIsAnalysisOpen(true);
                       }
                     }}
                     className={`bg-white border rounded-2xl p-4 text-left cursor-pointer transition-all duration-200 hover:border-zinc-350 hover:shadow-sm relative ${
