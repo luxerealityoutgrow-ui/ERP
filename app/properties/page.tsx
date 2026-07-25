@@ -134,8 +134,7 @@ export default function PropertyInventoryPage() {
       const matchesPropertyType = !filterPropertyType || prop.property_type === filterPropertyType;
       const matchesConfiguration = !filterConfiguration || (prop.configuration || '').includes(filterConfiguration);
       const matchesListingType = !filterListingType || prop.listing_type === filterListingType;
-      // No source-type (Direct/Broker) field exists on Property yet — filter is a no-op until that data lands.
-      const matchesSourceType = true;
+      const matchesSourceType = !filterSourceType || prop.source_type === filterSourceType;
 
       let matchesPrice = true;
       if (filterPriceMin) {

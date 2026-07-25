@@ -58,8 +58,11 @@ export interface Property {
   price?: number;
   status_id?: string;
   listing_type: string;
+  source_type?: string;
   owner_name?: string;
   owner_contact?: string;
+  unit_no?: string;
+  brokerage?: string;
   description?: string;
   internal_notes?: string;
   is_active?: boolean;

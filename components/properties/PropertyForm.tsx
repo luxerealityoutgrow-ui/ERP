@@ -283,6 +283,16 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
 
   const renderOwnership = () => (
     <div className="space-y-5">
+      <div className="space-y-1.5">
+        <FieldLabel>Property Source</FieldLabel>
+        <SelectWrapper>
+          <select name="source_type" className={selectCls} defaultValue={initialValues.source_type ?? 'Direct'}>
+            <option value="Direct">Direct</option>
+            <option value="Broker">Broker</option>
+          </select>
+        </SelectWrapper>
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <FieldLabel>Owner Name</FieldLabel>
