@@ -4,8 +4,8 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import type { Profile } from '@/lib/auth';
 
-function createSupabaseServerClient() {
-  const cookieStore = cookies();
+async function createSupabaseServerClient() {
+  const cookieStore = await cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -24,9 +24,9 @@ function createSupabaseServerClient() {
   );
 }
 
-async function getProfile(supabase: ReturnType<typeof createSupabaseServerClient>): Promise<Profile | null> {
+async function getProfile(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>): Promise<Profile | null> {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const anonClient = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -61,7 +61,7 @@ async function getProfile(supabase: ReturnType<typeof createSupabaseServerClient
 }
 
 export async function createPropertyAction(prevState: any, formData: FormData) {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const profile = await getProfile(supabase);
   const data: Record<string, unknown> = {
     title: formData.get('title'),
@@ -126,7 +126,7 @@ export async function createPropertyAction(prevState: any, formData: FormData) {
 
 
 export async function updatePropertyAction(prevState: any, formData: FormData) {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const id = formData.get('id') as string;
   if (!id) return { error: "Missing property ID" };
 
