@@ -881,38 +881,6 @@ Let us know if you would like to schedule a site visit!`);
                   </h3>
                 )}
               </div>
-
-              {/* Manual Override dropdown */}
-              <div className="flex items-center gap-2 bg-[#fffdf5] border border-[#fae8a4] px-3 py-1.5 rounded-xl text-left max-w-md shrink-0">
-                <span className="text-[9px] font-extrabold text-[#b8922e] uppercase shrink-0">Override Match:</span>
-                <select
-                  value={matchMode === 'leads' ? selectedPropertyId : selectedLeadId}
-                  onChange={(e) => {
-                    if (matchMode === 'leads') {
-                      setSelectedPropertyId(e.target.value);
-                    } else {
-                      setSelectedLeadId(e.target.value);
-                    }
-                  }}
-                  className="bg-transparent border-none outline-none text-[10.5px] font-bold text-zinc-700 cursor-pointer max-w-[200px]"
-                >
-                  {matchMode === 'leads' ? (
-                    <>
-                      <option value="">Select manually...</option>
-                      {properties.map(p => (
-                        <option key={p.id} value={p.id}>{p.title} ({formatBudgetAbbreviated(p.price)})</option>
-                      ))}
-                    </>
-                  ) : (
-                    <>
-                      <option value="">Select manually...</option>
-                      {leads.map(l => (
-                        <option key={l.id} value={l.id}>{l.client_name}</option>
-                      ))}
-                    </>
-                  )}
-                </select>
-              </div>
             </div>
 
             <div className="flex items-center justify-between gap-4 flex-wrap pt-3 border-t border-[#f5f5f3]">
