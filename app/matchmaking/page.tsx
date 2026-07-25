@@ -1222,10 +1222,14 @@ Let us know if you would like to schedule a site visit!`);
       </div>
 
       {/* ── VISUAL ANALYSIS SIDE DRAWER DIALOG (Direction B signature overlay) ── */}
+      {/* pointer-events-none on the overlay + backdrop lets clicks pass through to the
+          match cards underneath, so switching to a different card while the drawer is
+          open works in one click instead of the click being swallowed by the backdrop
+          (which would just close the drawer without selecting anything). */}
       {isAnalysisOpen && activeMatchData && (
-        <div className="fixed inset-0 z-50 flex justify-end">
-          <div className="absolute inset-0 bg-zinc-950/40 backdrop-blur-sm" onClick={() => setIsAnalysisOpen(false)} />
-          <div className="relative w-full max-w-[420px] bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+        <div className="fixed inset-0 z-50 flex justify-end pointer-events-none">
+          <div className="absolute inset-0 bg-zinc-950/40 backdrop-blur-sm pointer-events-none" />
+          <div className="relative w-full max-w-[420px] bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 pointer-events-auto">
             
             {/* Gold band at top */}
             <div className="h-1 shrink-0" style={{ background: 'linear-gradient(90deg, #d4ad4d, #e8c96e, #d4ad4d)' }} />
