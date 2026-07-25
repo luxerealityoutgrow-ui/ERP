@@ -137,6 +137,10 @@ export default function MatchmakingPage() {
   const [bookingTime, setBookingTime] = useState('11:00 AM');
   const [bookingNotes, setBookingNotes] = useState('');
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
+  // Dedicated, single-purpose state for which card's analysis is shown in the drawer.
+  // Deliberately separate from selectedLeadId/selectedPropertyId, which are also used
+  // for the left sidebar focus, booking, and sharing -- so nothing else can ever affect it.
+  const [analysisTargetId, setAnalysisTargetId] = useState<string>('');
 
   const handleOpenBookingModal = () => {
     const tomorrow = new Date();
@@ -481,6 +485,17 @@ export default function MatchmakingPage() {
     return counts;
   }, [leads, properties, minMatchScore, matchMode]);
 
+  // The specific property/lead the analysis drawer is showing. Resolved directly from
+  // analysisTargetId (set only by a card click / "View Analysis" click) rather than from
+  // selectedPropertyId/selectedLeadId, which are shared with the left sidebar, booking,
+  // and sharing logic elsewhere on this page.
+  const analysisTargetItem = useMemo(() => {
+    if (matchMode === 'leads') {
+      return properties.find(p => p.id === analysisTargetId) || null;
+    }
+    return leads.find(l => l.id === analysisTargetId) || null;
+  }, [matchMode, analysisTargetId, properties, leads]);
+
   // Active highlighted match for comparison panel
   const activeMatchData = useMemo(() => {
     if (multiSelectMode) {
@@ -495,14 +510,12 @@ export default function MatchmakingPage() {
       }
     } else {
       if (matchMode === 'leads') {
-        const activeProp = properties.find(p => p.id === selectedPropertyId) || properties[0];
-        return activeProp ? calculateDetailedMatch(currentLead, activeProp) : null;
+        return analysisTargetItem ? calculateDetailedMatch(currentLead, analysisTargetItem as Property) : null;
       } else {
-        const activeLead = leads.find(l => l.id === selectedLeadId) || leads[0];
-        return activeLead ? calculateDetailedMatch(activeLead, currentProperty) : null;
+        return analysisTargetItem ? calculateDetailedMatch(analysisTargetItem as Lead, currentProperty) : null;
       }
     }
-  }, [multiSelectMode, selectedMatchIds, matchMode, currentLead, currentProperty, selectedPropertyId, selectedLeadId, properties, leads]);
+  }, [multiSelectMode, selectedMatchIds, matchMode, currentLead, currentProperty, analysisTargetItem, properties, leads]);
 
   // Compute matched data for all selected items in multi-select mode
   const selectedMatchesData = useMemo(() => {
@@ -592,15 +605,19 @@ export default function MatchmakingPage() {
   };
 
   const handleAssignPropertyToLead = async () => {
-    if (!currentLead || !currentProperty) return;
+    // Use the drawer's own target (analysisTargetItem) rather than currentLead/currentProperty,
+    // which track the left sidebar focus and can differ from whichever card the drawer is showing.
+    const targetLead = matchMode === 'leads' ? currentLead : (analysisTargetItem as Lead | null);
+    const targetProperty = matchMode === 'leads' ? (analysisTargetItem as Property | null) : currentProperty;
+    if (!targetLead || !targetProperty) return;
     try {
       await supabase.from('leads').update({
-        preferred_location: currentProperty.location,
+        preferred_location: targetProperty.location,
         stage_id: 'Follow up',
-        notes: `Matched & Assigned to property: ${currentProperty.title} (${currentProperty.configuration})`
-      }).eq('id', currentLead.id);
+        notes: `Matched & Assigned to property: ${targetProperty.title} (${targetProperty.configuration})`
+      }).eq('id', targetLead.id);
 
-      alert(`Successfully assigned ${currentProperty.title} to ${currentLead.client_name} and moved stage to Follow Up!`);
+      alert(`Successfully assigned ${targetProperty.title} to ${targetLead.client_name} and moved stage to Follow Up!`);
     } catch (err) {
       console.error('Error assigning property:', err);
     }
@@ -1003,6 +1020,7 @@ Let us know if you would like to schedule a site visit!`);
                         handleToggleMatchSelect(match.id);
                       } else {
                         setSelectedPropertyId(match.id);
+                        setAnalysisTargetId(match.id);
                       }
                     }}
                     className={`bg-white border rounded-2xl p-4 text-left cursor-pointer transition-all duration-200 hover:border-zinc-350 hover:shadow-sm relative ${
@@ -1088,6 +1106,7 @@ Let us know if you would like to schedule a site visit!`);
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedPropertyId(match.id);
+                          setAnalysisTargetId(match.id);
                           setIsAnalysisOpen(true);
                         }}
                         className="text-[9.5px] font-bold text-[#d4ad4d] hover:text-[#b8922e] transition-colors"
@@ -1116,6 +1135,7 @@ Let us know if you would like to schedule a site visit!`);
                         handleToggleMatchSelect(match.id);
                       } else {
                         setSelectedLeadId(match.id);
+                        setAnalysisTargetId(match.id);
                       }
                     }}
                     className={`bg-white border rounded-2xl p-4 text-left cursor-pointer transition-all duration-200 hover:border-zinc-350 hover:shadow-sm relative ${
@@ -1199,6 +1219,7 @@ Let us know if you would like to schedule a site visit!`);
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedLeadId(match.id);
+                          setAnalysisTargetId(match.id);
                           setIsAnalysisOpen(true);
                         }}
                         className="text-[9.5px] font-bold text-[#d4ad4d] hover:text-[#b8922e] transition-colors"
@@ -1329,8 +1350,11 @@ Let us know if you would like to schedule a site visit!`);
 
             {/* Quick Actions Footer */}
             <div className="p-5 border-t border-[#ebebeb] flex items-center gap-2 shrink-0">
-              <a 
-                href={`https://wa.me/?text=${sharePropertyToLeadText(currentLead, currentProperty)}`}
+              <a
+                href={`https://wa.me/?text=${sharePropertyToLeadText(
+                  (matchMode === 'leads' ? currentLead : analysisTargetItem) as Lead,
+                  (matchMode === 'leads' ? analysisTargetItem : currentProperty) as Property
+                )}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-[11px] font-bold hover:bg-emerald-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
