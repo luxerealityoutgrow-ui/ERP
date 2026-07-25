@@ -333,11 +333,10 @@ export default function DashboardPage() {
             <h1 className="text-[17px] font-extrabold text-zinc-900 tracking-tight" style={{ letterSpacing: '-0.3px' }}>Dashboard Overview</h1>
             <p className="text-[10px] text-zinc-400 font-medium">Luxe Realty Pune CRM metrics</p>
           </div>
-          {/* Single adaptive Export button — icon only on mobile, full label on desktop */}
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={handleExportReport}
-            className="lg:hidden dc-btn gold font-extrabold text-[11px] px-3 py-1.5 rounded-xl flex items-center justify-center gap-1 shadow-xs cursor-pointer"
+            className="dc-btn gold font-extrabold text-[11px] px-3 py-1.5 rounded-xl flex items-center justify-center gap-1 shadow-xs cursor-pointer"
           >
             <Download className="h-3.5 w-3.5" />
             <span>Export</span>
@@ -378,15 +377,6 @@ export default function DashboardPage() {
             })}
           </div>
         </div>
-
-        <button 
-          type="button" 
-          onClick={handleExportReport}
-          className="hidden lg:flex dc-btn gold font-extrabold text-[11px] px-3.5 py-1.5 rounded-xl items-center justify-center gap-1.5 shadow-xs cursor-pointer"
-        >
-          <Download className="h-4 w-4" />
-          Export Report (PDF)
-        </button>
       </div>
       
       {/* ── UNIFIED PORCELAIN CARD FRAME (Editorial Command Cabinet) ── */}
