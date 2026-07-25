@@ -550,10 +550,15 @@ export default function PropertyInventoryPage() {
                   <option value="">Any config</option>
                   <option value="1 BHK">1 BHK</option>
                   <option value="2 BHK">2 BHK</option>
+                  <option value="2.5 BHK">2.5 BHK</option>
                   <option value="3 BHK">3 BHK</option>
+                  <option value="3.5 BHK">3.5 BHK</option>
                   <option value="4 BHK">4 BHK</option>
+                  <option value="4.5 BHK">4.5 BHK</option>
                   <option value="5 BHK">5 BHK</option>
-                  <option value="5+ BHK">5+ BHK</option>
+                  <option value="5.5 BHK">5.5 BHK</option>
+                  <option value="6 BHK">6 BHK</option>
+                  <option value="6.5 BHK">6.5 BHK</option>
                 </select>
               </div>
               <div className="space-y-1">

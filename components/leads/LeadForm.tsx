@@ -9,39 +9,18 @@ import { ChevronLeft, ChevronDown, User, Calendar, AlertTriangle, ExternalLink }
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
-const LOCATION_OPTIONS = [
-  { value: 'Aundh', label: 'Aundh' },
-  { value: 'Balewadi', label: 'Balewadi' },
-  { value: 'Baner', label: 'Baner' },
-  { value: 'Bavdhan', label: 'Bavdhan' },
-  { value: 'Boat Club Road', label: 'Boat Club Road' },
-  { value: 'Bund Garden Road', label: 'Bund Garden Road' },
-  { value: 'Camp', label: 'Camp' },
-  { value: 'Hadapsar', label: 'Hadapsar' },
-  { value: 'Hinjewadi', label: 'Hinjewadi' },
-  { value: 'Kalyani Nagar', label: 'Kalyani Nagar' },
-  { value: 'Kharadi', label: 'Kharadi' },
-  { value: 'Koregaon Park', label: 'Koregaon Park' },
-  { value: 'Koregaon Park Annexe', label: 'Koregaon Park Annexe' },
-  { value: 'Magarpatta', label: 'Magarpatta' },
-  { value: 'Mangaldas Road', label: 'Mangaldas Road' },
-  { value: 'Mundhwa', label: 'Mundhwa' },
-  { value: 'New Kalyani Nagar', label: 'New Kalyani Nagar' },
-  { value: 'Pashan', label: 'Pashan' },
-  { value: 'Pimpri-Chinchwad', label: 'Pimpri-Chinchwad' },
-  { value: 'Sopan Baug', label: 'Sopan Baug' },
-  { value: 'Viman Nagar', label: 'Viman Nagar' },
-  { value: 'Wakad', label: 'Wakad' },
-  { value: 'Wagholi', label: 'Wagholi' },
-  { value: 'Wanowrie', label: 'Wanowrie' },
-];
-
 const CONFIG_OPTIONS = [
   '1 BHK',
   '2 BHK',
+  '2.5 BHK',
   '3 BHK',
+  '3.5 BHK',
   '4 BHK',
-  '5+ BHK',
+  '4.5 BHK',
+  '5 BHK',
+  '5.5 BHK',
+  '6 BHK',
+  '6.5 BHK',
   'Penthouse',
   'Villa',
   'Studio',
@@ -65,6 +44,13 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
       ? initialValues.preferred_location.split(',').map((s: string) => s.trim()).filter(Boolean)
       : []
   );
+  const [locationOptions, setLocationOptions] = useState<{ value: string; label: string }[]>([]);
+
+  useEffect(() => {
+    supabase.from('locations').select('name').order('name').then(({ data }) => {
+      if (data) setLocationOptions(data.map(l => ({ value: l.name, label: l.name })));
+    });
+  }, []);
 
   // Multi-select BHK Configuration state
   const [selectedConfigs, setSelectedConfigs] = useState<string[]>(
@@ -131,6 +117,11 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
 
   useEffect(() => {
     if ((state as any)?.success) {
+      if (preferredLocations.length > 0) {
+        preferredLocations.forEach(loc => {
+          supabase.from('locations').upsert({ name: loc }, { onConflict: 'name' });
+        });
+      }
       router.push('/leads');
       router.refresh();
     }
@@ -344,7 +335,7 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
         <TagsInput
           value={preferredLocations}
           onChange={setPreferredLocations}
-          options={LOCATION_OPTIONS}
+          options={locationOptions}
           allowCustom={true}
           placeholder="Type or select locations..."
         />
@@ -481,11 +472,15 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
           </div>
           
           {/* Right content panel */}
+          {/* Sections stay mounted (display:none when inactive) rather than unmounting,
+              so fields from earlier sections are still present in FormData when submitting
+              from a later section — otherwise saving from the last page would silently
+              drop required fields like client_name/phone and fail. */}
           <div className="flex-1 px-8 py-6 max-w-2xl text-left">
-            {activeSection === 0 && renderContactFields()}
-            {activeSection === 1 && renderClassifyFields()}
-            {activeSection === 2 && renderRequirementsFields()}
-            {activeSection === 3 && renderNotesFields()}
+            <div style={{ display: activeSection === 0 ? 'block' : 'none' }}>{renderContactFields()}</div>
+            <div style={{ display: activeSection === 1 ? 'block' : 'none' }}>{renderClassifyFields()}</div>
+            <div style={{ display: activeSection === 2 ? 'block' : 'none' }}>{renderRequirementsFields()}</div>
+            <div style={{ display: activeSection === 3 ? 'block' : 'none' }}>{renderNotesFields()}</div>
 
             {/* Bottom navigation bar */}
             <div className="mt-8 flex items-center justify-between pt-4 border-t border-[#ebebeb]">

@@ -132,7 +132,10 @@ export async function updatePropertyAction(prevState: any, formData: FormData) {
   if (!id) return { error: "Missing property ID" };
 
   const profile = await getProfile(supabase);
-  const statusId = formData.get('status_id') as string;
+  // PropertyForm has no status_id field — status is changed via the inline
+  // dropdown/detail page instead. Only touch status_id if it was actually submitted,
+  // otherwise this would silently wipe the existing status back to null on every edit.
+  const statusId = formData.get('status_id') as string | null;
 
   const data: Record<string, unknown> = {
     title: formData.get('title'),
@@ -144,7 +147,6 @@ export async function updatePropertyAction(prevState: any, formData: FormData) {
     carpet_area: formData.get('carpet_area') || null,
     built_up_area: formData.get('built_up_area') || null,
     price: formData.get('price') || null,
-    status_id: statusId,
     listing_type: formData.get('listing_type'),
     source_type: formData.get('source_type') || 'Direct',
     owner_name: formData.get('owner_name'),
@@ -153,8 +155,7 @@ export async function updatePropertyAction(prevState: any, formData: FormData) {
     brokerage: formData.get('brokerage'),
     description: formData.get('description'),
     internal_notes: formData.get('internal_notes'),
-    // Auto-deactivate when sold
-    ...(statusId === 'Sold' ? { is_active: false } : {})
+    ...(statusId ? { status_id: statusId, ...(statusId === 'Sold' ? { is_active: false } : {}) } : {})
   };
 
   const { data: updated, error } = await supabase

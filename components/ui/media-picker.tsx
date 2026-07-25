@@ -112,6 +112,7 @@ export function MediaPicker({
                   className="w-full h-full object-cover"
                 />
                 <button
+                  type="button"
                   onClick={() => removeFile(index)}
                   className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
                 >
@@ -125,8 +126,9 @@ export function MediaPicker({
       )}
 
       {files.length > 0 && (
-        <Button 
-          onClick={handleUpload} 
+        <Button
+          type="button"
+          onClick={handleUpload}
           disabled={uploading}
           className="w-full"
         >

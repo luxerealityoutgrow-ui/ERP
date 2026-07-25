@@ -191,9 +191,15 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
             options={[
               { value: '1 BHK', label: '1 BHK' },
               { value: '2 BHK', label: '2 BHK' },
+              { value: '2.5 BHK', label: '2.5 BHK' },
               { value: '3 BHK', label: '3 BHK' },
+              { value: '3.5 BHK', label: '3.5 BHK' },
               { value: '4 BHK', label: '4 BHK' },
+              { value: '4.5 BHK', label: '4.5 BHK' },
               { value: '5 BHK', label: '5 BHK' },
+              { value: '5.5 BHK', label: '5.5 BHK' },
+              { value: '6 BHK', label: '6 BHK' },
+              { value: '6.5 BHK', label: '6.5 BHK' },
             ]}
             allowCustom={true}
             placeholder="Add config..."
@@ -479,12 +485,16 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
           </div>
 
           {/* Right fields */}
+          {/* Sections stay mounted (display:none when inactive) rather than unmounting,
+              so fields from earlier sections are still present in FormData when submitting
+              from a later section — otherwise saving from the last page would silently
+              drop required fields like title/price and fail. */}
           <div className="flex-1 px-8 py-6 max-w-2xl">
-            {activeSection === 0 && renderBasicInfo()}
-            {activeSection === 1 && renderLocation()}
-            {activeSection === 2 && renderPricing()}
-            {activeSection === 3 && renderOwnership()}
-            {activeSection === 4 && renderMedia()}
+            <div style={{ display: activeSection === 0 ? 'block' : 'none' }}>{renderBasicInfo()}</div>
+            <div style={{ display: activeSection === 1 ? 'block' : 'none' }}>{renderLocation()}</div>
+            <div style={{ display: activeSection === 2 ? 'block' : 'none' }}>{renderPricing()}</div>
+            <div style={{ display: activeSection === 3 ? 'block' : 'none' }}>{renderOwnership()}</div>
+            <div style={{ display: activeSection === 4 ? 'block' : 'none' }}>{renderMedia()}</div>
 
             {/* Bottom navigation bar */}
             <div className="mt-8 flex items-center justify-between pt-4 border-t border-[#ebebeb]">
