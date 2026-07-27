@@ -33,6 +33,16 @@ interface SiteVisit {
   reschedule_reason?: string;
 }
 
+interface FollowUp {
+  id: string; // lead id
+  client_name: string;
+  phone: string;
+  followup_date_raw: string; // YYYY-MM-DD
+  status: string; // lead status: Hot / Warm / etc
+  assigned_to?: string;
+  notes: string;
+}
+
 // Utility: format Date object to YYYY-MM-DD string
 function formatDateKey(d: Date): string {
   const year = d.getFullYear();
@@ -55,13 +65,17 @@ export default function SiteVisitsPage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date(2026, 5, 17));
 
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'calendar' | 'all'>('calendar');
-  
+  const [activeTab, setActiveTab] = useState<'calendar' | 'all' | 'followups'>('calendar');
+
   // Reschedule Modal State
   const [rescheduleVisit, setRescheduleVisit] = useState<SiteVisit | null>(null);
   const [rescheduleDateStr, setRescheduleDateStr] = useState('2026-06-18');
   const [rescheduleTime, setRescheduleTime] = useState('03:00 PM');
   const [rescheduleReason, setRescheduleReason] = useState('');
+
+  // Follow-Up Reschedule Modal State
+  const [rescheduleFollowup, setRescheduleFollowup] = useState<FollowUp | null>(null);
+  const [rescheduleFollowupDateStr, setRescheduleFollowupDateStr] = useState('2026-06-18');
   
   // Form input states
   const [newVisitDateStr, setNewVisitDateStr] = useState('2026-06-17');
@@ -69,6 +83,7 @@ export default function SiteVisitsPage() {
   const [notes, setNotes] = useState('');
 
   const [visits, setVisits] = useState<SiteVisit[]>([]);
+  const [followUps, setFollowUps] = useState<FollowUp[]>([]);
   const [loading, setLoading] = useState(true);
   const [leadsList, setLeadsList] = useState<any[]>([]);
   const [propertiesList, setPropertiesList] = useState<any[]>([]);
@@ -123,6 +138,33 @@ export default function SiteVisitsPage() {
         }
 
         const { data: leadsData } = await leadsQuery;
+
+        // 2b. Fetch leads with a scheduled follow-up date, same role scoping as visits/leads above
+        let followupsQuery = supabase
+          .from('leads')
+          .select('id, client_name, phone, next_followup_date, status, assigned_to, notes')
+          .not('next_followup_date', 'is', null)
+          .order('next_followup_date', { ascending: true });
+
+        if (!isManager && profile.id) {
+          followupsQuery = followupsQuery.eq('assigned_to', profile.id);
+        }
+
+        const { data: followupsData } = await followupsQuery;
+
+        if (followupsData) {
+          setFollowUps(followupsData.map((l: any) => ({
+            id: l.id,
+            client_name: l.client_name,
+            phone: l.phone || '',
+            followup_date_raw: l.next_followup_date,
+            status: l.status || 'Hot',
+            assigned_to: l.assigned_to,
+            notes: l.notes || ''
+          })));
+        } else {
+          setFollowUps([]);
+        }
 
         // 3. Fetch properties for dropdown
         const { data: propsData } = await supabase
@@ -213,6 +255,38 @@ export default function SiteVisitsPage() {
     setRescheduleVisit(null);
   };
 
+  const handleMarkFollowupDone = async (leadId: string) => {
+    setFollowUps(prev => prev.filter(f => f.id !== leadId));
+    try {
+      await supabase.from('leads').update({ next_followup_date: null }).eq('id', leadId);
+    } catch (err) {
+      console.error('Error clearing follow-up date:', err);
+    }
+  };
+
+  const handleOpenRescheduleFollowup = (item: FollowUp) => {
+    setRescheduleFollowup(item);
+    setRescheduleFollowupDateStr(item.followup_date_raw || formatDateKey(new Date()));
+  };
+
+  const handleRescheduleFollowupSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rescheduleFollowup) return;
+
+    setFollowUps(prev => prev.map(f => f.id === rescheduleFollowup.id ? { ...f, followup_date_raw: rescheduleFollowupDateStr } : f));
+
+    try {
+      await supabase
+        .from('leads')
+        .update({ next_followup_date: rescheduleFollowupDateStr })
+        .eq('id', rescheduleFollowup.id);
+    } catch (err) {
+      console.error('Error rescheduling follow-up:', err);
+    }
+
+    setRescheduleFollowup(null);
+  };
+
   // Month navigation handlers
   const handlePrevMonth = () => {
     setCurrentMonthDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
@@ -295,9 +369,14 @@ export default function SiteVisitsPage() {
   // Selected date matching
   const selectedDateStr = formatDateKey(selectedDate);
   const selectedDayVisits = visits.filter(v => v.visit_date_raw === selectedDateStr);
+  const selectedDayFollowups = followUps.filter(f => f.followup_date_raw === selectedDateStr);
 
   const hasVisitsOnDate = (dateStr: string) => {
     return visits.some(v => v.visit_date_raw === dateStr);
+  };
+
+  const hasFollowupsOnDate = (dateStr: string) => {
+    return followUps.some(f => f.followup_date_raw === dateStr);
   };
 
   const getDayDotStyle = (dateStr: string) => {
@@ -404,6 +483,17 @@ export default function SiteVisitsPage() {
               >
                 All Visits ({visits.length})
               </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('followups')}
+                className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                  activeTab === 'followups'
+                    ? 'bg-white text-zinc-900 shadow-xs'
+                    : 'text-zinc-500 hover:text-zinc-800'
+                }`}
+              >
+                Follow-Ups ({followUps.length})
+              </button>
             </div>
 
             {/* Schedule New Visit Action Button */}
@@ -494,6 +584,7 @@ export default function SiteVisitsPage() {
                   {calendarGrid.map((cell, idx) => {
                     const isSelected = selectedDateStr === cell.dateStr;
                     const dayHasVisits = hasVisitsOnDate(cell.dateStr);
+                    const dayHasFollowups = hasFollowupsOnDate(cell.dateStr);
 
                     return (
                       <button
@@ -514,8 +605,11 @@ export default function SiteVisitsPage() {
                         }`}
                       >
                         <span className="text-[11px]">{cell.dayNum}</span>
-                        {dayHasVisits && (
-                          <div className={`w-2 h-0.5 rounded-full mt-1 ${getDayDotStyle(cell.dateStr)}`} />
+                        {(dayHasVisits || dayHasFollowups) && (
+                          <div className="flex items-center gap-0.5 mt-1">
+                            {dayHasVisits && <div className={`w-1.5 h-1.5 rounded-full ${getDayDotStyle(cell.dateStr)}`} />}
+                            {dayHasFollowups && <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />}
+                          </div>
                         )}
                       </button>
                     );
@@ -537,6 +631,10 @@ export default function SiteVisitsPage() {
                 <div className="flex items-center gap-2 text-[10px] font-bold text-rose-600">
                   <div className="h-2 w-2 rounded-full bg-rose-500" />
                   Cancelled Visit
+                </div>
+                <div className="flex items-center gap-2 text-[10px] font-bold text-blue-700">
+                  <div className="h-2 w-2 rounded-full bg-blue-500" />
+                  Lead Follow-Up Due
                 </div>
               </div>
             </div>
@@ -656,14 +754,58 @@ export default function SiteVisitsPage() {
                   </div>
                 ))}
 
-                {selectedDayVisits.length === 0 && (
+                {selectedDayVisits.length === 0 && selectedDayFollowups.length === 0 && (
                   <div className="py-20 flex flex-col items-center justify-center bg-white rounded-2xl border-2 border-dashed border-[#ebebeb] text-zinc-400 space-y-2">
                     <CalendarIcon className="h-10 w-10 text-zinc-300" />
-                    <p className="text-[12px] font-bold text-zinc-600">No viewings scheduled for {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                    <p className="text-[12px] font-bold text-zinc-600">No viewings or follow-ups scheduled for {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                     <p className="text-[10px] text-zinc-400">Click &quot;Schedule Visit&quot; above to add a new client tour</p>
                   </div>
                 )}
               </div>
+
+              {/* Lead Follow-Ups Due This Day */}
+              {selectedDayFollowups.length > 0 && (
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between border-t border-[#ebebeb] pt-4">
+                    <h4 className="text-[11px] font-extrabold text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-blue-500" />
+                      Lead Follow-Ups Due
+                    </h4>
+                    <span className="px-3 py-1 rounded-full text-[10px] font-extrabold bg-white border border-[#e8e7e4] text-blue-700">
+                      {selectedDayFollowups.length} due
+                    </span>
+                  </div>
+                  {selectedDayFollowups.map((f) => (
+                    <div key={f.id} className="bg-white border border-l-4 border-l-blue-500 border-t-[#e8e7e4] border-r-[#e8e7e4] border-b-[#e8e7e4] rounded-2xl p-4 shadow-xs flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-[12px] font-extrabold text-zinc-900 flex items-center gap-1.5">
+                          <User className="h-3.5 w-3.5 text-zinc-400" />
+                          {f.client_name}
+                        </div>
+                        <div className="text-[10px] font-medium text-zinc-400 mt-0.5">{f.phone} · Status: {f.status}</div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleMarkFollowupDone(f.id)}
+                          className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10.5px] font-extrabold hover:bg-emerald-100 transition-colors flex items-center gap-1 cursor-pointer"
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                          Mark Done
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenRescheduleFollowup(f)}
+                          className="px-3 py-1.5 rounded-lg bg-white border border-[#e8e7e4] text-zinc-700 text-[10.5px] font-extrabold hover:bg-zinc-50 transition-colors flex items-center gap-1 cursor-pointer"
+                        >
+                          <CalendarDays className="h-3.5 w-3.5 text-[#d4ad4d]" />
+                          Reschedule
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
             </div>
 
@@ -736,6 +878,74 @@ export default function SiteVisitsPage() {
                     </td>
                   </tr>
                 ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* ── LEAD FOLLOW-UPS TABLE VIEW MODE ── */}
+        {activeTab === 'followups' && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-[#fafaf8] border-b border-[#ebebeb]">
+                  <th className="py-3 px-6 text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider">Follow-Up Date</th>
+                  <th className="py-3 px-6 text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider">Client Lead</th>
+                  <th className="py-3 px-6 text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider">Phone</th>
+                  <th className="py-3 px-6 text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider">Status</th>
+                  <th className="py-3 px-6 text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#f5f5f3]">
+                {followUps.map((f) => {
+                  const isOverdue = f.followup_date_raw < formatDateKey(new Date());
+                  return (
+                    <tr key={f.id} className="hover:bg-[#fafaf8]/80 transition-colors">
+                      <td className={`py-4 px-6 text-[11.5px] font-extrabold ${isOverdue ? 'text-rose-600' : 'text-zinc-900'}`}>
+                        {f.followup_date_raw}
+                        {isOverdue && <div className="text-[9px] font-bold text-rose-500 uppercase tracking-wider mt-0.5">Overdue</div>}
+                      </td>
+                      <td className="py-4 px-6 text-[11.5px] font-extrabold text-zinc-900">{f.client_name}</td>
+                      <td className="py-4 px-6 text-[11px] font-medium text-zinc-500">{f.phone}</td>
+                      <td className="py-4 px-6">
+                        <span className="px-2.5 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider border bg-blue-50 text-blue-700 border-blue-200">
+                          {f.status}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <a
+                            href={`/leads/${f.id}`}
+                            className="px-2.5 py-1 rounded-lg border border-[#e8e7e4] text-zinc-700 text-[10px] font-bold hover:bg-zinc-50"
+                          >
+                            View Lead
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenRescheduleFollowup(f)}
+                            className="px-2.5 py-1 rounded-lg border border-[#e8e7e4] text-zinc-700 text-[10px] font-bold hover:bg-zinc-50"
+                          >
+                            Reschedule
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleMarkFollowupDone(f.id)}
+                            className="px-2.5 py-1 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 text-[10px] font-bold hover:bg-emerald-100"
+                          >
+                            Mark Done
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {followUps.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-12 text-center text-xs font-semibold text-zinc-400">
+                      No lead follow-ups scheduled.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -918,6 +1128,52 @@ export default function SiteVisitsPage() {
                   className="px-4 py-2 rounded-xl bg-[#d4ad4d] text-white text-xs font-extrabold hover:bg-[#b8922e] transition-all shadow-2xs"
                 >
                   Save Reschedule
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── RESCHEDULE FOLLOW-UP MODAL ── */}
+      {rescheduleFollowup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/40 backdrop-blur-xs">
+          <div className="relative w-full max-w-md bg-white border border-[#e8e7e4] rounded-2xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-200 text-left">
+            <div className="p-5 border-b border-[#ebebeb] flex items-center justify-between bg-[#fafaf8]">
+              <div>
+                <h3 className="text-[14px] font-extrabold text-zinc-900">Reschedule Lead Follow-Up</h3>
+                <p className="text-[10px] text-zinc-400 font-medium">Updating follow-up date for {rescheduleFollowup.client_name}</p>
+              </div>
+              <button type="button" onClick={() => setRescheduleFollowup(null)} className="p-1.5 hover:bg-zinc-200/50 rounded-lg transition-colors text-zinc-400">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleRescheduleFollowupSubmit} className="p-5 space-y-4">
+              <div className="space-y-1">
+                <label className="text-[9.5px] font-extrabold text-zinc-400 uppercase tracking-wider">New Follow-Up Date *</label>
+                <input
+                  type="date"
+                  required
+                  value={rescheduleFollowupDateStr}
+                  onChange={(e) => setRescheduleFollowupDateStr(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-white border border-[#e8e7e4] text-xs font-bold text-zinc-800 focus:outline-none focus:border-[#d4ad4d]"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-[#ebebeb]">
+                <button
+                  type="button"
+                  onClick={() => setRescheduleFollowup(null)}
+                  className="px-4 py-2 rounded-xl border border-[#e8e7e4] text-xs font-bold text-zinc-600 hover:bg-zinc-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-[#d4ad4d] text-white text-xs font-extrabold hover:bg-[#b8922e] transition-all shadow-2xs"
+                >
+                  Save Follow-Up Date
                 </button>
               </div>
             </form>

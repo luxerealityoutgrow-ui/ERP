@@ -91,51 +91,127 @@ export function Header({ onToggleMenu }: { onToggleMenu?: () => void }) {
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Agency-Wide Admin Notifications State
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
-    {
-      id: 'n1',
-      title: 'Site Visit Confirmed Today',
-      message: 'Client Swati Patil confirmed property viewing for Nyati Evoque (Kalyani Nagar) at 02:30 PM.',
-      time: '12 mins ago',
-      unread: true,
-      type: 'visit',
-      actor: 'Rahul Sharma',
-      link: '/site-visits'
-    },
-    {
-      id: 'n2',
-      title: 'New High Priority Lead Inbound',
-      message: 'New prospect Siddharth Shetty (+91 98220 44512) assigned with ₹5.20 Cr budget.',
-      time: '38 mins ago',
-      unread: true,
-      type: 'lead',
-      actor: 'Priya Mehta',
-      link: '/leads'
-    },
-    {
-      id: 'n3',
-      title: 'Pipeline Stage Velocity',
-      message: 'Deal Vikram Malhotra (Baner Penthouse) advanced to Negotiation stage.',
-      time: '1 hour ago',
-      unread: true,
-      type: 'deal',
-      actor: 'Rahul Sharma',
-      link: '/pipeline'
-    },
-    {
-      id: 'n4',
-      title: 'Property Listing Added',
-      message: 'New listing Pristine Kyra (4 BHK • Koregaon Park) added to inventory at ₹5.20 Cr.',
-      time: '2 hours ago',
-      unread: false,
-      type: 'system',
-      actor: 'Priya Mehta',
-      link: '/properties'
-    }
-  ]);
+  // Real, role-scoped notifications: overdue/upcoming follow-ups and site visits for
+  // everyone, plus an agency-wide audit_logs activity feed for Admin/SuperAdmin.
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const isManager = profile?.role === 'Admin' || profile?.role === 'SuperAdmin';
 
   const unreadCount = notifications.filter(n => n.unread).length;
+
+  // Date-only field (next_followup_date / visit_date) relative to today, ignoring time-of-day
+  const formatDueRelative = (dateStr: string): string => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const target = new Date(dateStr + 'T00:00:00');
+    const diffDays = Math.round((target.getTime() - today.getTime()) / 86400000);
+    if (diffDays < 0) return `Overdue by ${-diffDays}d`;
+    if (diffDays === 0) return 'Due today';
+    if (diffDays === 1) return 'Due tomorrow';
+    return `Due in ${diffDays}d`;
+  };
+
+  // Timestamp field (audit_logs.created_at) relative to now, always in the past
+  const formatPastRelative = (iso: string): string => {
+    const diffMs = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins} min${mins === 1 ? '' : 's'} ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+    const days = Math.floor(hours / 24);
+    return `${days} day${days === 1 ? '' : 's'} ago`;
+  };
+
+  useEffect(() => {
+    if (!profile) return;
+
+    const profileId = profile.id;
+
+    async function loadNotifications() {
+      try {
+        const today = new Date();
+        const todayStr = today.toISOString().slice(0, 10);
+        const horizon = new Date(today.getTime() + 2 * 86400000).toISOString().slice(0, 10);
+
+        // 1. Lead follow-ups due (overdue through the next 2 days), scoped to this user
+        //    unless they're a manager -- same assigned_to filter used on the Site Visits page.
+        let followupsQuery = supabase
+          .from('leads')
+          .select('id, client_name, phone, next_followup_date')
+          .not('next_followup_date', 'is', null)
+          .lte('next_followup_date', horizon)
+          .order('next_followup_date', { ascending: true })
+          .limit(5);
+        if (!isManager) followupsQuery = followupsQuery.eq('assigned_to', profileId);
+        const { data: followups } = await followupsQuery;
+
+        // 2. Site visits happening in the next 2 days, same scoping
+        let visitsQuery = supabase
+          .from('site_visits')
+          .select('id, visit_date, visit_time, status, leads(client_name), properties(title, location)')
+          .gte('visit_date', todayStr)
+          .lte('visit_date', horizon)
+          .neq('status', 'Cancelled')
+          .order('visit_date', { ascending: true })
+          .limit(5);
+        if (!isManager) visitsQuery = visitsQuery.eq('assigned_to', profileId);
+        const { data: upcomingVisits } = await visitsQuery;
+
+        const followupItems: NotificationItem[] = (followups || []).map((l: any) => ({
+          id: `followup-${l.id}`,
+          title: l.next_followup_date < todayStr ? 'Follow-Up Overdue' : 'Lead Follow-Up Due',
+          message: `${l.client_name} (${l.phone || 'no phone on file'}) needs a follow-up call.`,
+          time: formatDueRelative(l.next_followup_date),
+          unread: l.next_followup_date <= todayStr,
+          type: 'lead',
+          link: `/leads/${l.id}`
+        }));
+
+        const visitItems: NotificationItem[] = (upcomingVisits || []).map((v: any) => ({
+          id: `visit-${v.id}`,
+          title: v.visit_date === todayStr ? 'Site Visit Today' : 'Upcoming Site Visit',
+          message: `${v.leads?.client_name || 'Client'} — ${v.properties?.title || 'Property'} (${v.properties?.location || 'TBD'}) at ${v.visit_time || 'TBD'}.`,
+          time: formatDueRelative(v.visit_date),
+          unread: v.visit_date === todayStr,
+          type: 'visit',
+          link: '/site-visits'
+        }));
+
+        let auditItems: NotificationItem[] = [];
+        if (isManager) {
+          // 3. Agency-wide activity feed for Admin/SuperAdmin only
+          const { data: auditLogs } = await supabase
+            .from('audit_logs')
+            .select('id, event, changes, created_at, profiles(full_name)')
+            .order('created_at', { ascending: false })
+            .limit(6);
+
+          auditItems = (auditLogs || []).map((a: any) => {
+            const eventLower = (a.event || '').toLowerCase();
+            const noun = a.changes?.client_name || a.changes?.title || '';
+            const type: NotificationItem['type'] = eventLower.includes('lead') ? 'lead' : eventLower.includes('propert') ? 'system' : 'deal';
+            const link = eventLower.includes('lead') ? '/leads' : eventLower.includes('propert') ? '/properties' : '/pipeline';
+            return {
+              id: `audit-${a.id}`,
+              title: a.event,
+              message: noun ? `${noun}` : 'View details in the activity log.',
+              time: formatPastRelative(a.created_at),
+              unread: Date.now() - new Date(a.created_at).getTime() < 24 * 3600000,
+              type,
+              actor: a.profiles?.full_name,
+              link
+            };
+          });
+        }
+
+        setNotifications([...followupItems, ...visitItems, ...auditItems]);
+      } catch (err) {
+        console.error('Error loading notifications:', err);
+      }
+    }
+
+    loadNotifications();
+  }, [profile, isManager]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -396,7 +472,7 @@ export function Header({ onToggleMenu }: { onToggleMenu?: () => void }) {
               setIsCreateOpen(false);
             }}
             className="relative p-2 rounded-full border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-450 hover:text-white transition-all cursor-pointer block"
-            title="Admin Notifications"
+            title="Notifications"
           >
             <Bell className="h-4 w-4 text-[#d4ad4d]" />
             {unreadCount > 0 && (
@@ -415,7 +491,7 @@ export function Header({ onToggleMenu }: { onToggleMenu?: () => void }) {
                 <div className="p-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-950">
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="h-4 w-4 text-[#d4ad4d]" />
-                    <h3 className="text-xs font-bold text-white">Agency Operations Stream</h3>
+                    <h3 className="text-xs font-bold text-white">{isManager ? 'Agency Operations Stream' : 'Your Notifications'}</h3>
                     {unreadCount > 0 && (
                       <span className="px-2 py-0.5 rounded text-[8.5px] font-extrabold bg-[#d4ad4d]/20 text-[#d4ad4d] border border-[#d4ad4d]/30 uppercase">
                         {unreadCount} UNREAD
@@ -488,12 +564,12 @@ export function Header({ onToggleMenu }: { onToggleMenu?: () => void }) {
                 </div>
 
                 <div className="p-3 border-t border-zinc-800 bg-zinc-950 text-center">
-                  <Link 
-                    href="/dashboard"
+                  <Link
+                    href={isManager ? '/dashboard' : '/leads'}
                     onClick={() => setIsNotifOpen(false)}
                     className="text-[10px] font-bold text-zinc-400 hover:text-[#d4ad4d] transition-colors flex items-center justify-center gap-1"
                   >
-                    <span>View All Admin Audit Logs →</span>
+                    <span>{isManager ? 'View All Admin Audit Logs →' : 'View My Leads →'}</span>
                   </Link>
                 </div>
 
