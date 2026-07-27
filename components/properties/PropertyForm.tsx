@@ -2,12 +2,13 @@
 import { useActionState } from 'react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { createPropertyAction, updatePropertyAction } from '@/app/properties/actions';
 import { supabase } from '@/lib/supabaseClient';
 import { TagsInput } from '@/components/ui/tags-input';
 import { MediaPicker } from '@/components/ui/media-picker';
 import { IndianNumberInput } from '@/components/ui/indian-number-input';
-import { Building2, MapPin, User, ImageIcon, DollarSign, Trash2, ChevronLeft, ChevronDown } from 'lucide-react';
+import { Building2, MapPin, User, ImageIcon, DollarSign, Trash2, ChevronLeft, ChevronDown, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 interface PropertyFormProps {
@@ -49,10 +50,23 @@ function SelectWrapper({ children }: { children: React.ReactNode }) {
 export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFormProps) {
   const router = useRouter();
   const isEdit = mode === 'edit' && !!initialValues.id;
-  const [state, formAction] = useActionState(isEdit ? updatePropertyAction : createPropertyAction, null);
+  const [state, formAction, isPending] = useActionState(isEdit ? updatePropertyAction : createPropertyAction, null);
   const [deleting, setDeleting] = useState(false);
   const [activeSection, setActiveSection] = useState(0);
   const [images, setImages] = useState<any[]>([]);
+
+  // Only one layout (desktop wizard or mobile single-scroll) is ever mounted at a time,
+  // matching the lg: (1024px) breakpoint the rest of the app uses. Previously both were
+  // always mounted with CSS display toggling, which duplicated every field's `name`
+  // attribute in the same <form> -- the hidden copy stayed empty, so native `required`
+  // validation silently blocked every submission with no visible error.
+  const [isDesktop, setIsDesktop] = useState(true);
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 1024);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   useEffect(() => {
     if (initialValues.id) {
@@ -112,6 +126,7 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
 
   useEffect(() => {
     if (state?.success) {
+      toast.success(isEdit ? 'Property updated successfully' : 'Property saved successfully');
       if (locations.length > 0) {
         locations.forEach(loc => {
           supabase.from('locations').upsert({ name: loc }, { onConflict: 'name' });
@@ -119,6 +134,8 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
       }
       router.push('/properties');
       router.refresh();
+    } else if (state?.error) {
+      toast.error(state.error);
     }
   }, [state]);
 
@@ -142,6 +159,36 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
     return `₹${n.toLocaleString('en-IN')}`;
   }
 
+  // Required fields are validated here rather than via the native `required` attribute:
+  // whichever wizard section isn't currently active is display:none, and a hidden required
+  // field can't be focused by the browser to show its validation error -- it just silently
+  // blocks submission instead. This runs on submit, jumps to the offending section, and
+  // shows a toast so the failure is actually visible.
+  function validateRequiredFields(): boolean {
+    if (!previewTitle.trim()) {
+      toast.error('Property Title is required.');
+      setActiveSection(0);
+      return false;
+    }
+    if (locations.length === 0) {
+      toast.error('At least one location is required.');
+      setActiveSection(1);
+      return false;
+    }
+    if (!previewPrice || !String(previewPrice).trim()) {
+      toast.error('Price is required.');
+      setActiveSection(2);
+      return false;
+    }
+    return true;
+  }
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    if (!validateRequiredFields()) {
+      e.preventDefault();
+    }
+  };
+
   // ── Render Helpers for Property Form Sections ──
 
   const renderBasicInfo = () => (
@@ -154,7 +201,6 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
             className={inputCls}
             placeholder="e.g. Modern Luxury Villa"
             defaultValue={initialValues.title ?? ''}
-            required
             onChange={e => setPreviewTitle(e.target.value)}
           />
         </div>
@@ -259,7 +305,6 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
             className={inputCls}
             placeholder="e.g. 1,50,00,000"
             defaultValue={initialValues.price ?? ''}
-            required
             onValueChange={setPreviewPrice}
           />
         </div>
@@ -388,7 +433,7 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
 
 
   return (
-    <form action={formAction} className="min-h-screen bg-[#fafaf8]">
+    <form action={formAction} onSubmit={handleSubmit} className="min-h-screen bg-[#fafaf8]">
       {isEdit && <input type="hidden" name="id" value={initialValues.id} />}
 
       {/* Sticky top header */}
@@ -405,7 +450,7 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
             <button
               type="button"
               onClick={handleDelete}
-              disabled={deleting}
+              disabled={deleting || isPending}
               className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg border border-rose-200 text-rose-600 text-[11px] font-bold bg-rose-50 hover:bg-rose-100 transition-all disabled:opacity-50"
             >
               <Trash2 className="h-3.5 w-3.5" />
@@ -414,9 +459,11 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
           )}
           <button
             type="submit"
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#d4ad4d] text-white text-[11px] font-bold hover:bg-[#b8922e] transition-all shadow-[0_2px_8px_rgba(212,173,77,.35)] cursor-pointer"
+            disabled={isPending}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#d4ad4d] text-white text-[11px] font-bold hover:bg-[#b8922e] transition-all shadow-[0_2px_8px_rgba(212,173,77,.35)] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {isEdit ? 'Update Property' : 'Save Property'}
+            {isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            {isPending ? 'Saving…' : (isEdit ? 'Update Property' : 'Save Property')}
           </button>
         </div>
       </div>
@@ -429,8 +476,12 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
       )}
 
       <div className="max-w-6xl mx-auto">
-        {/* ── DESKTOP VIEWPORT: Split Panel Nav Wizard ── */}
-        <div className="hidden lg:flex" style={{ minHeight: 'calc(100vh - 65px)' }}>
+        {/* Only one of these layouts is ever mounted (see isDesktop above) -- previously
+            both were always mounted with CSS show/hide, duplicating every field's name
+            attribute in this <form> and breaking both validation and submitted values. */}
+        {isDesktop ? (
+        /* ── DESKTOP VIEWPORT: Split Panel Nav Wizard ── */
+        <div className="flex" style={{ minHeight: 'calc(100vh - 65px)' }}>
           {/* Left navigation */}
           <div className="w-[200px] shrink-0 border-r border-[#ebebeb] bg-white pt-6 pb-10">
             {SECTIONS.map((s, i) => {
@@ -510,14 +561,17 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
                   {SECTIONS[activeSection + 1].label} →
                 </button>
               ) : (
-                <button type="submit" className="dc-btn gold font-bold">Save Property</button>
+                <button type="submit" disabled={isPending} className="dc-btn gold font-bold flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed">
+                  {isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  {isPending ? 'Saving…' : 'Save Property'}
+                </button>
               )}
             </div>
           </div>
         </div>
-
-        {/* ── MOBILE VIEWPORT: Single Page Scrolling stacked layout ── */}
-        <div className="block lg:hidden text-left space-y-0 bg-white">
+        ) : (
+        /* ── MOBILE VIEWPORT: Single Page Scrolling stacked layout ── */
+        <div className="text-left space-y-0 bg-white">
           
           <div className="px-5 pt-6 pb-5 border-b border-zinc-100 space-y-4">
             <h3 className="text-[11px] font-black text-zinc-900 pb-2.5 uppercase tracking-wider flex items-baseline gap-2 border-b border-zinc-100">
@@ -559,6 +613,7 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
             {renderMedia()}
           </div>
         </div>
+        )}
 
       </div>
     </form>

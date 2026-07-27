@@ -2,11 +2,12 @@
 
 import { useActionState, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { createLeadAction, updateLeadAction } from '@/app/leads/actions';
 import { TagsInput } from '@/components/ui/tags-input';
 import { IndianNumberInput } from '@/components/ui/indian-number-input';
 import { supabase } from '@/lib/supabaseClient';
-import { ChevronLeft, ChevronDown, User, Calendar, AlertTriangle, ExternalLink } from 'lucide-react';
+import { ChevronLeft, ChevronDown, User, Calendar, AlertTriangle, ExternalLink, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
@@ -37,7 +38,20 @@ const labelCls = "text-[10px] font-bold text-zinc-400 uppercase tracking-widest"
 export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> }) {
   const router = useRouter();
   const isEdit = !!initialValues.id;
-  const [state, formAction] = useActionState((isEdit ? updateLeadAction : createLeadAction) as any, null);
+  const [state, formAction, isPending] = useActionState((isEdit ? updateLeadAction : createLeadAction) as any, null);
+
+  // Only one layout (desktop wizard or mobile single-scroll) is ever mounted at a time,
+  // matching the lg: (1024px) breakpoint the rest of the app uses. Previously both were
+  // always mounted with CSS display toggling, which duplicated every field's `name`
+  // attribute in the same <form> -- the hidden copy stayed empty, so native `required`
+  // validation silently blocked every submission with no visible error.
+  const [isDesktop, setIsDesktop] = useState(true);
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 1024);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   // Preferred Locations state
   const [preferredLocations, setPreferredLocations] = useState<string[]>(
@@ -118,6 +132,7 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
 
   useEffect(() => {
     if ((state as any)?.success) {
+      toast.success(isEdit ? 'Lead updated successfully' : 'Lead saved successfully');
       if (preferredLocations.length > 0) {
         preferredLocations.forEach(loc => {
           supabase.from('locations').upsert({ name: loc }, { onConflict: 'name' });
@@ -125,6 +140,10 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
       }
       router.push('/leads');
       router.refresh();
+    } else if ((state as any)?.duplicate) {
+      toast.error('A lead with this mobile number already exists.');
+    } else if ((state as any)?.error) {
+      toast.error((state as any).error);
     }
   }, [state, router]);
 
@@ -133,9 +152,39 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
   };
 
   const toggleConfig = (cfg: string) => {
-    setSelectedConfigs(prev => 
+    setSelectedConfigs(prev =>
       prev.includes(cfg) ? prev.filter(c => c !== cfg) : [...prev, cfg]
     );
+  };
+
+  // Required fields are validated here rather than via the native `required` attribute:
+  // whichever wizard section isn't currently active is display:none, and a hidden required
+  // field can't be focused by the browser to show its validation error -- it just silently
+  // blocks submission instead. This runs on submit, jumps to the offending section, and
+  // shows a toast so the failure is actually visible.
+  function validateRequiredFields(): boolean {
+    if (!formState.client_name.trim()) {
+      toast.error('Client Name is required.');
+      setActiveSection(0);
+      return false;
+    }
+    if (!formState.phone.trim()) {
+      toast.error('Phone Number is required.');
+      setActiveSection(0);
+      return false;
+    }
+    if (!previewBudgetMax || !String(previewBudgetMax).trim()) {
+      toast.error('Max Budget is required.');
+      setActiveSection(2);
+      return false;
+    }
+    return true;
+  }
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    if (!validateRequiredFields()) {
+      e.preventDefault();
+    }
   };
 
   // ── Render Helpers for Form Sections ──
@@ -144,12 +193,12 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
     <div className="space-y-4">
       <div className="space-y-1.5">
         <label className={labelCls}>Client Name <span className="text-rose-500/80">*</span></label>
-        <input name="client_name" value={formState.client_name} onChange={handleChange} className={inputCls} placeholder="e.g. Rahul Sharma" required />
+        <input name="client_name" value={formState.client_name} onChange={handleChange} className={inputCls} placeholder="e.g. Rahul Sharma" />
       </div>
       
       <div className="space-y-1.5">
         <label className={labelCls}>Phone Number <span className="text-rose-500/80">*</span></label>
-        <input name="phone" value={formState.phone} onChange={handleChange} className={inputCls} placeholder="+91 98452 11002" required />
+        <input name="phone" value={formState.phone} onChange={handleChange} className={inputCls} placeholder="+91 98452 11002" />
         <p className="text-[10px] text-zinc-400 italic font-medium">Main deciding element. CRM automatically checks for duplicate numbers.</p>
       </div>
 
@@ -201,7 +250,7 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
         <div className="space-y-1.5">
           <label className={labelCls}>Lead Source *</label>
           <div className="relative">
-            <select name="lead_source_id" defaultValue={initialValues.lead_source_id ?? 'Google Ads'} className={selectCls} required>
+            <select name="lead_source_id" defaultValue={initialValues.lead_source_id ?? 'Google Ads'} className={selectCls}>
               <option value="Google Ads">Google Ads</option>
               <option value="WhatsApp Inbound">WhatsApp Inbound</option>
               <option value="Direct Referral">Direct Referral</option>
@@ -218,7 +267,7 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
         <div className="space-y-1.5">
           <label className={labelCls}>Category *</label>
           <div className="relative">
-            <select name="category" defaultValue={initialValues.category ?? 'Residential'} className={selectCls} required>
+            <select name="category" defaultValue={initialValues.category ?? 'Residential'} className={selectCls}>
               <option value="Residential">Residential</option>
               <option value="Commercial">Commercial</option>
             </select>
@@ -231,7 +280,7 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
         <div className="space-y-1.5">
           <label className={labelCls}>Transaction Type *</label>
           <div className="relative">
-            <select name="transaction_type" defaultValue={initialValues.transaction_type ?? 'Outright'} className={selectCls} required>
+            <select name="transaction_type" defaultValue={initialValues.transaction_type ?? 'Outright'} className={selectCls}>
               <option value="Outright">Outright (Buy)</option>
               <option value="Rent">Rent / Lease</option>
             </select>
@@ -293,7 +342,7 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
       <div className="space-y-1.5">
         <label className={labelCls}>Property Type *</label>
         <div className="relative">
-          <select name="property_type" defaultValue={initialValues.property_type ?? 'Apartment'} className={selectCls} required>
+          <select name="property_type" defaultValue={initialValues.property_type ?? 'Apartment'} className={selectCls}>
             <option value="Apartment">Apartment</option>
             <option value="Villa">Villa / Independent House</option>
             <option value="Penthouse">Penthouse</option>
@@ -352,7 +401,6 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
             defaultValue={initialValues.budget_max ?? ''}
             className={inputCls + " pl-7"}
             placeholder="e.g. 5,00,00,000"
-            required
             onValueChange={setPreviewBudgetMax}
           />
         </div>
@@ -375,9 +423,9 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
   );
 
   return (
-    <form action={formAction} className="min-h-screen bg-[#fafaf8]">
+    <form action={formAction} onSubmit={handleSubmit} className="min-h-screen bg-[#fafaf8]">
       {isEdit && <input type="hidden" name="id" value={initialValues.id} />}
-      
+
       {/* Sticky top header bar */}
       <div className="sticky top-0 z-10 bg-white border-b border-[#ebebeb] px-4 lg:px-6 py-3 lg:py-4 flex items-center justify-between gap-3">
         <Link href="/leads" className="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-800 transition-colors shrink-0">
@@ -387,8 +435,9 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
         <h1 className="text-[15px] font-extrabold text-zinc-900 tracking-tight flex-1 text-center lg:text-left" style={{letterSpacing:'-0.3px'}}>
           {isEdit ? 'Edit Lead' : 'New Lead'}
         </h1>
-        <button type="submit" className="dc-btn gold font-bold flex items-center gap-1.5 cursor-pointer shrink-0">
-          Save Lead
+        <button type="submit" disabled={isPending} className="dc-btn gold font-bold flex items-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-60 disabled:cursor-not-allowed">
+          {isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+          {isPending ? 'Saving…' : 'Save Lead'}
         </button>
       </div>
 
@@ -433,9 +482,13 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
           </div>
         )}
 
-        {/* ── DESKTOP VIEWPORT: Split Panel Dot Wizard Nav ── */}
-        <div className="hidden lg:flex" style={{minHeight:'calc(100vh - 65px)'}}>
-          
+        {/* Only one of these layouts is ever mounted (see isDesktop above) -- previously
+            both were always mounted with CSS show/hide, duplicating every field's name
+            attribute in this <form> and breaking both validation and submitted values. */}
+        {isDesktop ? (
+        /* ── DESKTOP VIEWPORT: Split Panel Dot Wizard Nav ── */
+        <div className="flex" style={{minHeight:'calc(100vh - 65px)'}}>
+
           {/* Left section navigation */}
           <div className="w-[200px] shrink-0 border-r border-[#ebebeb] bg-white pt-6 pb-10">
             {sections.map((s, i) => (
@@ -496,14 +549,17 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
                   {sections[activeSection+1].label} →
                 </button>
               ) : (
-                <button type="submit" className="dc-btn gold font-bold">Save Lead</button>
+                <button type="submit" disabled={isPending} className="dc-btn gold font-bold flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed">
+                  {isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  {isPending ? 'Saving…' : 'Save Lead'}
+                </button>
               )}
             </div>
           </div>
         </div>
-
-        {/* ── MOBILE VIEWPORT: Single Page Scrolling stacked layout ── */}
-        <div className="block lg:hidden text-left space-y-0 bg-white">
+        ) : (
+        /* ── MOBILE VIEWPORT: Single Page Scrolling stacked layout ── */
+        <div className="text-left space-y-0 bg-white">
           
           <div className="px-5 pt-6 pb-5 border-b border-zinc-100 space-y-4">
             <h3 className="text-[11px] font-black text-zinc-900 pb-2.5 uppercase tracking-wider flex items-baseline gap-2 border-b border-zinc-100">
@@ -537,6 +593,7 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
             {renderNotesFields()}
           </div>
         </div>
+        )}
 
       </div>
     </form>
