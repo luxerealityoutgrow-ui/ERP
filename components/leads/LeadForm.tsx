@@ -414,8 +414,8 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
                 </div>
               </div>
 
-              <Link href={`/leads`}>
-                <button 
+              <Link href={`/leads/${(state as any).existingLead.id}`}>
+                <button
                   type="button"
                   className="px-3 py-1.5 rounded-lg bg-zinc-900 text-white text-[11px] font-bold hover:bg-zinc-800 transition-all flex items-center gap-1 cursor-pointer"
                 >
