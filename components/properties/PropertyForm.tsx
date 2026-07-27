@@ -215,7 +215,7 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
     <div className="space-y-5">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <FieldLabel required>Property Title</FieldLabel>
+          <FieldLabel required>Society Name</FieldLabel>
           <input
             name="title"
             className={inputCls}
@@ -291,7 +291,7 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
   const renderLocation = () => (
     <div className="space-y-5">
       <div className="space-y-1.5">
-        <FieldLabel required>Society Name / Location Tags</FieldLabel>
+        <FieldLabel required>Location Tags</FieldLabel>
         <TagsInput
           value={locations}
           onChange={setLocations}
