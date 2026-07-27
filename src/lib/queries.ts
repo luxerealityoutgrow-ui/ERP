@@ -6,6 +6,7 @@ export interface Lead {
   id: string;
   client_name: string;
   phone: string;
+  alternate_phones?: string[];
   email: string;
   lead_source_id: string;
   budget_min: number;
@@ -61,6 +62,7 @@ export interface Property {
   source_type?: string;
   owner_name?: string;
   owner_contact?: string;
+  alternate_owner_contacts?: string[];
   unit_no?: string;
   brokerage?: string;
   description?: string;

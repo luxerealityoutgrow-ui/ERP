@@ -7,7 +7,7 @@ import { createLeadAction, updateLeadAction } from '@/app/leads/actions';
 import { TagsInput } from '@/components/ui/tags-input';
 import { IndianNumberInput } from '@/components/ui/indian-number-input';
 import { supabase } from '@/lib/supabaseClient';
-import { ChevronLeft, ChevronDown, User, Calendar, AlertTriangle, ExternalLink, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronDown, User, Calendar, AlertTriangle, ExternalLink, Loader2, Plus, X } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
@@ -91,6 +91,9 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
     status: initialValues.status ?? 'Hot' 
   });
   const [previewBudgetMax, setPreviewBudgetMax] = useState(initialValues.budget_max ?? '');
+  const [alternatePhones, setAlternatePhones] = useState<string[]>(
+    Array.isArray(initialValues.alternate_phones) ? initialValues.alternate_phones : []
+  );
 
   function formatPrice(v: string | number) {
     const n = parseFloat(String(v));
@@ -207,6 +210,38 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
         <label className={labelCls}>Phone Number <span className="text-rose-500/80">*</span></label>
         <input name="phone" value={formState.phone} onChange={handleChange} className={inputCls} placeholder="+91 98452 11002" />
         <p className="text-[10px] text-zinc-400 italic font-medium">Main deciding element. CRM automatically checks for duplicate numbers.</p>
+      </div>
+
+      <div className="space-y-1.5">
+        <label className={labelCls}>Additional Mobile Numbers <span className="text-zinc-300 font-semibold">(Optional)</span></label>
+        <div className="space-y-2">
+          {alternatePhones.map((num, idx) => (
+            <div key={idx} className="flex items-center gap-2">
+              <input
+                name="alternate_phones"
+                value={num}
+                onChange={e => setAlternatePhones(prev => prev.map((p, i) => i === idx ? e.target.value : p))}
+                className={inputCls}
+                placeholder="+91 98765 43210"
+              />
+              <button
+                type="button"
+                onClick={() => setAlternatePhones(prev => prev.filter((_, i) => i !== idx))}
+                className="shrink-0 p-2 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => setAlternatePhones(prev => [...prev, ''])}
+            className="flex items-center gap-1 text-[11px] font-bold text-[#b8922e] hover:text-[#96751f] transition-colors"
+          >
+            <Plus className="h-3 w-3" /> Add another number
+          </button>
+        </div>
+        <p className="text-[10px] text-zinc-400 italic font-medium">Also checked for duplicates, same as the main number.</p>
       </div>
 
       <div className="space-y-1.5">

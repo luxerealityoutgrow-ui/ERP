@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { TagsInput } from '@/components/ui/tags-input';
 import { MediaPicker } from '@/components/ui/media-picker';
 import { IndianNumberInput } from '@/components/ui/indian-number-input';
-import { Building2, MapPin, User, ImageIcon, DollarSign, Trash2, ChevronLeft, ChevronDown, Loader2 } from 'lucide-react';
+import { Building2, MapPin, User, ImageIcon, DollarSign, Trash2, ChevronLeft, ChevronDown, Loader2, Plus, X } from 'lucide-react';
 import Link from 'next/link';
 
 interface PropertyFormProps {
@@ -134,6 +134,9 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
   const [previewTitle, setPreviewTitle] = useState(initialValues.title || '');
   const [previewPrice, setPreviewPrice] = useState(initialValues.price || '');
   const [previewType, setPreviewType] = useState(initialValues.property_type || '');
+  const [alternateOwnerContacts, setAlternateOwnerContacts] = useState<string[]>(
+    Array.isArray(initialValues.alternate_owner_contacts) ? initialValues.alternate_owner_contacts : []
+  );
 
   useEffect(() => {
     supabase.from('locations').select('name').order('name').then(({ data }) => {
@@ -369,6 +372,37 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
         <div className="space-y-1.5">
           <FieldLabel>Owner Contact</FieldLabel>
           <input name="owner_contact" className={inputCls} placeholder="+91 90000 00000" defaultValue={initialValues.owner_contact ?? ''} />
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <FieldLabel>Additional Mobile Numbers</FieldLabel>
+        <div className="space-y-2">
+          {alternateOwnerContacts.map((num, idx) => (
+            <div key={idx} className="flex items-center gap-2">
+              <input
+                name="alternate_owner_contacts"
+                value={num}
+                onChange={e => setAlternateOwnerContacts(prev => prev.map((p, i) => i === idx ? e.target.value : p))}
+                className={inputCls}
+                placeholder="+91 90000 00001"
+              />
+              <button
+                type="button"
+                onClick={() => setAlternateOwnerContacts(prev => prev.filter((_, i) => i !== idx))}
+                className="shrink-0 p-2 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => setAlternateOwnerContacts(prev => [...prev, ''])}
+            className="flex items-center gap-1 text-[11px] font-bold text-[#b8922e] hover:text-[#96751f] transition-colors"
+          >
+            <Plus className="h-3 w-3" /> Add another number
+          </button>
         </div>
       </div>
 

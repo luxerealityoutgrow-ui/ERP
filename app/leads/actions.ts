@@ -30,19 +30,26 @@ export async function createLeadAction(prevState: any, formData: FormData) {
   
   const phoneRaw = String(formData.get('phone') || '').trim();
   const cleanPhone = phoneRaw.replace(/[^0-9]/g, '').slice(-10);
+  const altPhonesRaw = (formData.getAll('alternate_phones') as string[]).map(p => p.trim()).filter(Boolean);
+  const cleanAltPhones = altPhonesRaw.map(p => p.replace(/[^0-9]/g, '').slice(-10)).filter(p => p.length >= 7);
+  // Every number submitted on this lead (main + alternates) is checked for a match --
+  // the client's requirement has no distinction between which field the number is in.
+  const allSubmittedClean = [cleanPhone, ...cleanAltPhones].filter(p => p.length >= 7);
 
   // Check duplicate mobile number across ALL leads, not just active ones -- a lead that
   // was marked inactive (lost/closed) is still a real, already-assigned lead, and staff
   // creating a "new" one for the same phone number should be blocked and shown who it's
   // assigned to, same as for an active lead.
-  if (cleanPhone.length >= 7) {
+  if (allSubmittedClean.length > 0) {
     const { data: existingLeads } = await supabase
       .from('leads')
-      .select('id, client_name, phone, assigned_to');
+      .select('id, client_name, phone, alternate_phones, assigned_to');
 
     const matched = existingLeads?.find(l => {
-      const p = String(l.phone || '').replace(/[^0-9]/g, '').slice(-10);
-      return p && p === cleanPhone;
+      const existingClean = [l.phone, ...(l.alternate_phones || [])]
+        .map((p: string) => String(p || '').replace(/[^0-9]/g, '').slice(-10))
+        .filter((p: string) => p.length >= 7);
+      return existingClean.some((p: string) => allSubmittedClean.includes(p));
     });
 
     if (matched) {
@@ -76,6 +83,7 @@ export async function createLeadAction(prevState: any, formData: FormData) {
   const data: Record<string, unknown> = {
     client_name: formData.get('client_name'),
     phone: phoneRaw,
+    alternate_phones: altPhonesRaw,
     email: formData.get('email') || null,
     lead_source_id: formData.get('lead_source_id'),
     budget_min: formData.get('budget_min') || null,
@@ -149,15 +157,20 @@ export async function updateLeadAction(prevState: any, formData: FormData) {
   // a different, already-existing lead (active or inactive).
   const phoneRaw = String(formData.get('phone') || '').trim();
   const cleanPhone = phoneRaw.replace(/[^0-9]/g, '').slice(-10);
-  if (cleanPhone.length >= 7) {
+  const altPhonesRaw = (formData.getAll('alternate_phones') as string[]).map(p => p.trim()).filter(Boolean);
+  const cleanAltPhones = altPhonesRaw.map(p => p.replace(/[^0-9]/g, '').slice(-10)).filter(p => p.length >= 7);
+  const allSubmittedClean = [cleanPhone, ...cleanAltPhones].filter(p => p.length >= 7);
+  if (allSubmittedClean.length > 0) {
     const { data: existingLeads } = await supabase
       .from('leads')
-      .select('id, client_name, phone, assigned_to')
+      .select('id, client_name, phone, alternate_phones, assigned_to')
       .neq('id', id);
 
     const matched = existingLeads?.find(l => {
-      const p = String(l.phone || '').replace(/[^0-9]/g, '').slice(-10);
-      return p && p === cleanPhone;
+      const existingClean = [l.phone, ...(l.alternate_phones || [])]
+        .map((p: string) => String(p || '').replace(/[^0-9]/g, '').slice(-10))
+        .filter((p: string) => p.length >= 7);
+      return existingClean.some((p: string) => allSubmittedClean.includes(p));
     });
 
     if (matched) {
@@ -189,6 +202,7 @@ export async function updateLeadAction(prevState: any, formData: FormData) {
   const data: Record<string, unknown> = {
     client_name: formData.get('client_name'),
     phone: formData.get('phone'),
+    alternate_phones: altPhonesRaw,
     email: formData.get('email'),
     lead_source_id: formData.get('lead_source_id'),
     budget_min: formData.get('budget_min') || null,

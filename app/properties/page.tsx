@@ -188,7 +188,7 @@ export default function PropertyInventoryPage() {
     const cleanTitle = (prop.title || '').replace(/\s*\(\s*null\s*\)/gi, '').trim();
     const priceStr = prop.price ? formatPriceShort(prop.price) : 'Price on request';
 
-    let text = `${cleanTitle}\nLocation: ${prop.location || 'Pune'}\nPrice: ${priceStr}\nType: ${prop.configuration || prop.property_type || 'Apartment'}\nArea: ${prop.carpet_area ? `${prop.carpet_area} sq ft` : 'N/A'}\nFor: ${prop.listing_type || 'Sale'}`;
+    let text = `${cleanTitle}\nLocation: ${prop.location || 'Pune'}\nPrice: ${priceStr}\nType: ${prop.configuration || prop.property_type || 'Apartment'}\nCarpet Area: ${prop.carpet_area ? `${prop.carpet_area} sq ft` : 'N/A'}\nBuilt-up Area: ${prop.built_up_area ? `${prop.built_up_area} sq ft` : 'N/A'}\nFor: ${prop.listing_type || 'Sale'}`;
 
     if ((prop as any).parking_spaces) {
       text += `\nParking: ${(prop as any).parking_spaces} Car park(s)`;
