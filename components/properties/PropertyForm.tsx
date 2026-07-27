@@ -47,6 +47,17 @@ function SelectWrapper({ children }: { children: React.ReactNode }) {
   );
 }
 
+// property_code has a unique constraint in the DB. Leaving the field blank used to submit
+// an empty string (not null), and Postgres treats duplicate empty strings as a unique-key
+// collision -- so the second property ever saved with a blank code failed. Generating a
+// fresh, effectively-collision-proof code per form load removes the need to ever leave it
+// blank; staff can still overwrite it with their own scheme if they want.
+function generatePropertyCode(): string {
+  const timestamp = Date.now().toString(36).toUpperCase();
+  const random = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `PRP-${timestamp}-${random}`;
+}
+
 export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFormProps) {
   const router = useRouter();
   const isEdit = mode === 'edit' && !!initialValues.id;
@@ -112,6 +123,12 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
   );
   const [locationOptions, setLocationOptions] = useState<{ value: string; label: string }[]>([]);
 
+  // Auto-generate a code for new properties so the field is never submitted blank.
+  // Editing an existing property (even one that currently has no code) keeps whatever
+  // is already there rather than forcing a code onto it.
+  const [propertyCode, setPropertyCode] = useState(
+    initialValues.property_code || (initialValues.id ? '' : generatePropertyCode())
+  );
 
   // Live preview state
   const [previewTitle, setPreviewTitle] = useState(initialValues.title || '');
@@ -206,7 +223,7 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
         </div>
         <div className="space-y-1.5">
           <FieldLabel>Property Code</FieldLabel>
-          <input name="property_code" className={inputCls} placeholder="PRP-001" defaultValue={initialValues.property_code ?? ''} />
+          <input name="property_code" className={inputCls} placeholder="PRP-001" value={propertyCode} onChange={e => setPropertyCode(e.target.value)} />
         </div>
       </div>
 

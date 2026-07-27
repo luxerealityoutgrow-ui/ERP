@@ -65,7 +65,10 @@ export async function createPropertyAction(prevState: any, formData: FormData) {
   const profile = await getProfile(supabase);
   const data: Record<string, unknown> = {
     title: formData.get('title'),
-    property_code: formData.get('property_code'),
+    // property_code has a unique constraint; submitting '' (rather than null) collides
+    // with any other property that was also left blank, since Postgres only treats NULLs
+    // as distinct from each other -- empty strings are a real, comparable value.
+    property_code: String(formData.get('property_code') || '').trim() || null,
     location: formData.get('location'),
     address: formData.get('address'),
     property_type: formData.get('property_type'),
@@ -139,7 +142,10 @@ export async function updatePropertyAction(prevState: any, formData: FormData) {
 
   const data: Record<string, unknown> = {
     title: formData.get('title'),
-    property_code: formData.get('property_code'),
+    // property_code has a unique constraint; submitting '' (rather than null) collides
+    // with any other property that was also left blank, since Postgres only treats NULLs
+    // as distinct from each other -- empty strings are a real, comparable value.
+    property_code: String(formData.get('property_code') || '').trim() || null,
     location: formData.get('location'),
     address: formData.get('address'),
     property_type: formData.get('property_type'),
