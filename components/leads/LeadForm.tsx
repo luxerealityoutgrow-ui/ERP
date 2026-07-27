@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createLeadAction, updateLeadAction } from '@/app/leads/actions';
 import { TagsInput } from '@/components/ui/tags-input';
+import { IndianNumberInput } from '@/components/ui/indian-number-input';
 import { supabase } from '@/lib/supabaseClient';
 import { ChevronLeft, ChevronDown, User, Calendar, AlertTriangle, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
@@ -346,14 +347,13 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
         <label className={labelCls}>Max Budget *</label>
         <div className="relative">
           <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 text-base lg:text-[12px] font-bold">₹</span>
-          <input 
-            type="number" 
-            name="budget_max" 
-            defaultValue={initialValues.budget_max ?? ''} 
-            className={inputCls + " pl-7"} 
-            placeholder="e.g. 50000000" 
-            required 
-            onChange={e => setPreviewBudgetMax(e.target.value)}
+          <IndianNumberInput
+            name="budget_max"
+            defaultValue={initialValues.budget_max ?? ''}
+            className={inputCls + " pl-7"}
+            placeholder="e.g. 5,00,00,000"
+            required
+            onValueChange={setPreviewBudgetMax}
           />
         </div>
         {previewBudgetMax && (

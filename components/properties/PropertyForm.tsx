@@ -6,6 +6,7 @@ import { createPropertyAction, updatePropertyAction } from '@/app/properties/act
 import { supabase } from '@/lib/supabaseClient';
 import { TagsInput } from '@/components/ui/tags-input';
 import { MediaPicker } from '@/components/ui/media-picker';
+import { IndianNumberInput } from '@/components/ui/indian-number-input';
 import { Building2, MapPin, User, ImageIcon, DollarSign, Trash2, ChevronLeft, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 
@@ -253,14 +254,13 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <FieldLabel required>Price (₹)</FieldLabel>
-          <input
-            type="number"
+          <IndianNumberInput
             name="price"
             className={inputCls}
-            placeholder="e.g. 15000000"
+            placeholder="e.g. 1,50,00,000"
             defaultValue={initialValues.price ?? ''}
             required
-            onChange={e => setPreviewPrice(e.target.value)}
+            onValueChange={setPreviewPrice}
           />
         </div>
         <div className="space-y-1.5">
