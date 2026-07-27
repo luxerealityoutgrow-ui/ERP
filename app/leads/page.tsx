@@ -598,7 +598,10 @@ Notes: ${l.notes || 'None'}`;
    Notes: ${l.notes || 'None'}`;
     }).join('\n\n');
 
-    const headerText = `LUXE REALTY PUNE - SHARED LEADS SUMMARY (${selectedLeads.length} Lead${selectedLeads.length > 1 ? 's' : ''})\n${'─'.repeat(40)}\n\n`;
+    // No repeated-character divider here -- a fixed-width line (e.g. 40 dashes) wraps
+    // across 2-3 visual lines in WhatsApp's narrow message bubble instead of staying on
+    // one, which is what showed up as extra blank-looking lines under the header.
+    const headerText = `LUXE REALTY PUNE - SHARED LEADS SUMMARY (${selectedLeads.length} Lead${selectedLeads.length > 1 ? 's' : ''})\n\n`;
     const fullText = headerText + leadsSummary;
 
     if (type === 'copy') {

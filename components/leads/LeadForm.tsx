@@ -24,10 +24,17 @@ const CONFIG_OPTIONS = [
   '6 BHK',
   '6.5 BHK',
   'Penthouse',
-  'Villa',
   'Studio',
   'Office Space',
-  'Plot'
+  'Plot',
+  'Bunglow',
+  'Restaurant',
+  'Shop',
+  'Rowhouse',
+  'Showroom',
+  'Duplex',
+  'Triplex',
+  'Building'
 ];
 
 const inputCls = "w-full h-10 px-3.5 bg-[#fafaf8] border border-zinc-200/80 rounded-xl text-base lg:text-[12px] font-semibold text-zinc-800 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-[#d4ad4d] focus:ring-4 focus:ring-[#d4ad4d]/10 transition-all";

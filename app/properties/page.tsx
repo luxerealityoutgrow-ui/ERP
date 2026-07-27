@@ -219,7 +219,9 @@ export default function PropertyInventoryPage() {
   const handleShareWhatsApp = (props?: Property[]) => {
     const items = props || getSelectedProperties();
     if (items.length === 0) return;
-    const header = items.length > 1 ? `LUXE REALTY PUNE - ${items.length} PROPERTIES\n${'─'.repeat(30)}\n\n` : `LUXE REALTY PUNE\n\n`;
+    // No repeated-character divider -- a fixed-width line wraps across multiple visual
+    // lines in WhatsApp's narrow message bubble instead of staying on one.
+    const header = items.length > 1 ? `LUXE REALTY PUNE - ${items.length} PROPERTIES\n\n` : `LUXE REALTY PUNE\n\n`;
     const text = header + items.map((p, i) => items.length > 1 ? `${i + 1}. ${getPropertyText(p)}` : getPropertyText(p)).join('\n\n---\n\n');
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
