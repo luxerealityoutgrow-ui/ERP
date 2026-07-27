@@ -31,12 +31,14 @@ export async function createLeadAction(prevState: any, formData: FormData) {
   const phoneRaw = String(formData.get('phone') || '').trim();
   const cleanPhone = phoneRaw.replace(/[^0-9]/g, '').slice(-10);
 
-  // Check duplicate mobile number in active CRM leads
+  // Check duplicate mobile number across ALL leads, not just active ones -- a lead that
+  // was marked inactive (lost/closed) is still a real, already-assigned lead, and staff
+  // creating a "new" one for the same phone number should be blocked and shown who it's
+  // assigned to, same as for an active lead.
   if (cleanPhone.length >= 7) {
     const { data: existingLeads } = await supabase
       .from('leads')
-      .select('id, client_name, phone, assigned_to')
-      .eq('is_active', true);
+      .select('id, client_name, phone, assigned_to');
 
     const matched = existingLeads?.find(l => {
       const p = String(l.phone || '').replace(/[^0-9]/g, '').slice(-10);
@@ -142,6 +144,48 @@ export async function updateLeadAction(prevState: any, formData: FormData) {
   if (!id) return { error: "Missing lead ID" };
 
   const profile = await useProfile(supabase);
+
+  // Same duplicate-phone protection as create: block editing a lead's number to match
+  // a different, already-existing lead (active or inactive).
+  const phoneRaw = String(formData.get('phone') || '').trim();
+  const cleanPhone = phoneRaw.replace(/[^0-9]/g, '').slice(-10);
+  if (cleanPhone.length >= 7) {
+    const { data: existingLeads } = await supabase
+      .from('leads')
+      .select('id, client_name, phone, assigned_to')
+      .neq('id', id);
+
+    const matched = existingLeads?.find(l => {
+      const p = String(l.phone || '').replace(/[^0-9]/g, '').slice(-10);
+      return p && p === cleanPhone;
+    });
+
+    if (matched) {
+      let assigneeName = 'Unassigned';
+      if (matched.assigned_to) {
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', matched.assigned_to)
+          .single();
+        if (prof?.full_name) assigneeName = prof.full_name;
+      }
+
+      return {
+        success: false,
+        duplicate: true,
+        error: `DUPLICATE_LEAD`,
+        existingLead: {
+          id: matched.id,
+          client_name: matched.client_name,
+          phone: matched.phone,
+          assigneeName
+        },
+        data: null
+      };
+    }
+  }
+
   const data: Record<string, unknown> = {
     client_name: formData.get('client_name'),
     phone: formData.get('phone'),
