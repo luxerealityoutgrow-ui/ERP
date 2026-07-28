@@ -9,6 +9,7 @@ import { TagsInput } from '@/components/ui/tags-input';
 import { MediaPicker } from '@/components/ui/media-picker';
 import { IndianNumberInput } from '@/components/ui/indian-number-input';
 import { Building2, MapPin, User, ImageIcon, DollarSign, Trash2, ChevronLeft, ChevronDown, Loader2, Plus, X } from 'lucide-react';
+import { isResidentialType, BHK_CONFIG_OPTIONS, COMMERCIAL_CONFIG_OPTIONS } from '@/lib/propertyTypes';
 import Link from 'next/link';
 
 interface PropertyFormProps {
@@ -159,6 +160,17 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
     }
   }, [state]);
 
+  // Commercial/other property types (Office Space, Shop, Plot, etc.) don't have a BHK
+  // configuration -- auto-fill Configuration with the property type itself the moment it's
+  // picked, so staff aren't stuck free-typing "office" by hand. Only fires when Configuration
+  // is still empty, so it never overwrites something the user already entered.
+  const handlePropertyTypeChange = (value: string) => {
+    setPreviewType(value);
+    if (value && !isResidentialType(value) && configuration.length === 0) {
+      setConfiguration([value]);
+    }
+  };
+
   const handleDelete = async () => {
     if (!initialValues.id) return;
     if (!confirm('Are you sure you want to delete this property? This cannot be undone.')) return;
@@ -238,7 +250,7 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
               name="property_type"
               className={selectCls}
               defaultValue={initialValues.property_type ?? ''}
-              onChange={e => setPreviewType(e.target.value)}
+              onChange={e => handlePropertyTypeChange(e.target.value)}
             >
               <option value="">Select Type</option>
               <option>Apartment</option>
@@ -255,19 +267,7 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
           <TagsInput
             value={configuration}
             onChange={setConfiguration}
-            options={[
-              { value: '1 BHK', label: '1 BHK' },
-              { value: '2 BHK', label: '2 BHK' },
-              { value: '2.5 BHK', label: '2.5 BHK' },
-              { value: '3 BHK', label: '3 BHK' },
-              { value: '3.5 BHK', label: '3.5 BHK' },
-              { value: '4 BHK', label: '4 BHK' },
-              { value: '4.5 BHK', label: '4.5 BHK' },
-              { value: '5 BHK', label: '5 BHK' },
-              { value: '5.5 BHK', label: '5.5 BHK' },
-              { value: '6 BHK', label: '6 BHK' },
-              { value: '6.5 BHK', label: '6.5 BHK' },
-            ]}
+            options={!previewType || isResidentialType(previewType) ? BHK_CONFIG_OPTIONS : COMMERCIAL_CONFIG_OPTIONS}
             allowCustom={true}
             placeholder="Add config..."
           />

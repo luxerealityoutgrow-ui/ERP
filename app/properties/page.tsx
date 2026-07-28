@@ -30,22 +30,7 @@ import { formatCurrency, formatPriceShort } from '@/lib/formatters';
 import { ImageSlider } from '@/components/ui/image-slider';
 import { AvatarCell } from '@/components/ui/AvatarCell';
 import { InlineStatsBar } from '@/components/ui/InlineStatsBar';
-
-// BHK-style configuration only makes sense for residential unit types. Commercial/other
-// listings (Shop, Office Space, Plot, Showroom, etc.) should show their property type
-// instead -- showing "2 BHK" on a shop, or a blank dash when configuration was never set,
-// is meaningless for those listings.
-const RESIDENTIAL_TYPES = ['Apartment', 'Penthouse', 'Villa', 'Duplex', 'Triplex', 'Bunglow', 'Rowhouse', 'Row House', 'Building'];
-function isResidentialType(propertyType: string | undefined | null): boolean {
-  const t = (propertyType || '').toLowerCase();
-  return RESIDENTIAL_TYPES.some(rt => t.includes(rt.toLowerCase()));
-}
-function getConfigDisplay(prop: { property_type?: string; configuration?: string }): string {
-  if (!isResidentialType(prop.property_type)) {
-    return prop.property_type || prop.configuration || '—';
-  }
-  return prop.configuration || '—';
-}
+import { getConfigDisplay } from '@/lib/propertyTypes';
 
 export default function PropertyInventoryPage() {
   const profile = useProfile();
