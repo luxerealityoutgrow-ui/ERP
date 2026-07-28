@@ -31,6 +31,22 @@ import { ImageSlider } from '@/components/ui/image-slider';
 import { AvatarCell } from '@/components/ui/AvatarCell';
 import { InlineStatsBar } from '@/components/ui/InlineStatsBar';
 
+// BHK-style configuration only makes sense for residential unit types. Commercial/other
+// listings (Shop, Office Space, Plot, Showroom, etc.) should show their property type
+// instead -- showing "2 BHK" on a shop, or a blank dash when configuration was never set,
+// is meaningless for those listings.
+const RESIDENTIAL_TYPES = ['Apartment', 'Penthouse', 'Villa', 'Duplex', 'Triplex', 'Bunglow', 'Rowhouse', 'Row House', 'Building'];
+function isResidentialType(propertyType: string | undefined | null): boolean {
+  const t = (propertyType || '').toLowerCase();
+  return RESIDENTIAL_TYPES.some(rt => t.includes(rt.toLowerCase()));
+}
+function getConfigDisplay(prop: { property_type?: string; configuration?: string }): string {
+  if (!isResidentialType(prop.property_type)) {
+    return prop.property_type || prop.configuration || '—';
+  }
+  return prop.configuration || '—';
+}
+
 export default function PropertyInventoryPage() {
   const profile = useProfile();
   const perms = getPermissions(profile?.role);
@@ -188,7 +204,7 @@ export default function PropertyInventoryPage() {
     const cleanTitle = (prop.title || '').replace(/\s*\(\s*null\s*\)/gi, '').trim();
     const priceStr = prop.price ? formatPriceShort(prop.price) : 'Price on request';
 
-    let text = `${cleanTitle}\nLocation: ${prop.location || 'Pune'}\nPrice: ${priceStr}\nType: ${prop.configuration || prop.property_type || 'Apartment'}\nCarpet Area: ${prop.carpet_area ? `${prop.carpet_area} sq ft` : 'N/A'}\nBuilt-up Area: ${prop.built_up_area ? `${prop.built_up_area} sq ft` : 'N/A'}\nFor: ${prop.listing_type || 'Sale'}`;
+    let text = `${cleanTitle}\nLocation: ${prop.location || 'Pune'}\nPrice: ${priceStr}\nType: ${getConfigDisplay(prop)}\nCarpet Area: ${prop.carpet_area ? `${prop.carpet_area} sq ft` : 'N/A'}\nBuilt-up Area: ${prop.built_up_area ? `${prop.built_up_area} sq ft` : 'N/A'}\nFor: ${prop.listing_type || 'Sale'}`;
 
     if ((prop as any).parking_spaces) {
       text += `\nParking: ${(prop as any).parking_spaces} Car park(s)`;
@@ -691,11 +707,14 @@ export default function PropertyInventoryPage() {
                       </td>
                       <td onClick={() => handleOpenProperty(prop)}>
                         <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-zinc-100 text-[10px] font-bold text-zinc-700 uppercase">
-                          {prop.configuration || '—'}
+                          {getConfigDisplay(prop)}
                         </span>
                       </td>
                       <td onClick={() => handleOpenProperty(prop)}>
-                        <span className="text-xs font-semibold text-zinc-700">{prop.carpet_area ? `${prop.carpet_area} sqft` : '—'}</span>
+                        <div className="text-xs font-semibold text-zinc-700">{prop.carpet_area ? `${prop.carpet_area} sqft` : '—'}</div>
+                        {prop.built_up_area ? (
+                          <div className="text-[10px] font-medium text-zinc-400">{prop.built_up_area} sqft built-up</div>
+                        ) : null}
                       </td>
                       <td className="text-right font-bold text-zinc-900 text-xs" onClick={() => handleOpenProperty(prop)}>
                         {formatPriceShort(prop.price)}
