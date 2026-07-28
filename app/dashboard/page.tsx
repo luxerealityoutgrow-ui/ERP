@@ -174,23 +174,16 @@ export default function DashboardPage() {
   const closedRevenue = closedDeals.reduce((sum, l) => sum + (l.budget_max || 0), 0);
   const estimatedCommission = closedRevenue * 0.02;
 
-  // Agent Efficiency Matrix Data Mapping
+  // Agent Efficiency Matrix Data Mapping -- computed entirely from real leads/profiles data.
+  // No fabricated fallback roster and no response-time metric, since the app doesn't track
+  // response timestamps anywhere; that column shows "--" rather than inventing a number.
   const agentScorecards = useMemo(() => {
-    if (teamProfiles.length === 0) {
-      return [
-        { name: 'Rahul Sharma', role: 'SuperAdmin', assigned: 18, closedVal: 84000000, convRate: 33.3, respTime: '12 mins', score: 96, grade: 'EXCELLENT' },
-        { name: 'Priya Mehta', role: 'Manager', assigned: 14, closedVal: 52000000, convRate: 28.5, respTime: '18 mins', score: 91, grade: 'GOLD' },
-        { name: 'Siddharth Shetty', role: 'SalesPerson', assigned: 11, closedVal: 38000000, convRate: 25.0, respTime: '14 mins', score: 88, grade: 'STRONG' },
-        { name: 'Amit Deshmukh', role: 'SalesPerson', assigned: 9, closedVal: 12000000, convRate: 18.0, respTime: '35 mins', score: 78, grade: 'AVERAGE' },
-      ];
-    }
-
     return teamProfiles.map(member => {
       const assignedLeads = leads.filter(l => l.assigned_to === member.id);
       const memberClosed = assignedLeads.filter(l => l.status === 'Closed' || l.stage_id === 'Closure');
       const closedVal = memberClosed.reduce((sum, l) => sum + (l.budget_max || 0), 0);
       const convRate = assignedLeads.length > 0 ? (memberClosed.length / assignedLeads.length) * 100 : 0;
-      
+
       const score = Math.min(100, Math.round(convRate * 2 + (assignedLeads.length * 3) + 40));
       const grade = score >= 90 ? 'EXCELLENT' : score >= 80 ? 'GOLD' : score >= 70 ? 'STRONG' : 'AVERAGE';
 
@@ -201,12 +194,28 @@ export default function DashboardPage() {
         assigned: assignedLeads.length,
         closedVal,
         convRate: convRate.toFixed(1),
-        respTime: `${10 + Math.floor(Math.random() * 20)} mins`,
         score,
         grade
       };
     });
   }, [teamProfiles, leads]);
+
+  const teamAvgEfficiency = agentScorecards.length > 0
+    ? Math.round(agentScorecards.reduce((sum, a) => sum + a.score, 0) / agentScorecards.length)
+    : null;
+
+  // Lead Source Attribution, computed from the real lead_source_id on each lead
+  const leadSourceAttribution = useMemo(() => {
+    const counts = new Map<string, number>();
+    filteredLeads.forEach(l => {
+      const source = l.lead_source_id || 'Unspecified';
+      counts.set(source, (counts.get(source) || 0) + 1);
+    });
+    const total = filteredLeads.length;
+    return Array.from(counts.entries())
+      .map(([name, count]) => ({ name, count, pct: total > 0 ? Math.round((count / total) * 100) : 0 }))
+      .sort((a, b) => b.count - a.count);
+  }, [filteredLeads]);
 
   const handleExportReport = () => {
     const timestamp = new Date().toLocaleString('en-IN', {
@@ -396,7 +405,7 @@ export default function DashboardPage() {
             </div>
             <div className="text-[22px] font-black text-zinc-900 mt-1">{totalLeadsCount}</div>
             <div className="text-[10px] font-extrabold text-emerald-700 mt-0.5 flex items-center gap-1">
-              <span>↑ +14.2% ({dateRange.toUpperCase()})</span>
+              <span>{hotLeads.length} Hot · {warmLeads.length} Warm · {coldLeads.length} Other</span>
               <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
           </div>
@@ -481,7 +490,7 @@ export default function DashboardPage() {
                   <p className="text-[10px] text-zinc-400 font-medium">Click any stage card to filter granular deal list</p>
                 </div>
                 <span className="text-[10px] font-extrabold text-[#b8922e] bg-[#f4ebd0]/60 border border-[#e8d5a3] px-2.5 py-1 rounded-lg">
-                  Avg 18 Days Velocity
+                  {closedDeals.length} Deals Closed ({dateRange.toUpperCase()})
                 </span>
               </div>
 
@@ -524,10 +533,10 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-[13px] font-extrabold text-zinc-900">Sales Team Efficiency & Performance Matrix</h3>
-                  <p className="text-[10px] text-zinc-400 font-medium">Individual response times, closed deal valuations & efficiency ratings</p>
+                  <p className="text-[10px] text-zinc-400 font-medium">Assigned leads, closed deal valuations & efficiency ratings</p>
                 </div>
                 <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
-                  Team Avg Efficiency: 91%
+                  {teamAvgEfficiency !== null ? `Team Avg Efficiency: ${teamAvgEfficiency}%` : 'No Team Data'}
                 </span>
               </div>
 
@@ -539,7 +548,6 @@ export default function DashboardPage() {
                       <th className="py-2.5 px-3.5">Assigned Leads</th>
                       <th className="py-2.5 px-3.5">Deals Closed (₹)</th>
                       <th className="py-2.5 px-3.5">Tour Conv. Rate</th>
-                      <th className="py-2.5 px-3.5">Avg Response</th>
                       <th className="py-2.5 px-3.5 text-right">Efficiency Score</th>
                     </tr>
                   </thead>
@@ -560,7 +568,6 @@ export default function DashboardPage() {
                         <td className="py-2.5 px-3.5 font-bold text-zinc-800">{agent.assigned} Leads</td>
                         <td className="py-2.5 px-3.5 font-black text-[#b8922e]">₹{(agent.closedVal / 10000000).toFixed(1)} Cr</td>
                         <td className="py-2.5 px-3.5 font-extrabold text-emerald-700">{agent.convRate}%</td>
-                        <td className="py-2.5 px-3.5 font-medium text-zinc-500">{agent.respTime}</td>
                         <td className="py-2.5 px-3.5 text-right">
                           <span className={`inline-block px-2 py-0.5 rounded text-[9px] font-extrabold border ${
                             agent.grade === 'EXCELLENT' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
@@ -572,6 +579,11 @@ export default function DashboardPage() {
                         </td>
                       </tr>
                     ))}
+                    {agentScorecards.length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="py-8 px-3.5 text-center text-zinc-400 font-medium">No team members found.</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -733,15 +745,13 @@ export default function DashboardPage() {
             <div className="p-4 bg-white border border-[#e8e7e4] rounded-xl space-y-3">
               <h4 className="text-[10.5px] font-extrabold text-zinc-400 uppercase tracking-widest">Lead Source Attribution</h4>
               <div className="space-y-2 text-xs">
-                {[
-                  { name: 'Google Ads Campaign', count: '56 Leads', pct: '38%' },
-                  { name: 'WhatsApp Inbound API', count: '35 Leads', pct: '24%' },
-                  { name: 'Direct Referrals', count: '32 Leads', pct: '22%' },
-                  { name: 'Housing.com / Portals', count: '25 Leads', pct: '16%' },
-                ].map(src => (
+                {leadSourceAttribution.length === 0 && (
+                  <p className="text-[10px] text-zinc-400 font-medium py-2">No leads in this range.</p>
+                )}
+                {leadSourceAttribution.map(src => (
                   <div key={src.name} className="flex items-center justify-between text-[11px]">
                     <span className="font-semibold text-zinc-600">{src.name}</span>
-                    <span className="font-extrabold text-zinc-900">{src.count} ({src.pct})</span>
+                    <span className="font-extrabold text-zinc-900">{src.count} Leads ({src.pct}%)</span>
                   </div>
                 ))}
               </div>
