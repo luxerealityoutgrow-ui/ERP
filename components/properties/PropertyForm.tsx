@@ -254,8 +254,13 @@ export function PropertyForm({ initialValues = {}, mode = 'create' }: PropertyFo
             >
               <option value="">Select Type</option>
               <option>Apartment</option>
+              <option>Duplex</option>
+              <option>Terrace Apartment</option>
+              <option>Garden Apartment</option>
               <option>Penthouse</option>
               <option>Villa / Independent House</option>
+              <option>Rowhouse</option>
+              <option>Independent Building</option>
               <option>Office Space</option>
               <option>Shop / Retail</option>
               <option>Plot / Land</option>

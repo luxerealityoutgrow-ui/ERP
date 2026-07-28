@@ -1,7 +1,20 @@
 // BHK-style configuration only makes sense for residential unit types. Commercial/other
 // listings (Shop, Office Space, Plot, Showroom, etc.) don't have a BHK configuration --
 // their "configuration" should just reflect the property type itself.
-export const RESIDENTIAL_TYPES = ['Apartment', 'Penthouse', 'Villa', 'Duplex', 'Triplex', 'Bunglow', 'Rowhouse', 'Row House', 'Building'];
+export const RESIDENTIAL_TYPES = [
+  'Apartment',
+  'Terrace Apartment',
+  'Garden Apartment',
+  'Penthouse',
+  'Villa',
+  'Duplex',
+  'Triplex',
+  'Bunglow',
+  'Rowhouse',
+  'Row House',
+  'Independent Building',
+  'Building',
+];
 
 export function isResidentialType(propertyType: string | undefined | null): boolean {
   const t = (propertyType || '').toLowerCase();

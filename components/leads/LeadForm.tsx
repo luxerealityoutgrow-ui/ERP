@@ -386,8 +386,13 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
         <div className="relative">
           <select name="property_type" defaultValue={initialValues.property_type ?? 'Apartment'} className={selectCls}>
             <option value="Apartment">Apartment</option>
-            <option value="Villa">Villa / Independent House</option>
+            <option value="Duplex">Duplex</option>
+            <option value="Terrace Apartment">Terrace Apartment</option>
+            <option value="Garden Apartment">Garden Apartment</option>
             <option value="Penthouse">Penthouse</option>
+            <option value="Villa">Villa / Independent House</option>
+            <option value="Rowhouse">Rowhouse</option>
+            <option value="Independent Building">Independent Building</option>
             <option value="Office Space">Office Space</option>
             <option value="Shop">Shop / Retail</option>
             <option value="Plot">Plot / Land</option>

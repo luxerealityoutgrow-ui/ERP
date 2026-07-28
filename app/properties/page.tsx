@@ -536,11 +536,16 @@ export default function PropertyInventoryPage() {
                 >
                   <option value="">All types</option>
                   <option value="Apartment">Apartment</option>
-                  <option value="Villa">Villa</option>
+                  <option value="Duplex">Duplex</option>
+                  <option value="Terrace Apartment">Terrace Apartment</option>
+                  <option value="Garden Apartment">Garden Apartment</option>
                   <option value="Penthouse">Penthouse</option>
-                  <option value="Row House">Row House</option>
-                  <option value="Commercial">Commercial</option>
-                  <option value="Plot">Plot</option>
+                  <option value="Villa / Independent House">Villa / Independent House</option>
+                  <option value="Rowhouse">Rowhouse</option>
+                  <option value="Independent Building">Independent Building</option>
+                  <option value="Office Space">Office Space</option>
+                  <option value="Shop / Retail">Shop / Retail</option>
+                  <option value="Plot / Land">Plot / Land</option>
                 </select>
               </div>
               <div className="space-y-1">
