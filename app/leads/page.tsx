@@ -531,8 +531,14 @@ export default function LeadsPage() {
   // Sharing Helper Functions
   const generateShareText = (l: Lead) => {
     const createdDate = l.created_at ? new Date(l.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'N/A';
-    const budgetStr = l.budget_min
-      ? `${formatBudgetAbbreviated(l.budget_min)} - ${formatBudgetAbbreviated(l.budget_max)}`
+    // The lead form only ever collects a single "Max Budget" value -- budget_min is never
+    // set through the UI -- so gating this on budget_min (as before) always fell through to
+    // "Flexible" even when a real budget had been entered. Gate on budget_max instead, and
+    // only show a min-max range on the rare lead that does have both.
+    const budgetStr = l.budget_max
+      ? (l.budget_min && l.budget_min !== l.budget_max
+          ? `${formatBudgetAbbreviated(l.budget_min)} - ${formatBudgetAbbreviated(l.budget_max)}`
+          : formatBudgetAbbreviated(l.budget_max))
       : 'Flexible';
     return `LUXE REALTY PUNE - LEAD DETAILS
 
@@ -583,8 +589,10 @@ Notes: ${l.notes || 'None'}`;
     if (selectedLeads.length === 0) return;
     
     const leadsSummary = selectedLeads.map((l, index) => {
-      const budgetStr = l.budget_min
-        ? `${formatBudgetAbbreviated(l.budget_min)} - ${formatBudgetAbbreviated(l.budget_max)}`
+      const budgetStr = l.budget_max
+        ? (l.budget_min && l.budget_min !== l.budget_max
+            ? `${formatBudgetAbbreviated(l.budget_min)} - ${formatBudgetAbbreviated(l.budget_max)}`
+            : formatBudgetAbbreviated(l.budget_max))
         : 'Flexible';
       return `${index + 1}. ${l.client_name}
    Phone: ${l.phone || 'N/A'}

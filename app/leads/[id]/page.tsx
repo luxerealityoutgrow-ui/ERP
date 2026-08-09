@@ -136,11 +136,20 @@ export default function LeadDetailPage() {
 
   // Generate clean sharing description text
   const generateShareText = (l: Lead) => {
+    // The lead form only ever collects a single "Max Budget" value -- budget_min is never
+    // set through the UI -- so gating this on budget_min (as before) always fell through to
+    // "Flexible" even when a real budget had been entered. Gate on budget_max instead, and
+    // only show a min-max range on the rare lead that does have both.
+    const budgetStr = l.budget_max
+      ? (l.budget_min && l.budget_min !== l.budget_max
+          ? `${formatBudgetAbbreviated(l.budget_min)} - ${formatBudgetAbbreviated(l.budget_max)}`
+          : formatBudgetAbbreviated(l.budget_max))
+      : 'Flexible';
     return `📋 *LUXE REALTY LEAD DETAILS*
 👤 *Client Name:* ${l.client_name}
 📞 *Phone:* ${l.phone || 'N/A'}
 ✉️ *Email:* ${l.email || 'N/A'}
-💰 *Budget:* ${l.budget_min ? `${formatBudgetAbbreviated(l.budget_min)} - ${formatBudgetAbbreviated(l.budget_max)}` : 'Flexible'}
+💰 *Budget:* ${budgetStr}
 📍 *Preferred Location:* ${l.preferred_location || 'Flexible'}
 🏢 *Property Type:* ${l.property_type || 'N/A'} (${l.configuration || 'Any'})
 💼 *Transaction:* ${l.transaction_type || 'Outright'} / ${l.category || 'Residential'}
@@ -316,8 +325,10 @@ export default function LeadDetailPage() {
               <div className="p-4 rounded-xl bg-zinc-50 border border-zinc-100">
                 <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Budget Range</p>
                 <p className="text-sm font-bold text-zinc-900">
-                  {lead.budget_min 
-                    ? `${formatBudgetAbbreviated(lead.budget_min)} - ${formatBudgetAbbreviated(lead.budget_max)}`
+                  {lead.budget_max
+                    ? (lead.budget_min && lead.budget_min !== lead.budget_max
+                        ? `${formatBudgetAbbreviated(lead.budget_min)} - ${formatBudgetAbbreviated(lead.budget_max)}`
+                        : formatBudgetAbbreviated(lead.budget_max))
                     : 'Flexible'}
                 </p>
               </div>
