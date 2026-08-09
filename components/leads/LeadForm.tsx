@@ -299,6 +299,8 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
               <option value="Housing.com">Housing.com</option>
               <option value="99acres">99acres</option>
               <option value="Magicbricks">Magicbricks</option>
+              <option value="Instagram">Instagram</option>
+              <option value="Facebook">Facebook</option>
               <option value="Website">Website</option>
               <option value="Walk-in">Walk-in</option>
             </select>

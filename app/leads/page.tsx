@@ -908,6 +908,7 @@ Notes: ${l.notes || 'None'}`;
                     <option value="Website">Website</option>
                     <option value="Referral">Referral</option>
                     <option value="Instagram">Instagram</option>
+                    <option value="Facebook">Facebook</option>
                     <option value="99 acres">99 Acres</option>
                     <option value="Magicbricks">Magicbricks</option>
                     <option value="Walk-in">Walk-in</option>

@@ -55,7 +55,8 @@ export default function PropertyInventoryPage() {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [filterLocations, setFilterLocations] = useState<string[]>([]);
   const [filterPropertyType, setFilterPropertyType] = useState('');
-  const [filterConfiguration, setFilterConfiguration] = useState('');
+  const [filterConfigurations, setFilterConfigurations] = useState<string[]>([]);
+  const [configDropdownOpen, setConfigDropdownOpen] = useState(false);
   const [filterListingType, setFilterListingType] = useState('');
   const [filterSourceType, setFilterSourceType] = useState(''); // '' = All, 'Direct' = direct, 'Broker' = through broker
   const [filterPriceMin, setFilterPriceMin] = useState('');
@@ -133,7 +134,7 @@ export default function PropertyInventoryPage() {
         (prop.location || '').toLowerCase().includes(loc.toLowerCase())
       );
       const matchesPropertyType = !filterPropertyType || prop.property_type === filterPropertyType;
-      const matchesConfiguration = !filterConfiguration || (prop.configuration || '').includes(filterConfiguration);
+      const matchesConfiguration = filterConfigurations.length === 0 || filterConfigurations.some(cfg => (prop.configuration || '').includes(cfg));
       const matchesListingType = !filterListingType || prop.listing_type === filterListingType;
       const matchesSourceType = !filterSourceType || prop.source_type === filterSourceType;
 
@@ -159,7 +160,7 @@ export default function PropertyInventoryPage() {
 
       return matchesSearch && matchesTab && matchesActiveState && matchesLocation && matchesPropertyType && matchesConfiguration && matchesListingType && matchesSourceType && matchesPrice && matchesArea;
     });
-  }, [displayProperties, searchQuery, activeTab, activeState, filterLocations, filterPropertyType, filterConfiguration, filterListingType, filterSourceType, filterPriceMin, filterPriceMax, filterAreaMin, filterAreaMax]);
+  }, [displayProperties, searchQuery, activeTab, activeState, filterLocations, filterPropertyType, filterConfigurations, filterListingType, filterSourceType, filterPriceMin, filterPriceMax, filterAreaMin, filterAreaMax]);
 
   // Selection helpers
   const allVisibleSelected = filteredProperties.length > 0 && filteredProperties.every(p => selectedIds.has(p.id));
@@ -417,9 +418,9 @@ export default function PropertyInventoryPage() {
           >
             <SlidersHorizontal className="h-3.5 w-3.5" />
             Drill Down
-            {(filterLocations.length > 0 || filterPropertyType || filterConfiguration || filterListingType || filterPriceMin || filterPriceMax || filterAreaMin || filterAreaMax) && (
+            {(filterLocations.length > 0 || filterPropertyType || filterConfigurations.length > 0 || filterListingType || filterPriceMin || filterPriceMax || filterAreaMin || filterAreaMax) && (
               <span className="ml-1 h-4 w-4 rounded-full bg-zinc-700 text-white text-[9px] font-bold flex items-center justify-center">
-                {[filterLocations.length > 0, filterPropertyType, filterConfiguration, filterListingType, filterPriceMin || filterPriceMax, filterAreaMin || filterAreaMax].filter(Boolean).length}
+                {[filterLocations.length > 0, filterPropertyType, filterConfigurations.length > 0, filterListingType, filterPriceMin || filterPriceMax, filterAreaMin || filterAreaMax].filter(Boolean).length}
               </span>
             )}
           </button>
@@ -467,7 +468,7 @@ export default function PropertyInventoryPage() {
                 onClick={() => {
                   setFilterLocations([]);
                   setFilterPropertyType('');
-                  setFilterConfiguration('');
+                  setFilterConfigurations([]);
                   setFilterListingType('');
                   setFilterPriceMin('');
                   setFilterPriceMax('');
@@ -548,26 +549,52 @@ export default function PropertyInventoryPage() {
                   <option value="Plot / Land">Plot / Land</option>
                 </select>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1 relative">
                 <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Configuration</label>
-                <select
-                  value={filterConfiguration}
-                  onChange={(e) => setFilterConfiguration(e.target.value)}
-                  className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-2 text-xs font-semibold outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all cursor-pointer"
+                <button
+                  type="button"
+                  onClick={() => setConfigDropdownOpen(!configDropdownOpen)}
+                  className="w-full flex items-center justify-between rounded-lg border border-zinc-200 bg-white px-2.5 py-2 text-xs font-semibold text-left outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all"
                 >
-                  <option value="">Any config</option>
-                  <option value="1 BHK">1 BHK</option>
-                  <option value="2 BHK">2 BHK</option>
-                  <option value="2.5 BHK">2.5 BHK</option>
-                  <option value="3 BHK">3 BHK</option>
-                  <option value="3.5 BHK">3.5 BHK</option>
-                  <option value="4 BHK">4 BHK</option>
-                  <option value="4.5 BHK">4.5 BHK</option>
-                  <option value="5 BHK">5 BHK</option>
-                  <option value="5.5 BHK">5.5 BHK</option>
-                  <option value="6 BHK">6 BHK</option>
-                  <option value="6.5 BHK">6.5 BHK</option>
-                </select>
+                  {filterConfigurations.length === 0
+                    ? <span className="text-zinc-400">Any config</span>
+                    : <span className="text-zinc-800">{filterConfigurations.length} selected</span>
+                  }
+                  <ChevronDown className={`h-3.5 w-3.5 text-zinc-400 transition-transform ${configDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {filterConfigurations.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {filterConfigurations.map(cfg => (
+                      <span key={cfg} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-zinc-100 text-[9px] font-bold text-zinc-700">
+                        {cfg}
+                        <button onClick={() => setFilterConfigurations(prev => prev.filter(c => c !== cfg))} className="text-zinc-400 hover:text-zinc-700">×</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {configDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-30" onClick={() => setConfigDropdownOpen(false)} />
+                    <div className="absolute top-full left-0 mt-1 w-48 max-h-52 overflow-y-auto bg-white border border-zinc-200 rounded-xl shadow-lg z-40 p-1">
+                      {['1 BHK', '2 BHK', '2.5 BHK', '3 BHK', '3.5 BHK', '4 BHK', '4.5 BHK', '5 BHK', '5.5 BHK', '6 BHK', '6.5 BHK'].map(cfg => (
+                        <button
+                          key={cfg}
+                          onClick={() => {
+                            setFilterConfigurations(prev =>
+                              prev.includes(cfg) ? prev.filter(c => c !== cfg) : [...prev, cfg]
+                            );
+                          }}
+                          className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                            filterConfigurations.includes(cfg) ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-650 hover:bg-zinc-50'
+                          }`}
+                        >
+                          {cfg}
+                          {filterConfigurations.includes(cfg) && <span className="text-emerald-500 font-bold">✓</span>}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Listing Type</label>
