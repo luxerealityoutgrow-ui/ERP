@@ -26,7 +26,7 @@ import {
   Trash2
 } from 'lucide-react';
 import Link from 'next/link';
-import { formatCurrency, formatPriceShort } from '@/lib/formatters';
+import { formatCurrency, formatPriceShort, formatNumber } from '@/lib/formatters';
 import { ImageSlider } from '@/components/ui/image-slider';
 import { AvatarCell } from '@/components/ui/AvatarCell';
 import { InlineStatsBar } from '@/components/ui/InlineStatsBar';
@@ -584,20 +584,22 @@ export default function PropertyInventoryPage() {
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Price Min (₹)</label>
                 <input
-                  type="number"
-                  placeholder="e.g. 10000000"
-                  value={filterPriceMin}
-                  onChange={(e) => setFilterPriceMin(e.target.value)}
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="e.g. 1,00,00,000"
+                  value={filterPriceMin ? formatNumber(filterPriceMin) : ''}
+                  onChange={(e) => setFilterPriceMin(e.target.value.replace(/[^\d]/g, ''))}
                   className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-2 text-xs font-semibold outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all"
                 />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Price Max (₹)</label>
                 <input
-                  type="number"
-                  placeholder="e.g. 50000000"
-                  value={filterPriceMax}
-                  onChange={(e) => setFilterPriceMax(e.target.value)}
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="e.g. 5,00,00,000"
+                  value={filterPriceMax ? formatNumber(filterPriceMax) : ''}
+                  onChange={(e) => setFilterPriceMax(e.target.value.replace(/[^\d]/g, ''))}
                   className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-2 text-xs font-semibold outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all"
                 />
               </div>
