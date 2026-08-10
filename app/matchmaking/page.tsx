@@ -690,18 +690,19 @@ export default function MatchmakingPage() {
     );
   }, [properties, searchQuery, matchMode]);
 
-  // Share via WhatsApp helper
+  // Share via WhatsApp helper -- plain text, no emojis or match-percentage, fields always in
+  // Society Name / Location / Type / Area / Price order to match what staff send everywhere.
   const sharePropertyToLeadText = (l: Lead, p: Property) => {
     const cleanTitle = (p.title || '').replace(/\s*\(\s*null\s*\)/gi, '').trim();
-    return encodeURIComponent(`👋 Hello ${l.client_name},
+    return encodeURIComponent(`Hello ${l.client_name},
 We found a premium property matching your requirements!
 
-🏠 *${cleanTitle}*
-📍 Location: ${p.location}
-💰 Price: ${formatBudgetAbbreviated(p.price)}
-🏢 Configuration: ${p.configuration || p.property_type}
-📐 Area: ${p.carpet_area ? `${p.carpet_area} sq ft` : 'N/A'}
-🔑 For ${p.listing_type || 'Sale'}
+${cleanTitle}
+Location: ${p.location}
+Type: ${p.configuration || p.property_type}
+Area: ${p.carpet_area ? `${p.carpet_area} sq ft` : 'N/A'}
+Price: ${formatBudgetAbbreviated(p.price)}
+For ${p.listing_type || 'Sale'}
 
 Let us know if you would like to schedule a site visit!`);
   };
@@ -710,24 +711,24 @@ Let us know if you would like to schedule a site visit!`);
   // so both always produce identical content instead of two copies of the same formatting.
   const buildBulkMatchesText = (): string => {
     if (matchMode === 'leads') {
-      let text = `👋 Hello ${currentLead?.client_name},\nWe found some premium properties matching your requirements!\n\n`;
-      selectedMatchesData.forEach(({ item, details }, idx) => {
+      let text = `Hello ${currentLead?.client_name},\nWe found some premium properties matching your requirements!\n\n`;
+      selectedMatchesData.forEach(({ item }, idx) => {
         const p = item as Property;
-        text += `🏠 ${idx + 1}. ${p.title} (${details.totalScore}% Match)\n`;
-        text += `📍 Location: ${p.location}\n`;
-        text += `💰 Price: ${formatBudgetAbbreviated(p.price)}\n`;
-        text += `🏢 Type: ${p.property_type} (${p.configuration})\n`;
-        text += `📐 Area: ${p.carpet_area} sq ft\n\n`;
+        text += `${idx + 1}. ${p.title}\n`;
+        text += `Location: ${p.location}\n`;
+        text += `Type: ${p.property_type} (${p.configuration})\n`;
+        text += `Area: ${p.carpet_area} sq ft\n`;
+        text += `Price: ${formatBudgetAbbreviated(p.price)}\n\n`;
       });
       text += `Let us know if you would like to schedule site visits for any of these!`;
       return text;
     }
-    let text = `👋 Hello team,\nHere are potential buyers matching ${currentProperty?.title}:\n\n`;
-    selectedMatchesData.forEach(({ item, details }, idx) => {
+    let text = `Hello team,\nHere are potential buyers matching ${currentProperty?.title}:\n\n`;
+    selectedMatchesData.forEach(({ item }, idx) => {
       const l = item as Lead;
-      text += `👤 ${idx + 1}. ${l.client_name} (${details.totalScore}% Match)\n`;
-      text += `📞 Phone: ${l.phone}\n`;
-      text += `💰 Budget Limit: ${formatBudgetAbbreviated(l.budget_max)}\n\n`;
+      text += `${idx + 1}. ${l.client_name}\n`;
+      text += `Phone: ${l.phone}\n`;
+      text += `Budget Limit: ${formatBudgetAbbreviated(l.budget_max)}\n\n`;
     });
     return text;
   };
