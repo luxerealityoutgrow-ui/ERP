@@ -486,7 +486,7 @@ export function Header({ onToggleMenu }: { onToggleMenu?: () => void }) {
           {isNotifOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setIsNotifOpen(false)} />
-              <div className="absolute right-0 top-full mt-2 w-80 sm:w-[400px] bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-0 z-50 overflow-hidden animate-in zoom-in-95 duration-150 text-left">
+              <div className="fixed inset-x-3 top-[4.25rem] sm:absolute sm:inset-x-auto sm:top-full sm:right-0 sm:mt-2 w-auto sm:w-[400px] max-w-[calc(100vw-1.5rem)] bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-0 z-50 overflow-hidden animate-in zoom-in-95 duration-150 text-left">
                 
                 <div className="p-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-950">
                   <div className="flex items-center gap-2">
