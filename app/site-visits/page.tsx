@@ -60,25 +60,27 @@ export default function SiteVisitsPage() {
   const profile = useProfile();
   const perms = getPermissions(profile?.role);
 
-  // Default to June 2026 for demo consistency, but fully navigable!
-  const [currentMonthDate, setCurrentMonthDate] = useState<Date>(new Date(2026, 5, 1));
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date(2026, 5, 17));
+  const [currentMonthDate, setCurrentMonthDate] = useState<Date>(() => {
+    const today = new Date();
+    return new Date(today.getFullYear(), today.getMonth(), 1);
+  });
+  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'calendar' | 'all' | 'followups'>('calendar');
 
   // Reschedule Modal State
   const [rescheduleVisit, setRescheduleVisit] = useState<SiteVisit | null>(null);
-  const [rescheduleDateStr, setRescheduleDateStr] = useState('2026-06-18');
+  const [rescheduleDateStr, setRescheduleDateStr] = useState(() => formatDateKey(new Date()));
   const [rescheduleTime, setRescheduleTime] = useState('03:00 PM');
   const [rescheduleReason, setRescheduleReason] = useState('');
 
   // Follow-Up Reschedule Modal State
   const [rescheduleFollowup, setRescheduleFollowup] = useState<FollowUp | null>(null);
-  const [rescheduleFollowupDateStr, setRescheduleFollowupDateStr] = useState('2026-06-18');
+  const [rescheduleFollowupDateStr, setRescheduleFollowupDateStr] = useState(() => formatDateKey(new Date()));
   
   // Form input states
-  const [newVisitDateStr, setNewVisitDateStr] = useState('2026-06-17');
+  const [newVisitDateStr, setNewVisitDateStr] = useState(() => formatDateKey(new Date()));
   const [visitTime, setVisitTime] = useState('02:00 PM');
   const [notes, setNotes] = useState('');
 

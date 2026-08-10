@@ -7,6 +7,7 @@ import { createLeadAction, updateLeadAction } from '@/app/leads/actions';
 import { TagsInput } from '@/components/ui/tags-input';
 import { IndianNumberInput } from '@/components/ui/indian-number-input';
 import { supabase } from '@/lib/supabaseClient';
+import { useProfile } from '@/lib/auth';
 import { ChevronLeft, ChevronDown, User, Calendar, AlertTriangle, ExternalLink, Loader2, Plus, X } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -46,6 +47,8 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
   const router = useRouter();
   const isEdit = !!initialValues.id;
   const [state, formAction, isPending] = useActionState((isEdit ? updateLeadAction : createLeadAction) as any, null);
+  const profile = useProfile();
+  const isAdmin = profile?.role === 'Admin' || profile?.role === 'SuperAdmin';
 
   // Only one layout (desktop wizard or mobile single-scroll) is ever mounted at a time,
   // matching the lg: (1024px) breakpoint the rest of the app uses. Previously both were
@@ -94,6 +97,25 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
   const [alternatePhones, setAlternatePhones] = useState<string[]>(
     Array.isArray(initialValues.alternate_phones) ? initialValues.alternate_phones : []
   );
+
+  // Assigned Representative -- must be a controlled value synced from initialValues, not
+  // defaultValue. teamProfiles loads asynchronously below, so at first render the <select>
+  // only contains the placeholder option; with defaultValue, React applies the intended
+  // value once at mount, finds no matching <option> yet, and the browser silently falls back
+  // to the placeholder ("") -- permanently, even after the real option appears once
+  // teamProfiles loads. Saving the form then submits an empty assigned_to, which the server
+  // resolves to whoever is currently logged in, silently reassigning the lead away from its
+  // actual owner. This was the root cause of leads (e.g. "Zia Memon") appearing to vanish
+  // from a sales rep's list every time the lead was opened and saved.
+  const [assignedTo, setAssignedTo] = useState(initialValues.assigned_to ?? '');
+
+  // Non-admins can only ever own their own new leads -- auto-assign to themselves and never
+  // expose a picker to reassign to someone else. Admins/SuperAdmins keep full control.
+  useEffect(() => {
+    if (!isEdit && profile && !isAdmin) {
+      setAssignedTo(profile.id);
+    }
+  }, [profile, isAdmin, isEdit]);
 
   function formatPrice(v: string | number) {
     const n = parseFloat(String(v));
@@ -259,21 +281,32 @@ export function LeadForm({ initialValues = {} }: { initialValues?: Partial<any> 
         <label className="text-[10px] font-bold text-[#b8922e] uppercase tracking-widest flex items-center gap-1">
           <User className="h-3.5 w-3.5" /> Assigned Representative *
         </label>
-        <div className="relative">
-          <select 
-            name="assigned_to" 
-            defaultValue={initialValues.assigned_to ?? ''} 
-            className={selectCls + " border-[#d4ad4d]/40 font-bold"}
-          >
-            <option value="">Select Sales Executive / Admin...</option>
-            {teamProfiles.map(p => (
-              <option key={p.id} value={p.id}>
-                {p.full_name} ({p.role || 'Executive'})
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
-        </div>
+        {isAdmin ? (
+          <div className="relative">
+            <select
+              name="assigned_to"
+              value={assignedTo}
+              onChange={e => setAssignedTo(e.target.value)}
+              className={selectCls + " border-[#d4ad4d]/40 font-bold"}
+            >
+              <option value="">Select Sales Executive / Admin...</option>
+              {teamProfiles.map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.full_name} ({p.role || 'Executive'})
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
+          </div>
+        ) : (
+          <>
+            <input type="hidden" name="assigned_to" value={assignedTo} />
+            <div className="h-10 px-3.5 flex items-center bg-zinc-100 border border-zinc-200 rounded-xl text-[12px] font-bold text-zinc-600">
+              {profile?.full_name || 'You'} <span className="ml-1 text-zinc-400 font-semibold">(You)</span>
+            </div>
+            <p className="text-[10px] text-zinc-400 italic font-medium">Leads are always assigned to you. Only Admins can reassign.</p>
+          </>
+        )}
       </div>
 
       <div className="space-y-1.5">

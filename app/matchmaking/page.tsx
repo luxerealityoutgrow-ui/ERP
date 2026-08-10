@@ -23,7 +23,8 @@ import {
   ChevronDown,
   Layout,
   Maximize2,
-  Filter
+  Filter,
+  Copy
 } from 'lucide-react';
 import { 
   Radar, 
@@ -705,6 +706,42 @@ We found a premium property matching your requirements!
 Let us know if you would like to schedule a site visit!`);
   };
 
+  // Shared plain-text builder for the multi-select toolbar's WhatsApp link and Copy button,
+  // so both always produce identical content instead of two copies of the same formatting.
+  const buildBulkMatchesText = (): string => {
+    if (matchMode === 'leads') {
+      let text = `👋 Hello ${currentLead?.client_name},\nWe found some premium properties matching your requirements!\n\n`;
+      selectedMatchesData.forEach(({ item, details }, idx) => {
+        const p = item as Property;
+        text += `🏠 ${idx + 1}. ${p.title} (${details.totalScore}% Match)\n`;
+        text += `📍 Location: ${p.location}\n`;
+        text += `💰 Price: ${formatBudgetAbbreviated(p.price)}\n`;
+        text += `🏢 Type: ${p.property_type} (${p.configuration})\n`;
+        text += `📐 Area: ${p.carpet_area} sq ft\n\n`;
+      });
+      text += `Let us know if you would like to schedule site visits for any of these!`;
+      return text;
+    }
+    let text = `👋 Hello team,\nHere are potential buyers matching ${currentProperty?.title}:\n\n`;
+    selectedMatchesData.forEach(({ item, details }, idx) => {
+      const l = item as Lead;
+      text += `👤 ${idx + 1}. ${l.client_name} (${details.totalScore}% Match)\n`;
+      text += `📞 Phone: ${l.phone}\n`;
+      text += `💰 Budget Limit: ${formatBudgetAbbreviated(l.budget_max)}\n\n`;
+    });
+    return text;
+  };
+
+  const handleCopyBulkMatches = async () => {
+    try {
+      await navigator.clipboard.writeText(buildBulkMatchesText());
+      alert(`Copied details for ${selectedMatchesData.length} ${matchMode === 'leads' ? 'propert' + (selectedMatchesData.length === 1 ? 'y' : 'ies') : 'lead' + (selectedMatchesData.length === 1 ? '' : 's')} to clipboard!`);
+    } catch (err) {
+      console.error('Copy failed:', err);
+      alert('Failed to copy to clipboard.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[550px] gap-3">
@@ -950,46 +987,20 @@ Let us know if you would like to schedule a site visit!`);
                     >
                       Book Tours ({selectedMatchIds.size})
                     </button>
-                    {matchMode === 'leads' ? (
-                      <a 
-                        href={`https://wa.me/?text=${(() => {
-                          let text = `👋 Hello ${currentLead?.client_name},\nWe found some premium properties matching your requirements!\n\n`;
-                          selectedMatchesData.forEach(({ item, details }, idx) => {
-                            const p = item as Property;
-                            text += `🏠 *${idx + 1}. ${p.title}* (${details.totalScore}% Match)\n`;
-                            text += `📍 Location: ${p.location}\n`;
-                            text += `💰 Price: ${formatBudgetAbbreviated(p.price)}\n`;
-                            text += `🏢 Type: ${p.property_type} (${p.configuration})\n`;
-                            text += `📐 Area: ${p.carpet_area} sq ft\n\n`;
-                          });
-                          text += `Let us know if you would like to schedule site visits for any of these!`;
-                          return encodeURIComponent(text);
-                        })()}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-2.5 py-1 text-[9.5px] font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded transition-all flex items-center gap-1 cursor-pointer"
-                      >
-                        <MessageSquare className="h-3 w-3" /> WhatsApp
-                      </a>
-                    ) : (
-                      <a 
-                        href={`https://wa.me/?text=${(() => {
-                          let text = `👋 Hello team,\nHere are potential buyers matching *${currentProperty?.title}*:\n\n`;
-                          selectedMatchesData.forEach(({ item, details }, idx) => {
-                            const l = item as Lead;
-                            text += `👤 *${idx + 1}. ${l.client_name}* (${details.totalScore}% Match)\n`;
-                            text += `📞 Phone: ${l.phone}\n`;
-                            text += `💰 Budget Limit: ${formatBudgetAbbreviated(l.budget_max)}\n\n`;
-                          });
-                          return encodeURIComponent(text);
-                        })()}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-2.5 py-1 text-[9.5px] font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded transition-all flex items-center gap-1 cursor-pointer"
-                      >
-                        <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
-                      </a>
-                    )}
+                    <button
+                      onClick={handleCopyBulkMatches}
+                      className="px-2.5 py-1 text-[9.5px] font-bold bg-zinc-100 text-zinc-700 hover:bg-zinc-200 rounded transition-all flex items-center gap-1 cursor-pointer"
+                    >
+                      <Copy className="h-3 w-3" /> Copy
+                    </button>
+                    <a
+                      href={`https://wa.me/?text=${encodeURIComponent(buildBulkMatchesText())}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1 text-[9.5px] font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded transition-all flex items-center gap-1 cursor-pointer"
+                    >
+                      <MessageSquare className="h-3 w-3" /> WhatsApp
+                    </a>
                   </div>
                 )}
                 
