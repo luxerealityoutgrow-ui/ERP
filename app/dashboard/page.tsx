@@ -94,7 +94,7 @@ export default function DashboardPage() {
         
         const { data: fetchedLogs } = await supabase
           .from('audit_logs')
-          .select('*, profiles(full_name)')
+          .select('*, profiles(full_name, email)')
           .order('created_at', { ascending: false })
           .limit(15);
 
@@ -102,11 +102,18 @@ export default function DashboardPage() {
           .from('profiles')
           .select('id, full_name, email, role');
 
+        // Husain and the Outgrow dev team access the CRM under @letsoutgrow.com /
+        // @outgrowintelligence.com accounts to build and test it -- that activity isn't real
+        // sales work and shouldn't show up as if it were a team member's performance. Every
+        // genuine Luxe Realty staff account is on @luxerealtypune.com, so that's the one
+        // signal that reliably tells real usage apart from developer/testing activity.
+        const isRealTeamMember = (email?: string | null) => (email || '').toLowerCase().endsWith('@luxerealtypune.com');
+
         setLeads(fetchedLeads);
         setProperties(fetchedProperties);
         setSiteVisits(fetchedVisits);
-        setAuditLogs(fetchedLogs || []);
-        setTeamProfiles(fetchedProfiles || []);
+        setAuditLogs((fetchedLogs || []).filter((log: any) => isRealTeamMember(log.profiles?.email)));
+        setTeamProfiles((fetchedProfiles || []).filter((p: any) => isRealTeamMember(p.email)));
       } catch (err) {
         console.error(err);
       } finally {
@@ -614,7 +621,7 @@ export default function DashboardPage() {
                   </thead>
                   <tbody className="divide-y divide-[#f5f5f3]">
                     {filteredLeads.slice(0, 5).map((lead) => {
-                      const assignedUser = teamProfiles.find(p => p.id === lead.assigned_to)?.full_name || 'Rahul Sharma';
+                      const assignedUser = teamProfiles.find(p => p.id === lead.assigned_to)?.full_name || 'Unassigned';
                       return (
                         <tr 
                           key={lead.id} 
@@ -669,7 +676,7 @@ export default function DashboardPage() {
 
               <div className="space-y-2">
                 {filteredVisits.slice(0, 4).map((visit) => {
-                  const assignedUser = teamProfiles.find(p => p.id === visit.assigned_to)?.full_name || 'Rahul Sharma';
+                  const assignedUser = teamProfiles.find(p => p.id === visit.assigned_to)?.full_name || 'Unassigned';
                   return (
                     <div 
                       key={visit.id}
@@ -716,7 +723,7 @@ export default function DashboardPage() {
 
               <div className="space-y-2">
                 {leads.filter(l => l.next_followup_date || l.status === 'Hot').slice(0, 4).map((lead) => {
-                  const assignedUser = teamProfiles.find(p => p.id === lead.assigned_to)?.full_name || 'Saif Bhayani';
+                  const assignedUser = teamProfiles.find(p => p.id === lead.assigned_to)?.full_name || 'Unassigned';
                   return (
                     <div 
                       key={lead.id}
@@ -768,7 +775,7 @@ export default function DashboardPage() {
 
               <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
                 {filteredLogs.slice(0, 6).map((log) => {
-                  const operator = log.profiles?.full_name || 'Rahul Sharma';
+                  const operator = log.profiles?.full_name || 'Team Member';
                   return (
                     <div key={log.id} className="p-2.5 bg-white border border-[#ebebeb] rounded-xl text-[10px] space-y-0.5">
                       <div className="flex items-center justify-between">
@@ -783,6 +790,9 @@ export default function DashboardPage() {
                     </div>
                   );
                 })}
+                {filteredLogs.length === 0 && (
+                  <p className="text-[10px] text-zinc-400 text-center py-4 font-medium">No team activity in this range yet.</p>
+                )}
               </div>
             </div>
 
