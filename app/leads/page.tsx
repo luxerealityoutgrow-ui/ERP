@@ -125,6 +125,7 @@ export default function LeadsPage() {
   const [filterBudgetMin, setFilterBudgetMin] = useState('');
   const [filterBudgetMax, setFilterBudgetMax] = useState('');
   const [filterStage, setFilterStage] = useState('');
+  const [filterAssignedTo, setFilterAssignedTo] = useState('');
   const [activeState, setActiveState] = useState<'Active' | 'Inactive' | 'All'>('Active');
   const [availableLocations, setAvailableLocations] = useState<string[]>([]);
   const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
@@ -219,6 +220,7 @@ export default function LeadsPage() {
       const matchesSource = !filterSource || lead.lead_source_id === filterSource;
       const matchesTransactionType = !filterTransactionType || lead.transaction_type === filterTransactionType;
       const matchesStage = !filterStage || lead.stage_id === filterStage;
+      const matchesAssignedTo = !filterAssignedTo || (filterAssignedTo === '__unassigned__' ? !lead.assigned_to : lead.assigned_to === filterAssignedTo);
 
       // Active/Inactive filter
       const matchesActiveState = activeState === 'All' 
@@ -235,9 +237,9 @@ export default function LeadsPage() {
         if (!isNaN(max)) matchesBudget = (lead.budget_min || 0) <= max;
       }
 
-      return matchesSearch && matchesStatus && matchesActiveState && matchesLocation && matchesPropertyType && matchesConfiguration && matchesSource && matchesTransactionType && matchesStage && matchesBudget;
+      return matchesSearch && matchesStatus && matchesActiveState && matchesLocation && matchesPropertyType && matchesConfiguration && matchesSource && matchesTransactionType && matchesStage && matchesBudget && matchesAssignedTo;
     });
-  }, [displayLeads, searchQuery, statusFilter, activeState, filterLocations, filterPropertyType, filterConfiguration, filterSource, filterTransactionType, filterBudgetMin, filterBudgetMax, filterStage]);
+  }, [displayLeads, searchQuery, statusFilter, activeState, filterLocations, filterPropertyType, filterConfiguration, filterSource, filterTransactionType, filterBudgetMin, filterBudgetMax, filterStage, filterAssignedTo]);
 
   // Sort logic
   const sortedLeads = useMemo(() => {
@@ -759,9 +761,9 @@ Notes: ${l.notes || 'None'}`;
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
               Drill Down
-              {(filterLocations.length > 0 || filterPropertyType || filterConfiguration || filterSource || filterTransactionType || filterBudgetMin || filterBudgetMax || filterStage) && (
+              {(filterLocations.length > 0 || filterPropertyType || filterConfiguration || filterSource || filterTransactionType || filterBudgetMin || filterBudgetMax || filterStage || filterAssignedTo) && (
                 <span className="ml-1 h-4 w-4 rounded-full bg-zinc-700 text-white text-[9px] font-bold flex items-center justify-center">
-                  {[filterLocations.length > 0, filterPropertyType, filterConfiguration, filterSource, filterTransactionType, filterBudgetMin || filterBudgetMax, filterStage].filter(Boolean).length}
+                  {[filterLocations.length > 0, filterPropertyType, filterConfiguration, filterSource, filterTransactionType, filterBudgetMin || filterBudgetMax, filterStage, filterAssignedTo].filter(Boolean).length}
                 </span>
               )}
             </button>
@@ -800,6 +802,7 @@ Notes: ${l.notes || 'None'}`;
                     setFilterBudgetMin('');
                     setFilterBudgetMax('');
                     setFilterStage('');
+                    setFilterAssignedTo('');
                   }}
                   className="text-[10px] font-bold text-zinc-500 hover:text-zinc-700 transition-colors"
                 >
@@ -940,6 +943,22 @@ Notes: ${l.notes || 'None'}`;
                     <option value="Closure">Closure</option>
                   </select>
                 </div>
+                {perms.canViewAllLeads && (
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Assigned To</label>
+                    <select
+                      value={filterAssignedTo}
+                      onChange={(e) => setFilterAssignedTo(e.target.value)}
+                      className="w-full rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-semibold outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500 transition-all cursor-pointer"
+                    >
+                      <option value="">Everyone</option>
+                      <option value="__unassigned__">Unassigned</option>
+                      {salesExecutives.map(exec => (
+                        <option key={exec.id} value={exec.id}>{exec.full_name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Budget Min (₹)</label>
                   <input
