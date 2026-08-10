@@ -1391,32 +1391,34 @@ Notes: ${l.notes || 'None'}`;
         title={qrLead ? `Scan to view ${qrLead.client_name}'s requirements` : ''}
       />
 
-      {/* Floating Bulk Action Dock */}
+      {/* Floating Bulk Action Dock -- icon-over-label stacked buttons on mobile so the
+          whole dock fits within the viewport without needing horizontal scroll; reverts
+          to icon-beside-label pill buttons at sm: and up. */}
       {selectedLeadIds.size > 0 && (
         <div
-          className="fixed bottom-4 inset-x-3 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 sm:max-w-fit z-50 bg-zinc-950 text-white rounded-2xl shadow-2xl border border-zinc-800 px-4 sm:px-5 py-3 flex items-center gap-3 sm:gap-6 animate-in slide-in-from-bottom-5 duration-300 overflow-x-auto max-w-full [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-          style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+          className="fixed bottom-4 inset-x-3 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 sm:max-w-fit z-50 bg-zinc-950 text-white rounded-2xl shadow-2xl border border-zinc-800 px-2.5 sm:px-5 py-2.5 sm:py-3 flex items-center justify-between sm:justify-start gap-1 sm:gap-6 animate-in slide-in-from-bottom-5 duration-300"
+          style={{ paddingBottom: 'max(0.625rem, env(safe-area-inset-bottom))' }}
         >
-          <div className="flex items-center gap-2.5 shrink-0 border-r border-zinc-800 pr-5">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 sm:border-r sm:border-zinc-800 sm:pr-5">
             <span className="h-5 w-5 rounded-full bg-zinc-800 text-white text-[10px] font-black flex items-center justify-center shrink-0">
               {selectedLeadIds.size}
             </span>
-            <span className="text-[11px] font-bold tracking-wide uppercase text-zinc-400 whitespace-nowrap">Leads Selected</span>
+            <span className="hidden sm:inline text-[11px] font-bold tracking-wide uppercase text-zinc-400 whitespace-nowrap">Leads Selected</span>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-0.5 sm:gap-2.5 shrink-0">
             <button
               onClick={() => exportCsv(selectedLeads)}
-              className="px-3.5 py-2 bg-zinc-900 border border-zinc-800 text-zinc-200 rounded-xl text-xs font-bold hover:bg-zinc-800 hover:text-white transition-all shadow-xs shrink-0 flex items-center gap-1.5 cursor-pointer"
+              className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 w-12 sm:w-auto px-1 sm:px-3.5 py-1.5 sm:py-2 bg-zinc-900 border border-zinc-800 text-zinc-200 rounded-lg sm:rounded-xl text-[9px] sm:text-xs font-bold hover:bg-zinc-800 hover:text-white transition-all shadow-xs shrink-0 cursor-pointer"
             >
-              <Download01 className="h-3.5 w-3.5 text-zinc-400" />
+              <Download01 className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-zinc-400" />
               Export
             </button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="px-3.5 py-2 bg-zinc-900 border border-zinc-800 text-zinc-200 rounded-xl text-xs font-bold hover:bg-zinc-800 hover:text-white transition-all shadow-xs shrink-0 flex items-center gap-1.5 cursor-pointer">
-                  <Share2 className="h-3.5 w-3.5 text-zinc-500" />
+                <button className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 w-12 sm:w-auto px-1 sm:px-3.5 py-1.5 sm:py-2 bg-zinc-900 border border-zinc-800 text-zinc-200 rounded-lg sm:rounded-xl text-[9px] sm:text-xs font-bold hover:bg-zinc-800 hover:text-white transition-all shadow-xs shrink-0 cursor-pointer">
+                  <Share2 className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-zinc-500" />
                   Share
                 </button>
               </DropdownMenuTrigger>
@@ -1439,16 +1441,16 @@ Notes: ${l.notes || 'None'}`;
             <button
               onClick={bulkDeleteSelected}
               disabled={bulkDeleting}
-              className="px-3.5 py-2 bg-rose-950/60 border border-rose-800 text-rose-200 rounded-xl text-xs font-bold hover:bg-rose-900 hover:text-white transition-all shadow-xs disabled:opacity-50 shrink-0 flex items-center gap-1.5 cursor-pointer"
+              className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 w-12 sm:w-auto px-1 sm:px-3.5 py-1.5 sm:py-2 bg-rose-950/60 border border-rose-800 text-rose-200 rounded-lg sm:rounded-xl text-[9px] sm:text-xs font-bold hover:bg-rose-900 hover:text-white transition-all shadow-xs disabled:opacity-50 shrink-0 cursor-pointer"
             >
-              <Trash2 className="h-3.5 w-3.5" />
-              {bulkDeleting ? "Deleting..." : "Delete"}
+              <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+              {bulkDeleting ? "..." : "Delete"}
             </button>
           </div>
 
           <button
             onClick={() => setSelectedLeadIds(new Set())}
-            className="p-1.5 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors ml-2 shrink-0"
+            className="p-1.5 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors sm:ml-2 shrink-0"
           >
             <X className="h-4 w-4" />
           </button>
