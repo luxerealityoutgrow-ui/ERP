@@ -225,30 +225,29 @@ export default function MatchmakingPage() {
       points: number;
     }[] = [];
 
-    // 1. Budget Match (30 pts)
+    // 1. Budget Match (30 pts) -- gated on budget_max, the only budget field the lead form
+    // actually collects (budget_min is never set through the UI). Previously this required
+    // BOTH budget_min AND budget_max to run a real comparison, so it always fell through to
+    // the "Flexible Budget" branch and handed every property full budget points regardless
+    // of price -- the root cause of "100% matches" showing properties way outside budget.
     let budgetScore = 0;
     let budgetStatus: 'exact' | 'partial' | 'mismatch' = 'mismatch';
     let budgetStatusText = 'Outside Budget';
-    
-    if (lead.budget_min && lead.budget_max && prop.price) {
-      if (prop.price >= lead.budget_min && prop.price <= lead.budget_max) {
+
+    if (lead.budget_max && prop.price) {
+      if (prop.price <= lead.budget_max) {
         budgetScore = 100;
         totalScore += 30;
         budgetStatus = 'exact';
-        budgetStatusText = 'Fits Budget Range';
-      } else if (prop.price < lead.budget_min) {
-        // Affordable (cheaper than target range)
-        budgetScore = 100;
-        totalScore += 30;
-        budgetStatus = 'exact';
-        budgetStatusText = 'Under Budget (Affordable)';
+        budgetStatusText = lead.budget_min && prop.price < lead.budget_min ? 'Under Budget (Affordable)' : 'Fits Budget Range';
       } else if (prop.price <= lead.budget_max * 1.15) {
         budgetScore = 50;
         totalScore += 15;
         budgetStatus = 'partial';
         budgetStatusText = 'Slightly Over Budget (<15%)';
       }
-    } else if (prop.price) {
+    } else if (prop.price && !lead.budget_max) {
+      // Lead genuinely has no budget cap on file -- treat as flexible rather than mismatch.
       budgetScore = 100;
       totalScore += 30;
       budgetStatus = 'exact';
@@ -700,7 +699,8 @@ We found a premium property matching your requirements!
 ${cleanTitle}
 Location: ${p.location}
 Type: ${p.configuration || p.property_type}
-Area: ${p.carpet_area ? `${p.carpet_area} sq ft` : 'N/A'}
+Carpet Area: ${p.carpet_area ? `${p.carpet_area} sq ft` : 'N/A'}
+Built-up Area: ${p.built_up_area ? `${p.built_up_area} sq ft` : 'N/A'}
 Price: ${formatBudgetAbbreviated(p.price)}
 For ${p.listing_type || 'Sale'}
 
@@ -717,7 +717,8 @@ Let us know if you would like to schedule a site visit!`);
         text += `${idx + 1}. ${p.title}\n`;
         text += `Location: ${p.location}\n`;
         text += `Type: ${p.property_type} (${p.configuration})\n`;
-        text += `Area: ${p.carpet_area} sq ft\n`;
+        text += `Carpet Area: ${p.carpet_area ? `${p.carpet_area} sq ft` : 'N/A'}\n`;
+        text += `Built-up Area: ${p.built_up_area ? `${p.built_up_area} sq ft` : 'N/A'}\n`;
         text += `Price: ${formatBudgetAbbreviated(p.price)}\n\n`;
       });
       text += `Let us know if you would like to schedule site visits for any of these!`;
